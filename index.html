@@ -75,7 +75,7 @@
       justify-content:flex-start;
       align-items:center;
       overflow-x:hidden;
-    padding-top:calc(var(--topbarH,84px) + 28px);}
+    padding-top:calc(var(--topbarH,84px) + 18px);}
     .app{width:100%;max-width:var(--appMax);margin:0 auto;padding:12px}
 
     /* Ensure topbar + main are centered in column layout */
@@ -208,29 +208,60 @@
       .topbar .right{grid-column:2}
     }
     @media (max-width:520px){
+      /* En vertical queremos el header fijo ARRIBA ocupando todo el ancho (no flotante pequeño). */
       header.topbar{
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        width:100%;
+        max-width:none;
+        transform:none;
+        border-radius:0 0 22px 22px;
+        padding:10px 12px;
+        padding-top:calc(10px + env(safe-area-inset-top));
         display:flex;
-        flex-direction:column;
-        align-items:stretch;
+        flex-direction:row;
+        align-items:center;
+        justify-content:center;
         gap:10px;
       }
-      .brand{justify-content:center}
-      .brandtext .eyebrow,
-      .brandtext .title{display:none; /* hidden: logo-only brand */
+      /* Menos espacio muerto arriba en móvil */
+      body{padding-top:calc(var(--topbarH,84px) + 10px);}
+      /* En móvil usamos el bottom nav para navegar (Fichas/Desafíos/Grupo), así que ocultamos tabs del header */
+      .topbar .center{display:none !important;}
 
-        white-space:normal;
-        overflow:visible;
-        text-overflow:clip;
-        text-align:center;
+      /* Marca centrada, texto oculto */
+      .brand{justify-content:center; flex:1;}
+      .brandtext{display:none;}
+
+      /* Botón hamburguesa pegado a la izquierda */
+      #sidebarToggleBtn{
+        position:absolute;
+        left:max(12px, calc(env(safe-area-inset-left) + 8px));
+        top:50%;
+        transform:translateY(-50%);
+        margin:0;
       }
-      .topbar .center{order:2}
+
+      /* Acciones a la derecha en una sola fila (scroll horizontal si no caben) */
       .topbar .right{
-        order:3;
-        justify-content:center;
+        justify-content:flex-end;
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        overflow-y:hidden;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+        max-width:55vw;
+        padding-left:6px;
       }
+      .topbar .right::-webkit-scrollbar{width:0;height:0;display:none;}
+
+      /* Icon-only en móvil para reducir altura */
+      .btn-txt{display:none;}
+      .topbar .right .btn.small{padding:8px 10px;}
     }
 
-    
         /* ===== PANEL GLOBAL ===== */
     .panel{
       background:linear-gradient(145deg, var(--app-panel-1), var(--app-panel-2));
@@ -243,8 +274,17 @@
       color:var(--app-text);
       position:relative;
     }
+    /* Sidebar fill + avoid clipping */
+    aside.panel{display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+    aside.panel .sidebar-header{flex:0 0 auto;}
 
-    /* ===== BOTONES (GLOBAL) ===== */
+
+    
+    /* ===== Botones: icono + texto (para compactar en móvil) ===== */
+    .btn .btn-ico{display:inline-flex;align-items:center;justify-content:center;min-width:1.1em}
+    .btn .btn-txt{display:inline-flex}
+    .btn .btn-caret{display:inline-flex;opacity:.75}
+/* ===== BOTONES (GLOBAL) ===== */
     a.btn{ text-decoration:none; }
       .btn{
       border:none;border-radius:999px;padding:7px 12px;
@@ -276,7 +316,12 @@
       border:1px solid rgba(34,197,94,.35);
     }
 
-    /* ===== Indicador de recompensas sin reclamar ===== */
+    
+
+    /* ===== Botones con icono + texto (para compactar en móvil) ===== */
+    .btn-ico{display:inline-flex;align-items:center;justify-content:center;line-height:1;}
+    .btn-txt{display:inline-block;}
+/* ===== Indicador de recompensas sin reclamar ===== */
     .unclaimed-indicator{
       display:none;
       align-items:center;
@@ -350,35 +395,84 @@
       border-color:rgba(215,185,142,.55);
       background:linear-gradient(135deg,rgba(215,185,142,.22),rgba(243,231,211,.12));
     }
-    .hero-list{margin:0;padding:6px 0 0;list-style:none;max-height:420px;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+    .hero-list{
+      margin:0;
+      padding:8px 10px 14px;
+      list-style:none;
+      flex:1 1 auto;
+      min-height:0;
+      overflow-y:auto;
+      overflow-x:visible;
+      scrollbar-width:none;
+      -ms-overflow-style:none;
+    }
+
+  /* Desktop: keep the PERSONAJES island shape while allowing internal scroll */
+  #sidebarPanel{
+    display:flex;
+    flex-direction:column;
+    overflow:hidden; /* keeps rounded corners when list scrolls */
+  }
+  #sidebarPanel .hero-list{
+    flex:1;
+    min-height:0;
+    padding-right:6px;
+  }
+  @media (min-width: 901px){
+    #sidebarPanel{
+      max-height: calc(100vh - 140px);
+    }
+  }
     .hero-list::-webkit-scrollbar{width:0;height:0;display:none}
+
     .hero-item{
       border-radius:14px;padding:8px 9px;margin-bottom:6px;
       border:1px solid rgba(11,11,11,.85);
       cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:6px;
-      background:linear-gradient(135deg,rgba(11,11,11,.95),rgba(215,185,142,.7));
+      background:linear-gradient(135deg,rgba(11,11,11,.95),rgba(215,185,142,.52));
       transition:border-color .12s ease, box-shadow .12s ease, transform .08s ease;
       position:relative;z-index:1;
       -webkit-tap-highlight-color:transparent;
     }
+    .hero-item::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      background:linear-gradient(90deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,.28) 55%, rgba(0,0,0,.50) 100%);
+      pointer-events:none;
+      opacity:.78;
+      z-index:0;
+    }
+    .hero-meta, .pill{position:relative;z-index:1;}
+    .hero-name{color:rgba(255,255,255,.94);text-shadow:0 1px 2px rgba(0,0,0,.65);}
+    .hero-sub{color:rgba(255,255,255,.72);text-shadow:0 1px 2px rgba(0,0,0,.55);}
+
     .hero-item:hover{transform:translateY(-1px)}
     .hero-item.active{
       border-color:#D7B98E;
-      background:linear-gradient(135deg,rgba(215,185,142,.2),rgba(215,185,142,.95));
+      background:linear-gradient(135deg,rgba(215,185,142,.18),rgba(215,185,142,.88));
       box-shadow:0 10px 26px rgba(0,0,0,.55);
       z-index:3000;
     }
     .hero-meta{display:flex;flex-direction:column;gap:2px}
     .hero-name{font-size:.78rem;font-weight:650}
-    .hero-sub{font-size:.68rem;color:var(--app-muted)}
+    .hero-sub{font-size:.68rem}
     .pill{
-      font-size:.62rem;padding:2px 8px;border-radius:999px;
+      font-size:.62rem;
+      padding:2px 8px;
+      border-radius:999px;
       border:1px solid rgba(243,231,211,.25);
-      color:var(--app-muted);
-      background:radial-gradient(circle at top,rgba(11,11,11,.9),transparent);
+      color:rgba(243,231,211,.92);
+      background:rgba(11,11,11,.62);
+      box-shadow:0 6px 14px rgba(0,0,0,.35) inset, 0 4px 10px rgba(0,0,0,.28);
+      text-shadow:0 1px 0 rgba(0,0,0,.55);
       white-space:nowrap;
+      font-weight:750;
+      letter-spacing:.02em;
     }
-    .pill.level{border-color:#D7B98E;color:#D7B98E}
+    .pill.level{border-color:#D7B98E;color:#D7B98E;background:rgba(11,11,11,.55)}
+
     .empty-state{
       font-size:.8rem;color:var(--app-muted);
       padding:12px;border-radius:14px;
@@ -428,7 +522,7 @@
     /* === MODO NORMAL HORIZONTAL === */
     @media (orientation:landscape){
       .hero-main-layout{flex-direction:row;align-items:flex-start;gap:16px}
-      .hero-portrait-block{flex:0 0 38%;position:sticky;top:calc(var(--topbarH,84px) + 28px);align-self:flex-start}
+      .hero-portrait-block{flex:0 0 38%;position:sticky;top:calc(var(--topbarH,84px) + 18px);align-self:flex-start}
       .hero-info-block{flex:1;max-height:none;overflow:visible;padding-right:4px}
     }
 
@@ -633,6 +727,11 @@
 
     .challenge-list{display:flex;flex-direction:column;gap:8px;scrollbar-width:none;-ms-overflow-style:none}
     .challenge-list::-webkit-scrollbar{width:0;height:0;display:none}
+    #challengeContent .challenge-list{flex:1 1 auto;min-height:0;overflow:auto;padding-right:6px;}
+    #challengeContent .challenge-list::-webkit-scrollbar{width:0;height:0;}
+    /* Desafios: lista con scroll interno para no crecer la pagina */
+    #challengeContent > .panel{display:flex;flex-direction:column;min-height:0;max-height:calc(100dvh - var(--topbarH,88px) - var(--bottomNavH,0px) - 44px);}
+    #challengeContent .challenge-controls{flex:0 0 auto;}
     .challenge-card{
       border-radius:16px;border:1px solid rgba(243,231,211,.25);
       background:radial-gradient(circle at top,rgba(215,185,142,.10),rgba(11,11,11,.92));
@@ -688,8 +787,74 @@
       scrollbar-width:none;-ms-overflow-style:none;
     }
     .modal-body::-webkit-scrollbar{width:0;height:0;display:none}
+    /* ===== Modal Alumno: estilo más consistente (evita look beige en iOS) ===== */
+    #studentModal .modal{
+      width:min(520px,100%);
+      background:linear-gradient(145deg, rgba(10,10,10,.98), rgba(18,18,18,.92));
+      border:1px solid rgba(243,231,211,.28);
+    }
+    #studentModal .modal-header{
+      background:linear-gradient(135deg, rgba(6,6,6,.65), rgba(215,185,142,.12));
+    }
+    #studentModal .modal-title{font-size:.86rem}
+    #studentModal .modal-body{padding:14px}
+    #studentModal .field label{color:rgba(243,231,211,.78)}
+    #studentModal input,
+    #studentModal select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(243,231,211,.22);
+      background:rgba(0,0,0,.35);
+      color:var(--app-text);
+      outline:none;
+      -webkit-appearance:none;
+      appearance:none;
+    }
+    #studentModal select{
+      background-image: linear-gradient(45deg, transparent 50%, rgba(243,231,211,.65) 50%),
+                        linear-gradient(135deg, rgba(243,231,211,.65) 50%, transparent 50%);
+      background-position: calc(100% - 18px) calc(1em + 2px), calc(100% - 13px) calc(1em + 2px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right:34px;
+    }
+    #studentModal input:focus,
+    #studentModal select:focus{
+      border-color:rgba(160,255,220,.35);
+      box-shadow:0 0 0 4px rgba(160,255,220,.10);
+    }
 
-    /* ===== Tema modal (pequeño, esquina) ===== */
+
+    
+
+    /* ===== Modal Alumno: más consistente con el resto (menos "beige") ===== */
+    #studentModal .modal{
+      width:min(520px,100%);
+      background:linear-gradient(145deg,rgba(10,10,10,.98),rgba(20,20,20,.94));
+      border:1px solid rgba(243,231,211,.28);
+    }
+    #studentModal .modal-header{border-bottom:1px solid rgba(243,231,211,.18);}
+    #studentModal .modal-title{font-size:.9rem;}
+    #studentModal .field label{color:rgba(243,231,211,.78);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;}
+    #studentModal input,
+    #studentModal select{
+      width:100%;
+      background:rgba(6,6,6,.55);
+      border:1px solid rgba(243,231,211,.22);
+      color:var(--app-text);
+      border-radius:14px;
+      padding:12px 12px;
+      font-size:1rem;
+      outline:none;
+    }
+    #studentModal input:focus,
+    #studentModal select:focus{border-color:rgba(160,255,220,.35);box-shadow:0 0 0 4px rgba(160,255,220,.10);}
+    #studentModal .modal-subtitle{color:rgba(243,231,211,.62) !important;}
+    @media (max-width:520px){
+      #studentModal .modal{max-height:82vh;}
+    }
+/* ===== Tema modal (pequeño, esquina) ===== */
     .modal-backdrop.theme{
       align-items:flex-end;
       justify-content:flex-end;
@@ -874,7 +1039,7 @@
 
     /* El contenido ocupa el alto disponible; scroll dentro de paneles */
     body.presentation main.layout{min-height:0;overflow:hidden;margin-top:12px;grid-template-columns:1fr;}
-    body.presentation aside.panel{display:none}
+    body.presentation aside.panel{display:none !important}
     body.presentation section.panel{min-height:0;overflow:hidden}
     body.presentation #rightContent,
     body.presentation #sheetContent,
@@ -891,10 +1056,23 @@
     body.presentation .btn{padding:10px 14px;font-size:.9rem}
     body.presentation .btn.small{padding:8px 12px;font-size:.82rem}
     body.presentation .drop-btn{padding:12px 14px;font-size:.92rem}
+
+    /* --- Presentation: maximize visibility (hide extra header controls & bottom nav) --- */
+    body.presentation header.topbar{padding:10px 14px;}
+    body.presentation header.topbar .center{display:none !important;}
+    body.presentation header.topbar #dataMenuBtn{display:none !important;}
+    body.presentation header.topbar #editBtn{display:none !important;}
+    body.presentation header.topbar #themeBtn{display:none !important;}
+    body.presentation header.topbar #homeBtn{display:none !important;}
+    body.presentation #bottomNav{display:none !important;}
+    body.presentation .mobileHeader{display:none !important;}
+
     /* ===== Dock (miniaturas) en PRESENTACIÓN: izquierda, vertical (overlay) ===== */
     .pres-strip{display:none}
     body.presentation .pres-strip{
-      display:block;
+      /* En presentación: usar esta tira como el UNICO acceso a personajes (auto-hide) */
+      display:flex;
+      flex-direction:column;
       position:fixed;
       left:14px;
       top:calc(var(--topbarH,72px) + 14px);
@@ -915,8 +1093,11 @@
       /* allow scroll but hide scrollbar */
       scrollbar-width:none;
       -ms-overflow-style:none;
+    
+      scrollbar-width:none;
+      -ms-overflow-style:none;
     }
-    body.presentation .pres-strip::-webkit-scrollbar{ width:0; height:0; }
+    body.presentation .pres-strip::-webkit-scrollbar{ width:0; height:0; display:none; }
     body.presentation .pres-strip.hide{
       opacity:0;
       transform:translateX(-16px);
@@ -1242,12 +1423,9 @@
     .pres-strip, .pres-strip-row, #presStripRow{ scrollbar-width:none; -ms-overflow-style:none; }
     .pres-strip::-webkit-scrollbar,
     .pres-strip-row::-webkit-scrollbar,
-    #presStripRow::-webkit-scrollbar{ width:0; height:0; }
+    #presStripRow::-webkit-scrollbar{ width:0; height:0; display:none; }
 
     /* Evita que el navegador reserve espacio para scrollbars */
-    body.presentation .pres-strip,
-    body.presentation .pres-strip-row{ scrollbar-gutter: auto; }
-
 .pres-edge-hotzone{ position:fixed; left:0; top:0; width:18px; height:100vh; z-index:9998; background:transparent; }
 </style>
 </head>
@@ -1273,10 +1451,10 @@
 
       <div class="right">
         <button class="btn small secondary mobile-only" id="sidebarToggleBtn" type="button" title="Menú">☰</button>
-<button class="btn small secondary" id="presentationBtn" type="button">📽 Presentación</button>
-        <button class="btn small secondary" id="themeBtn" type="button">🎨 Tema</button>
+<button class="btn small secondary" id="presentationBtn" type="button"><span class="btn-ico">📽</span><span class="btn-txt">Presentación</span></button>
+        <button class="btn small secondary" id="themeBtn" type="button"><span class="btn-ico">🎨</span><span class="btn-txt">Tema</span></button>
         <div class="menuWrap edit-only">
-          <button class="btn small secondary edit-only" id="dataMenuBtn" type="button">📦 Datos ▾</button>
+          <button class="btn small secondary edit-only" id="dataMenuBtn" type="button"><span class="btn-ico">📦</span><span class="btn-txt">Datos</span><span class="btn-caret">▾</span></button>
           <div class="dropdown" id="dataMenu" style="display:none;">
             <button type="button" id="dataExportBtn">⬇ Respaldo (personajes)</button>
             <button type="button" id="dataImportBtn">⬆ Importar (personajes)</button>
@@ -1285,7 +1463,7 @@
             <button type="button" id="dataImportGroupBtn">⬆ Importar grupo (alumnos)</button>
           </div>
         </div>
-        <button class="btn small secondary" id="editLockBtn" type="button" title="Desbloquear edición">🔒 Edición</button>
+        <button class="btn small secondary" id="editLockBtn" type="button" title="Desbloquear edición"><span class="btn-ico">🔒</span><span class="btn-txt">Edición</span></button>
 </div>
     </header>
     <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true" style="display:none"></div>
@@ -1904,6 +2082,14 @@ window.addEventListener('keydown', function(e){
     var DOCK_TRIGGER_PX = 90; // muestra si el cursor está en los primeros 90px (borde izquierdo)
 
     function $(id){ return document.getElementById(id); }
+    function setBtnLabel(id, ico, txt){
+      var b=$(id); if(!b) return;
+      var i=b.querySelector('.btn-ico'); var t=b.querySelector('.btn-txt');
+      if(i) i.textContent=ico;
+      if(t) t.textContent=txt;
+      if(!i && !t){ b.textContent = ico + ' ' + txt; }
+    }
+
 
     // Basic HTML escaping for safe UI rendering
     function escapeHtml(s){
@@ -3174,7 +3360,7 @@ function saveHeroes(){
     function setPresentation(on){
       document.body.classList.toggle("presentation", !!on);
       localStorage.setItem(PRESENTATION_KEY, on ? "1" : "0");
-      $("presentationBtn").textContent = on ? "✖ Salir" : "📽 Presentación";
+      setBtnLabel("presentationBtn", on ? "✖" : "📽", on ? "Salir" : "Presentación");
 
       if(on && appMode !== "sheets") setMode("sheets");
 
@@ -5638,6 +5824,11 @@ body.mobile-portrait #bottomNav{display:flex;}
   }
   #startupGate .gate-sub{margin:10px 0 16px;text-align:center;font-size:13px;opacity:.88;line-height:1.4;}
   #startupGate .gate-row{display:flex;gap:10px;align-items:center;}
+  @media (max-width:520px){
+    #startupGate .gate-row{flex-direction:column;align-items:stretch;}
+    #startupGate button#gateEnterBtn{width:100%;}
+    #startupGate .gate-hint{display:none;}
+  } /* gate-row-mobile */
   #startupGate input#gatePin{flex:1;padding:13px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);
     background:rgba(0,0,0,.28);color:inherit;font-size:16px;letter-spacing:.18em;font-weight:800;
     outline:none;}
@@ -5651,6 +5842,8 @@ body.mobile-portrait #bottomNav{display:flex;}
   #startupGate .gate-bad{color:rgba(255,130,150,.95);font-weight:800;}
   #startupGate .gate-good{color:rgba(120,255,200,.95);font-weight:800;}
 </style>
+
+
 <div id="startupGate" class="gate" aria-label="Acceso por PIN">
   <div class="gate-card">
     <div class="gate-top">
@@ -6020,7 +6213,7 @@ window.__setEditUnlocked = function(v){ unlocked = !!v; try{ setLockUI(); }catch
   function setLockUI(){
     var b = byId('editLockBtn');
     if(b){
-      b.textContent = unlocked ? "🔓 Edición" : "🔒 Edición";
+      setBtnLabel("editLockBtn", unlocked ? "🔓" : "🔒", "Edición");
       b.title = unlocked ? "Bloquear edición" : "Desbloquear edición";
     }
     try{ applyLocks(); }catch(e){}
