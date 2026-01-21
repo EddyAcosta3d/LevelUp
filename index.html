@@ -1,3 +1,4 @@
+<!-- LevelUp GitHub Pages pack | built 2026-01-21 17:54 UTC -->
 <!DOCTYPE html>
 <!--
 ========================================================
@@ -1767,6 +1768,70 @@ body.presentation #sheetScope{max-width:100%;}
     .event-req{margin-top:8px;font-size:12px;opacity:.85;}
     .event-lock{display:inline-flex;align-items:center;gap:6px;font-size:12px;opacity:.75;margin-top:6px;}
 
+
+
+/* ===== Bosses/Eventos cards (vertical) ===== */
+#eventsContent .events-grid{grid-template-columns:repeat(4, minmax(210px,1fr));}
+@media (max-width: 1200px){ #eventsContent .events-grid{grid-template-columns:repeat(2, minmax(210px,1fr));} }
+@media (max-width: 760px){ #eventsContent .events-grid{grid-template-columns:1fr;} }
+
+.be-card{
+  border-radius:18px;border:1px solid rgba(243,231,211,.20);
+  background:radial-gradient(circle at top,rgba(215,185,142,.08),rgba(11,11,11,.92));
+  overflow:hidden;cursor:pointer;
+  transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  min-height:240px;
+  display:flex;flex-direction:column;
+}
+.be-card:hover{transform:translateY(-2px);border-color:rgba(243,231,211,.30);box-shadow:0 18px 40px rgba(0,0,0,.35);}
+.be-art{position:relative;height:150px;display:flex;align-items:center;justify-content:center;}
+.be-art-inner{position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(0,0,0,.0),rgba(0,0,0,.55));}
+.be-art-icon{
+  position:relative;
+  font-size:54px;line-height:1;
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.6));
+  opacity:.95;
+}
+.be-card.locked .be-art-icon{
+  filter:brightness(0) contrast(1.1) drop-shadow(0 10px 18px rgba(0,0,0,.75));
+  opacity:.9;
+}
+.be-art-lock{
+  position:absolute;right:10px;top:10px;
+  width:28px;height:28px;border-radius:999px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(243,231,211,.22);
+  background:rgba(11,11,11,.55);
+  font-size:14px;
+}
+.be-info{padding:12px 12px 14px 12px;display:flex;flex-direction:column;gap:6px;}
+.be-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.be-kind{font-size:11px;letter-spacing:.18em;font-weight:900;opacity:.85;}
+.be-sub{font-size:12px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.be-name{font-size:15px;font-weight:900;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.be-req{font-size:12px;opacity:.85;line-height:1.25;}
+
+/* Modal bosses/eventos */
+#beModal .modal{width:min(980px,100%);}
+.be-modal-hero{display:flex;gap:12px;align-items:flex-start;}
+.be-modal-art{
+  width:100%;height:260px;border-radius:18px;
+  border:1px solid rgba(243,231,211,.22);
+  overflow:hidden;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.be-modal-icon{font-size:84px;filter:drop-shadow(0 16px 22px rgba(0,0,0,.6));opacity:.95;}
+.be-modal-art.locked .be-modal-icon{filter:brightness(0) contrast(1.1) drop-shadow(0 16px 22px rgba(0,0,0,.75));opacity:.9;}
+.be-modal-overlay{
+  position:absolute;left:16px;bottom:16px;
+  padding:8px 10px;border-radius:999px;
+  border:1px solid rgba(243,231,211,.22);
+  background:rgba(11,11,11,.55);
+  font-size:12px;opacity:.9;
+}
+.be-modal-meta{margin-top:12px;}
+.be-modal-req{margin-top:10px;opacity:.9;}
+
 </style>
 
 <script>
@@ -2246,6 +2311,21 @@ body.presentation #sheetScope{max-width:100%;}
         </div>
 
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL BOSS/EVENTO -->
+<div class="modal-backdrop" id="beModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Jefe o Evento">
+    <div class="modal-header">
+      <h3 class="modal-title" id="beModalTitle">Encuentro</h3>
+      <button class="btn small secondary" type="button" data-action="be-close">Cerrar</button>
+    </div>
+    <div class="modal-body" id="beModalBody"></div>
+    <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:10px;padding:12px 14px;border-top:1px solid rgba(255,255,255,.10);">
+      <button class="btn small secondary" type="button" data-action="be-close">Cancelar</button>
+      <button class="btn small ok" id="beModalFight" type="button" data-action="be-fight">Retar</button>
     </div>
   </div>
 </div>
@@ -5773,24 +5853,294 @@ function saveHeroes(){
 
 
     /* ===== Eventos (fase inicial) ===== */
-    const EVENTS_CONFIG = [
-      {id:'boss_loquito', name:'????', subtitle:'Silueta bloqueada', req:'Completa 4 desafíos', icon:'🕴️'},
-      {id:'boss_garbanzo', name:'????', subtitle:'Silueta bloqueada', req:'Llega al nivel 3', icon:'🫘'},
-      {id:'boss_ratero', name:'????', subtitle:'Silueta bloqueada', req:'Responsabilidad >= 7', icon:'🕵️'}
-    ];
+    /* ===== Bosses / Eventos (Phase 1) ===== */
+const BOSSEVENTS_CONFIG = [
+  {
+    id:'boss_loquito',
+    kind:'boss',
+    title:'El Loquito del Centro',
+    lockedTitle:'????',
+    subtitle:'Jefe • Calle',
+    artColor:'linear-gradient(135deg, rgba(243,231,211,.14), rgba(11,11,11,.92))',
+    icon:'🕴️',
+    imgLocked:'assets/boss_loquito_locked.png',
+    imgFull:'assets/boss_loquito_full.png',
+    requirements:[
+      {type:'completed_count', min:4}
+    ],
+    blurb:'Completa retos y demuestra constancia para desbloquear el primer jefe.'
+  },
+  {
+    id:'event_loteria',
+    kind:'event',
+    title:'Evento: Lotería sorpresa',
+    lockedTitle:'????',
+    subtitle:'Evento • Bonus',
+    artColor:'linear-gradient(135deg, rgba(120,255,214,.10), rgba(11,11,11,.92))',
+    icon:'🎟️',
+    requirements:[
+      {type:'level_at_least', min:2}
+    ],
+    blurb:'Un evento corto con recompensa. Se desbloquea con un poco de avance.'
+  },
+  {
+    id:'boss_garbanzo',
+    kind:'boss',
+    title:'El Garbanzo',
+    lockedTitle:'????',
+    subtitle:'Jefe • Resistencia',
+    artColor:'linear-gradient(135deg, rgba(255,208,120,.12), rgba(11,11,11,.92))',
+    icon:'🫘',
+    requirements:[
+      {type:'level_at_least', min:3},
+      {type:'completed_count', min:8}
+    ],
+    blurb:'Sube de nivel y completa más desafíos para desbloquear este jefe.'
+  },
+  {
+    id:'event_alianza',
+    kind:'event',
+    title:'Evento: Alianza',
+    lockedTitle:'????',
+    subtitle:'Evento • Cooperativo',
+    artColor:'linear-gradient(135deg, rgba(120,170,255,.12), rgba(11,11,11,.92))',
+    icon:'🤝',
+    requirements:[
+      {type:'stat_at_least', stat:'con', min:5}
+    ],
+    blurb:'Demuestra responsabilidad (CON) para acceder a este evento.'
+  }
+];
 
-    function renderEventsUI(){
-      try{
-        const grid = document.getElementById('eventsGrid');
-        if(!grid) return;
-        grid.innerHTML = EVENTS_CONFIG.map(ev => {
-          return `            <div class="event-card" data-event-id="${ev.id}">              <div class="event-sil" aria-hidden="true"></div>              <div class="event-meta">                <div class="event-name">${ev.name}</div>                <div class="event-sub">${ev.subtitle}</div>                <div class="event-lock">🔒 Bloqueado</div>                <div class="event-req"><span style="opacity:.7">Requisito:</span> ${ev.req}</div>              </div>            </div>`;
-        }).join('');
-      }catch(e){
-        // no-op
+function __beActiveHero(){
+  try{
+    // Prioridad: alumno seleccionado (vista Alumnos) si existe
+    if(typeof window.selectedStudentId !== "undefined" && window.selectedStudentId){
+      var list = (typeof window.currentStudents === "function") ? window.currentStudents() : [];
+      for(var i=0;i<list.length;i++){
+        if(list[i] && list[i].id === window.selectedStudentId){
+          var hid = list[i].heroId;
+          if(hid && typeof window.findHeroById==="function"){
+            return window.findHeroById(hid);
+          }
+          break;
+        }
       }
     }
-    /* ===== Mode switch ===== */
+  }catch(e){}
+  // Fallback: héroe seleccionado en Fichas
+  try{
+    if(typeof window.selectedId !== "undefined" && window.selectedId && typeof window.findHeroById==="function"){
+      return window.findHeroById(window.selectedId);
+    }
+  }catch(e){}
+  return null;
+}
+
+
+function __beEsc(s){
+  try{
+    if(typeof window.esc==="function") return window.__beEsc(s);
+    if(typeof window.escapeHtml==="function") return window.escapeHtml(s);
+  }catch(e){}
+  s = String(s==null?'':s);
+  return s.replace(/[&<>"']/g, function(ch){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);
+  });
+}
+
+
+
+function __beReqText(req){
+  if(!req) return "—";
+  if(req.type==='completed_count') return "Completa " + req.min + " desafíos";
+  if(req.type==='level_at_least') return "Alcanza nivel " + req.min;
+  if(req.type==='xp_at_least') return "Acumula " + req.min + " XP";
+  if(req.type==='stat_at_least'){
+    var label = (req.stat||"").toUpperCase();
+    return label + " ≥ " + req.min;
+  }
+  return "Requisito";
+}
+
+function __beMeets(req, hero){
+  if(!req) return true;
+  if(!hero) return false;
+  try{
+    if(req.type==='completed_count'){
+      var c = Array.isArray(hero.completed) ? hero.completed.length : 0;
+      return c >= Number(req.min||0);
+    }
+    if(req.type==='level_at_least') return Number(hero.level||0) >= Number(req.min||0);
+    if(req.type==='xp_at_least') return Number(hero.xp||0) >= Number(req.min||0);
+    if(req.type==='stat_at_least'){
+      var key = String(req.stat||'').toLowerCase();
+      return Number(hero[key]||0) >= Number(req.min||0);
+    }
+  }catch(e){}
+  return false;
+}
+
+function __beStatus(item, hero){
+  var reqs = (item && Array.isArray(item.requirements)) ? item.requirements : [];
+  for(var i=0;i<reqs.length;i++){
+    if(!__beMeets(reqs[i], hero)){
+      return {unlocked:false, unmet:reqs[i], unmetIndex:i, total:reqs.length};
+    }
+  }
+  return {unlocked:true, unmet:null, unmetIndex:-1, total:reqs.length};
+}
+
+function __beArtStyle(item, locked){
+  try{
+    var url = locked ? (item.imgLocked||"") : (item.imgFull||item.imgUnlocked||"");
+    if(url){
+      return "background-image:url('"+url+"');background-size:cover;background-position:center;background-repeat:no-repeat;";
+    }
+  }catch(e){}
+  return "background:"+(item.artColor||"")+";";
+}
+
+function renderEventsUI(){
+  try{
+    const grid = document.getElementById('eventsGrid');
+    if(!grid) return;
+
+    const hero = __beActiveHero();
+    grid.innerHTML = BOSSEVENTS_CONFIG.map(function(item){
+      var st = __beStatus(item, hero);
+      var locked = !st.unlocked;
+      var artStyle = __beArtStyle(item, locked);
+      var hasImg = locked ? !!(item.imgLocked) : !!(item.imgFull||item.imgUnlocked);
+      var showIcon = !hasImg;
+      var name = locked ? (item.lockedTitle||"????") : (item.title||"");
+      var reqLine = locked ? ("Requisito: " + __beReqText(st.unmet)) : "Desbloqueado";
+      var kindLabel = item.kind==='boss' ? "JEFE" : "EVENTO";
+
+      return (
+        '<div class="be-card '+(locked?'locked':'unlocked')+'" data-action="be-open" data-be-id="'+__beEsc(item.id)+'" role="button" tabindex="0">' +
+          '<div class="be-art" style="'+artStyle+'">' +
+            '<div class="be-art-inner">'+
+              (showIcon ? '<div class="be-art-icon">'+__beEsc(item.icon||"")+'</div>' : '') +
+            '</div>'+
+            (locked ? '<div class="be-art-lock">🔒</div>' : '<div class="be-art-lock">✅</div>')+
+          '</div>' +
+          '<div class="be-info">' +
+            '<div class="be-top">' +
+              '<div class="be-kind">'+kindLabel+'</div>' +
+              '<div class="be-sub">'+__beEsc(item.subtitle||"")+'</div>' +
+            '</div>' +
+            '<div class="be-name">'+__beEsc(name)+'</div>' +
+            '<div class="be-req">'+__beEsc(reqLine)+'</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }catch(e){
+    try{ console.error("[Eventos] render error", e); }catch(_e){}
+  }
+}
+
+// Modal (Phase 3 base): pantalla completa con "Retar"
+function __beOpenModal(id){
+  var item = null;
+  for(var i=0;i<BOSSEVENTS_CONFIG.length;i++){ if(BOSSEVENTS_CONFIG[i].id===id){ item=BOSSEVENTS_CONFIG[i]; break; } }
+  if(!item) return;
+
+  var hero = __beActiveHero();
+  var st = __beStatus(item, hero);
+  var locked = !st.unlocked;
+  var artStyle = __beArtStyle(item, locked);
+  var hasImg = locked ? !!(item.imgLocked) : !!(item.imgFull||item.imgUnlocked);
+  var showIcon = !hasImg;
+
+  var titleEl = document.getElementById("beModalTitle");
+  var bodyEl = document.getElementById("beModalBody");
+  var btnEl  = document.getElementById("beModalFight");
+
+  if(titleEl) titleEl.textContent = locked ? (item.lockedTitle||"????") : (item.title||"");
+  if(bodyEl){
+    bodyEl.innerHTML = '' +
+      '<div class="be-modal-hero">'+
+        '<div class="be-modal-art '+(locked?'locked':'')+'" style="'+artStyle+'">' +
+          (showIcon ? '<div class="be-modal-icon">'+__beEsc(item.icon||"")+'</div>' : '') +
+          (locked ? '<div class="be-modal-overlay">Silueta bloqueada</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="be-modal-meta">' +
+        '<div class="pill" style="opacity:.9;">'+ (item.kind==='boss'?'JEFE':'EVENTO') +'</div>' +
+        '<div style="opacity:.8;margin-top:8px;">'+__beEsc(item.blurb||"")+'</div>' +
+        '<div class="be-modal-req">'+ (locked ? ('<strong>Requisito:</strong> '+__beEsc(__beReqText(st.unmet))) : '<strong>Listo:</strong> Puedes retar este encuentro.') +'</div>' +
+      '</div>';
+  }
+  if(btnEl){
+    btnEl.disabled = locked;
+    btnEl.style.opacity = locked ? ".45" : "1";
+  }
+
+  var modal = document.getElementById("beModal");
+  if(modal) modal.style.display = "flex";
+}
+
+function __beCloseModal(){
+  var modal = document.getElementById("beModal");
+  if(modal) modal.style.display = "none";
+}
+
+// Exponer módulo (debug/uso interno)
+try{
+  window.LU = window.LU || {};
+  LU.modules = LU.modules || {};
+  LU.modules.bossesEvents = {
+    config: BOSSEVENTS_CONFIG,
+    render: renderEventsUI,
+    openModal: __beOpenModal,
+    closeModal: __beCloseModal,
+    activeHero: __beActiveHero,
+    status: __beStatus
+  };
+}catch(e){}
+
+
+// Router mínimo para Eventos (sin tocar el router de Alumnos)
+(function(){
+  if(window.__beRouterBound) return;
+  window.__beRouterBound = true;
+
+  document.addEventListener("click", function(ev){
+    try{
+      var t = ev.target;
+      var el = t && t.closest ? t.closest('[data-action="be-open"],[data-action="be-close"],[data-action="be-fight"]') : null;
+      if(!el) return;
+      var act = el.getAttribute("data-action") || "";
+      if(act==="be-open"){
+        ev.preventDefault();
+        var id = el.getAttribute("data-be-id");
+        __beOpenModal(id);
+      } else if(act==="be-close"){
+        ev.preventDefault();
+        __beCloseModal();
+      } else if(act==="be-fight"){
+        ev.preventDefault();
+        // Phase 3: placeholder (luego conectamos batalla)
+        try{ luAlert("¡Reto iniciado! (Placeholder)", {title:"Retar"}); }catch(e){ alert("¡Reto iniciado!"); }
+      }
+    }catch(e){}
+  }, true);
+
+  document.addEventListener("keydown", function(e){
+    try{
+      if(e.key==="Escape"){
+        var modal = document.getElementById("beModal");
+        if(modal && modal.style.display==="flex"){ __beCloseModal(); }
+      }
+    }catch(_e){}
+  }, true);
+})();
+
+
+
+/* ===== Mode switch ===== */
     function setMode(mode){
       appMode = mode;
 
