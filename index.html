@@ -2833,6 +2833,144 @@ body.sidebar-open #sidebarBackdrop{ display:block !important; }
   }
 }
 
+
+/* ============================================================
+   MOBILE FIX v0.05.57 (iPhone/iOS)
+   Goals:
+   - Restore scrolling (use page scroll; avoid fixed-height clamps)
+   - Keep desktop layout unchanged
+   - Make header compact: centered logo + left nav drawer + right actions drawer
+   - Prevent wrapped desktop header buttons from showing on mobile
+   ============================================================ */
+
+@media (max-width: 900px){
+  /* Let the page scroll naturally on iOS (nested fixed/overflow layouts are fragile) */
+  html, body{
+    height:auto !important;
+    min-height:100% !important;
+    overflow:auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Undo the "no page scroll" clamp on small screens */
+  main.layout{
+    position:relative !important;
+    inset:auto !important;
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+    /* leave room for the bottom nav */
+    padding-bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+  }
+  #mainContent, #rightContent{
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+    min-height:0 !important;
+  }
+  /* Content views should not be forced into their own scroll regions on mobile */
+  #sheetContent, #challengeContent, #eventsContent, #groupContent{
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+
+  /* Compact sticky header */
+  header.topbar{
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1200 !important;
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Hide desktop header actions to avoid the "second row" of buttons on iPhone */
+  #presentationBtn, #themeBtn, #dataBtn, #editBtn{
+    display:none !important;
+  }
+  header.topbar .center{ display:none !important; } /* desktop tab strip */
+  header.topbar .brand-text{ display:none !important; }
+
+  /* Show mobile buttons */
+  .mobile-only{ display:flex !important; }
+
+  /* Make the header row breathe */
+  header.topbar .wrap{
+    gap: 10px !important;
+    padding: 10px 12px !important;
+  }
+  #sidebarToggleBtn, #mobileActionsBtn{
+    width:44px !important;
+    height:44px !important;
+    flex:0 0 44px !important;
+  }
+  header.topbar .logo{
+    margin: 0 auto !important;
+    transform: translateX(0) !important;
+  }
+
+  /* Bottom nav: fixed + safe area */
+  .bottom-nav{
+    position:fixed !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: 10px !important;
+    z-index: 1300 !important;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Ensure drawers overlay correctly */
+  #sidebarBackdrop{
+    position:fixed !important;
+    inset:0 !important;
+    z-index: 1250 !important;
+    pointer-events:auto !important;
+  }
+  aside.panel{
+    position:fixed !important;
+    top: calc(env(safe-area-inset-top) + 72px) !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(10px + 92px + env(safe-area-inset-bottom)) !important;
+    z-index: 1260 !important;
+    max-width:none !important;
+    width:auto !important;
+    transform: translateY(-10px);
+  }
+
+  /* Mobile actions menu */
+  #mobileActionsMenu{
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top) + 72px) !important;
+    right: 10px !important;
+    left: 10px !important;
+    z-index: 1265 !important;
+    max-width:none !important;
+  }
+
+  /* Horizontal carousels should swipe */
+  .events-row,
+  .bosses-row,
+  .boss-row,
+  .event-row,
+  .eventsCarousel,
+  .bossesCarousel{
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    touch-action: pan-x;
+  }
+  .bossCard, .eventCard, .boss-card, .event-card{
+    scroll-snap-align: start;
+  }
+
+  /* Group page: make cards fit the viewport width better */
+  .group-split{ gap: 12px !important; }
+  .group-card, .group-panel{
+    border-radius: 22px !important;
+  }
+}
+
 </style>
 
 <script>
