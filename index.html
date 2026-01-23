@@ -2633,6 +2633,101 @@ main.layout > section.panel{
 /* In group mode we already use a fixed full-viewport container */
 body.group-noscroll main.layout{ visibility:hidden; pointer-events:none; }
 
+
+/* ============================
+   Mobile UX Patch (v00.05.55)
+   - Compact topbar with centered logo
+   - Action overflow menu (⋯)
+   - iOS scroll fixes (momentum)
+   - Group (Personajes) better stack on narrow screens
+============================ */
+:root{ --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+
+#sheetContent, #challengeContent, #eventsContent, #groupRoster, .gprof-scroll{
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 760px){
+  /* Topbar compact */
+  header.topbar{
+    padding-top: calc(10px + var(--safe-top));
+    padding-bottom: 10px;
+    min-height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  header.topbar .center{ display:none !important; } /* hide Fichas/Desafíos/Eventos/Personajes tabs (bottom nav covers this) */
+  header.topbar .brand{
+    position:absolute;
+    left:50%;
+    transform: translateX(-50%);
+    margin:0 !important;
+  }
+  header.topbar .right{
+    width:100%;
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    gap:10px;
+  }
+  /* Hide large buttons; use ⋯ menu */
+  #presentationBtn, #themeBtn, #dataMenuBtn, #editLockBtn, .menuWrap.edit-only{ display:none !important; }
+  #sidebarToggleBtn, #mobileActionsBtn{ display:inline-flex !important; }
+
+  /* Mobile actions dropdown placement */
+  #mobileActionsMenu{
+    position:absolute;
+    right: 14px;
+    top: calc(100% + 8px);
+    min-width: 210px;
+    z-index: 9999;
+  }
+  #mobileActionsMenu button{
+    width:100%;
+    text-align:left;
+    padding: 12px 12px;
+    border-radius: 10px;
+  }
+
+  /* Main layout: allow app content to scroll correctly on iOS */
+  body{ overflow:auto; }
+  main.layout{ min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom)); height:auto; }
+
+  /* Bottom nav safe-area */
+  .bottom-nav{ padding-bottom: calc(10px + var(--safe-bottom)); }
+
+  /* Personajes (Grupo) - stack columns */
+  body.group-noscroll #groupContent{
+    position: relative !important;
+    inset: auto !important;
+    height: auto !important;
+  }
+  body.group-noscroll .group-panel{ height:auto !important; }
+  body.group-noscroll .group-table-wrap{ height:auto !important; }
+  body.group-noscroll .group-split{
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+  body.group-noscroll .group-leftCard{
+    max-height: 44vh;
+    overflow:auto;
+  }
+  body.group-noscroll .group-rightCard{
+    min-height: 42vh;
+    overflow:hidden;
+  }
+  body.group-noscroll .gprof-scroll{
+    max-height: 42vh;
+    overflow:auto;
+  }
+
+  /* Events: allow vertical scrolling of section on mobile, keep inner carousels horizontal */
+  #eventsContent{ overflow:auto !important; }
+  .events-wrap{ overflow:auto !important; }
+}
+
 </style>
 
 <script>
@@ -2711,6 +2806,13 @@ body.group-noscroll main.layout{ visibility:hidden; pointer-events:none; }
 
       <div class="right">
         <button class="btn small secondary mobile-only" id="sidebarToggleBtn" type="button" title="Menú">☰</button>
+<button class="btn small secondary mobile-only" id="mobileActionsBtn" type="button" title="Acciones">⋯</button>
+<div class="dropdown mobile-only" id="mobileActionsMenu" style="display:none;">
+  <button type="button" data-act="presentation">📽 Presentación</button>
+  <button type="button" data-act="theme">🎨 Tema</button>
+  <button type="button" data-act="data">📦 Datos</button>
+  <button type="button" data-act="edit">🔒 Edición</button>
+</div>
 <button class="btn small secondary" id="presentationBtn" type="button"><span class="btn-ico">📽</span><span class="btn-txt">Presentación</span></button>
         <button class="btn small secondary" id="themeBtn" type="button"><span class="btn-ico">🎨</span><span class="btn-txt">Tema</span></button>
         <div class="menuWrap edit-only">
@@ -9965,6 +10067,50 @@ ${where}`, stack);
       };
     }
   }catch(e){}
+})();
+
+</script>
+<script>
+
+/* Mobile Actions Menu (⋯) */
+(function(){
+  function q(sel, root){ return (root||document).querySelector(sel); }
+  function closeMenus(){
+    var m = q('#mobileActionsMenu');
+    if(m) m.style.display = 'none';
+  }
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('#mobileActionsBtn');
+    var menu = q('#mobileActionsMenu');
+    if(btn && menu){
+      e.preventDefault();
+      e.stopPropagation();
+      menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
+      return;
+    }
+    var item = e.target.closest && e.target.closest('#mobileActionsMenu [data-act]');
+    if(item){
+      e.preventDefault();
+      var act = item.getAttribute('data-act');
+      // proxy to existing desktop buttons (hidden on mobile)
+      try{
+        if(act === 'presentation'){ var b=q('#presentationBtn'); if(b) b.click(); }
+        if(act === 'theme'){ var b=q('#themeBtn'); if(b) b.click(); }
+        if(act === 'data'){
+          var b=q('#dataMenuBtn'); if(b) b.click();
+          // if data menu opened, also close ⋯
+        }
+        if(act === 'edit'){ var b=q('#editLockBtn'); if(b) b.click(); }
+      }catch(_){}
+      closeMenus();
+      return;
+    }
+    // outside click closes
+    if(!e.target.closest('#mobileActionsMenu')) closeMenus();
+  }, true);
+
+  // close on resize/orientation
+  window.addEventListener('resize', closeMenus, {passive:true});
 })();
 
 </script>
