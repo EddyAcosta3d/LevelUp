@@ -3168,6 +3168,18 @@ body.mobile-portrait #bottomNav{
   -webkit-transform: translateZ(0);
 }
 
+
+/* === Mobile iOS scroll stability (V.00.05.60) === */
+@media (max-width: 900px){
+  html, body{ height:auto !important; overflow:auto !important; }
+  main.layout{ height:auto !important; min-height: 100dvh !important; overflow: visible !important; }
+  #sheetContent, #challengeContent, #eventsContent, #groupContent{ overflow: visible !important; }
+  #sheetContent, #challengeContent, #eventsContent, #groupRoster, #groupDetail{ -webkit-overflow-scrolling: touch; }
+}
+/* Allow scrolling in Desafíos y Eventos when content exceeds panel */
+#challengeContent{ overflow:auto; -webkit-overflow-scrolling: touch; }
+#eventsContent{ overflow:auto; -webkit-overflow-scrolling: touch; }
+
 </style>
 
 <script>
