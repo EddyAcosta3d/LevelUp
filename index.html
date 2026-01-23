@@ -2971,6 +2971,117 @@ body.sidebar-open #sidebarBackdrop{ display:block !important; }
   }
 }
 
+
+/* ===== MOBILE HEADER / SCROLL FIXES (v.00.05.58) ===== */
+:root{ --vh: 1vh; }
+@supports(height: 100dvh){
+  :root{ --vh: 1dvh; }
+}
+html, body{ height:100%; }
+body{ -webkit-text-size-adjust: 100%; }
+
+/* Make the app itself handle scrolling; avoid full-page scroll issues on iOS */
+body.mobile-portrait{ overflow:hidden; }
+body.mobile-portrait #appMain{ height: calc(var(--vh, 1vh) * 100 - var(--topbar-h, 84px) - var(--bottomNavH, 86px)); overflow:hidden; }
+body.mobile-portrait #appMain .page{ height:100%; min-height:0; }
+body.mobile-portrait #appMain .page .pageInner{ height:100%; min-height:0; overflow:auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+/* Header: only show burger + logo + actions on mobile */
+body.mobile-portrait header.topbar{ position: sticky; top:0; z-index: 1000; }
+body.mobile-portrait header.topbar .center{ display:none !important; }
+body.mobile-portrait header.topbar .right{ display:none !important; }
+body.mobile-portrait header.topbar .brandText{ display:none !important; }
+body.mobile-portrait header.topbar .left{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+body.mobile-portrait header.topbar .left .mobile-only{ display:inline-flex !important; }
+body.mobile-portrait header.topbar .left .brandLogoWrap{ margin:0 auto; }
+body.mobile-portrait header.topbar .left .brandLogo{ width:46px; height:46px; }
+body.mobile-portrait header.topbar{ padding:14px 14px 10px; }
+
+/* Ensure mobile actions menu is tappable and doesn't clip */
+#mobileActionsMenu{ z-index: 1200; }
+body.mobile-portrait #mobileActionsMenu{ position: fixed; right: 14px; top: calc(var(--topbar-h, 84px) - 6px); max-height: calc(var(--vh, 1vh) * 100 - var(--topbar-h, 84px) - 14px); overflow:auto; -webkit-overflow-scrolling: touch; }
+
+/* Tabs bottom bar spacing */
+body.mobile-portrait .bottom-nav{ padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+/* Group page: prevent nested flex overflow traps */
+body.mobile-portrait .group-table-wrap, body.mobile-portrait .group-split, body.mobile-portrait .group-leftCard, body.mobile-portrait .group-rightCard{ min-height:0; }
+body.mobile-portrait .group-table-wrap{ overflow:hidden; }
+body.mobile-portrait .group-leftCard{ overflow:auto; -webkit-overflow-scrolling: touch; }
+
+/* Events: allow horizontal scroll to show last card */
+body.mobile-portrait .eventsRow{ overflow-x:auto !important; overflow-y:hidden !important; -webkit-overflow-scrolling: touch; padding-right: 24px; scroll-padding-right: 24px; }
+body.mobile-portrait .eventsRow::-webkit-scrollbar{ display:none; }
+
+/* Prevent accidental text selection while dragging carousels */
+body.mobile-portrait .eventsRow, body.mobile-portrait .eventsRow *{ -webkit-user-select:none; user-select:none; }
+body.mobile-portrait .eventsCard{ pointer-events:auto; }
+
+
+
+/* === MOBILE OVERRIDES (v00.05.58) === */
+:root{
+  --topbarH: var(--topbar-h, 84px);
+  --bottomNavH: var(--bottomnav-h, 76px);
+}
+
+@media (max-width: 820px){
+  /* One scroll host per tab */
+  html, body{ height:100%; overflow:hidden !important; }
+  body{ padding-bottom: calc(12px + var(--bottomNavH)); }
+
+  /* Keep the app within the visible viewport */
+  main.layout{
+    height: calc(100dvh - var(--topbarH) - var(--bottomNavH) - 24px);
+    min-height:0;
+    overflow:hidden;
+  }
+  main.layout > .panel{ min-height:0; }
+  main.layout > section.panel{ overflow:hidden; min-height:0; }
+
+  #rightContent{ flex:1 1 auto; min-height:0; overflow:hidden; }
+  #sheetContent, #challengeContent, #eventsContent{ height:100%; min-height:0; }
+  #sheetContent{ overflow:auto; }
+  #challengeContent{ overflow:auto !important; }
+  #eventsContent{ overflow:auto !important; }
+
+  /* Events: allow vertical scroll, keep rows horizontal */
+  #eventsGrid, #eventsContent .events-panel{ overflow:visible !important; height:auto !important; }
+  .eventsRow{ padding-right: 36px; }
+
+  /* Topbar: compact 3-slot layout (☰  LOGO  ⋯) */
+  header.topbar{ position:sticky; top:0; z-index:2001; }
+  header.topbar .center,
+  header.topbar .right{ display:none !important; }
+  header.topbar .left{ width:100%; justify-content:center; position:relative; }
+  header.topbar .title{ display:none !important; }
+  header.topbar .brand{ position:relative; left:auto; transform:none; }
+
+  #sidebarToggleBtn,
+  #mobileActionsBtn{ display:inline-flex !important; }
+  #sidebarToggleBtn{ position:absolute; left: 14px; top:50%; transform:translateY(-50%); }
+  #mobileActionsBtn{ position:absolute; right:14px; top:50%; transform:translateY(-50%); }
+
+  /* Actions menu: fixed + safe-area */
+  #mobileActionsMenu{
+    position:fixed;
+    right: 14px;
+    top: calc(var(--topbarH) + 10px);
+    z-index: 3000;
+  }
+
+  /* Group (Personajes) on mobile: make the whole section scroll, avoid nested scroll locks */
+  body.group-noscroll #groupContent{
+    position:relative !important;
+    inset:auto !important;
+    height: calc(100dvh - var(--topbarH) - var(--bottomNavH) - 24px) !important;
+    overflow:auto !important;
+    -webkit-overflow-scrolling:touch;
+  }
+  body.group-noscroll .group-table-wrap,
+  body.group-noscroll .group-panel{ height:auto !important; min-height:0 !important; }
+  body.group-noscroll .group-leftCard{ max-height:none !important; overflow:visible !important; }
+}
 </style>
 
 <script>
@@ -9989,31 +10100,29 @@ window.__gateShow = show;
   function el(id){return document.getElementById(id);} 
   var mql = window.matchMedia ? window.matchMedia('(orientation: portrait)') : null;
   function apply(){
+    // Mobile layout should depend on viewport width, not only orientation
     var portrait = false;
-    try{ portrait = !!(mql && mql.matches); }catch(e){}
-    document.body.classList.toggle('mobile-portrait', portrait);
+    try{ portrait = !!(mql && mql.matches); }catch(e){ portrait = (window.innerHeight > window.innerWidth); }
+    var isMobileWidth = false;
+    try{ isMobileWidth = window.matchMedia('(max-width: 900px)').matches; }catch(e){ isMobileWidth = (window.innerWidth <= 900); }
+    var mobilePortrait = !!(isMobileWidth && portrait);
+    document.body.classList.toggle('mobile-portrait', mobilePortrait);
+
     // Sync CSS vars for header / bottom nav sizing
     try{
       var topbar = document.querySelector('header.topbar');
-      if(topbar){
-        var h = Math.round(topbar.getBoundingClientRect().height || topbar.offsetHeight || 0);
-        if(h) document.documentElement.style.setProperty('--topbarH', h+'px');
-      }
-      var bn = document.getElementById('bottomNav');
-      if(bn){
-        var bh = Math.round(bn.getBoundingClientRect().height || bn.offsetHeight || 0) || 64;
-        document.documentElement.style.setProperty('--bottomNavH', bh+'px');
-      }
+      if(topbar){ document.documentElement.style.setProperty('--topbar-h', topbar.getBoundingClientRect().height + 'px'); }
+      var bnav = document.querySelector('.bottomNav');
+      if(bnav){ document.documentElement.style.setProperty('--bottomnav-h', bnav.getBoundingClientRect().height + 'px'); }
     }catch(e){}
 
-    if(!portrait){
-      document.body.classList.remove('sidebar-open');
-    }
-
+    // Also keep a stable viewport height var for iOS (address bar changes)
+    try{
+      var vv = window.visualViewport;
+      var h = vv ? vv.height : window.innerHeight;
+      document.documentElement.style.setProperty('--app-vh', h + 'px');
+    }catch(e){}
   }
-  if(mql && mql.addEventListener){ mql.addEventListener('change', apply); }
-  else if(mql && mql.addListener){ mql.addListener(apply); }
-  window.addEventListener('resize', apply);
   apply();
 
   // Drawer toggle
