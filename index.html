@@ -3169,7 +3169,7 @@ body.mobile-portrait #bottomNav{
 }
 
 
-/* === Mobile iOS scroll stability (V.00.05.60) === */
+/* === Mobile iOS scroll stability (V.00.05.61) === */
 @media (max-width: 900px){
   html, body{ height:auto !important; overflow:auto !important; }
   main.layout{ height:auto !important; min-height: 100dvh !important; overflow: visible !important; }
@@ -3179,6 +3179,69 @@ body.mobile-portrait #bottomNav{
 /* Allow scrolling in Desafíos y Eventos when content exceeds panel */
 #challengeContent{ overflow:auto; -webkit-overflow-scrolling: touch; }
 #eventsContent{ overflow:auto; -webkit-overflow-scrolling: touch; }
+
+
+
+/* =========================
+   Mobile Header Fix (V.00.05.61)
+   - Show ☰ and ⋯ on iPhone
+   - Prevent desktop header shift
+========================= */
+@media (max-width: 900px){
+  /* ensure mobile buttons show */
+  .mobile-only{ display:inline-flex !important; }
+  /* hide desktop-only controls if any */
+  .desktop-only{ display:none !important; }
+  /* hide center tabs (bottom nav handles navigation) */
+  header.topbar .center{ display:none !important; }
+  header.topbar{
+    position: sticky;
+    top: 0;
+    z-index: 9000;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    padding-bottom: 10px;
+    min-height: 64px;
+  }
+  /* center brand */
+  header.topbar .brand{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    margin:0 !important;
+  }
+  header.topbar .brandtext{ display:none !important; }
+  header.topbar .right{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  /* left / right buttons */
+  #sidebarToggleBtn{
+    position:relative !important;
+    left:auto !important;
+    top:auto !important;
+    transform:none !important;
+  }
+  #mobileActionsBtn{
+    position:relative !important;
+  }
+  /* actions menu as fixed popover so it won't be clipped */
+  #mobileActionsMenu{
+    position:fixed !important;
+    right: 12px !important;
+    top: calc(env(safe-area-inset-top) + 72px) !important;
+    z-index: 99999 !important;
+  }
+  /* allow tapping outside menus to work */
+  #sidebarBackdrop{ z-index: 90000 !important; }
+}
+@media (min-width: 901px){
+  /* never show mobile controls on desktop */
+  .mobile-only{ display:none !important; }
+  #mobileActionsMenu{ display:none !important; }
+}
 
 </style>
 
