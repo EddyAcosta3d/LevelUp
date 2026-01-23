@@ -2728,6 +2728,111 @@ body.group-noscroll main.layout{ visibility:hidden; pointer-events:none; }
   .events-wrap{ overflow:auto !important; }
 }
 
+
+/* ============================
+   MOBILE FIX PACK (iOS Safari)
+   ============================ */
+
+/* Backdrop for sidebar (was missing styles -> couldn't close) */
+#sidebarBackdrop{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.42);
+  backdrop-filter: blur(2px);
+  z-index:1998;
+}
+body.sidebar-open #sidebarBackdrop{ display:block !important; }
+
+/* Ensure mobile-only controls are hidden on desktop */
+.mobile-only{ display:none !important; }
+.desktop-only{ display:flex !important; }
+
+/* Mobile layout + scroll (single scroll area per tab) */
+@media (max-width: 820px){
+  /* swap visibility */
+  .mobile-only{ display:flex !important; }
+  .desktop-only{ display:none !important; }
+
+  html, body{
+    height:100%;
+    overflow:hidden; /* avoid body scroll fights on iOS; each tab scrolls internally */
+  }
+
+  body{
+    padding:12px;
+    padding-bottom: calc(12px + var(--bottomNavH));
+  }
+
+  header.topbar{
+    position:sticky;
+    top:0;
+    z-index:2001;
+  }
+
+  /* Keep main app area within viewport */
+  main.layout{
+    flex:1 1 auto;
+    min-height:0;
+    height:auto;
+    overflow:hidden;
+  }
+
+  /* Right side becomes the scroll host for each tab */
+  #rightContent{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* Each top-level view takes the available space */
+  #rightContent > div{
+    flex:1 1 auto;
+    min-height:0;
+  }
+
+  /* Make the active view scrollable (others are display:none already) */
+  #sheetContent,
+  #challengeContent,
+  #eventsContent,
+  #groupContent{
+    
+    overflow:auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Mobile actions menu: use fixed positioning so it doesn't get clipped */
+  #mobileActionsMenu{
+    position:fixed;
+    right: 14px;
+    top: calc(env(safe-area-inset-top) + 76px);
+    z-index: 3000;
+  }
+
+  /* Sidebar becomes off-canvas with its own scroll */
+  aside.panel{
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    height:100dvh;
+    z-index:2002;
+    overflow:auto;
+    -webkit-overflow-scrolling: touch;
+    transform: translateX(-110%);
+  }
+  body.sidebar-open aside.panel{ transform: translateX(0); }
+
+  /* prevent the header strip from looking huge */
+  header.topbar .header{
+    padding:10px 12px;
+  }
+}
+
 </style>
 
 <script>
@@ -10468,6 +10573,84 @@ unlocked = true;
     }
   }catch(e){}
 })();
+
+/* ============================
+   MOBILE MENU RELIABILITY FIX
+   ============================ */
+(function(){
+  function el(id){ return document.getElementById(id); }
+  const backdrop = el('sidebarBackdrop');
+  const sidebarBtn = el('sidebarToggleBtn');
+  const actionsBtn = el('mobileActionsBtn');
+  const actionsMenu = el('mobileActionsMenu');
+
+  function closeSidebar(){
+    document.body.classList.remove('sidebar-open');
+  }
+  function closeActions(){
+    if(actionsMenu) actionsMenu.classList.remove('open');
+  }
+  function toggleActions(){
+    if(!actionsMenu) return;
+    actionsMenu.classList.toggle('open');
+  }
+
+  if(backdrop){
+    backdrop.addEventListener('click', closeSidebar, {passive:true});
+    backdrop.addEventListener('touchstart', closeSidebar, {passive:true});
+  }
+
+  if(sidebarBtn){
+    sidebarBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      document.body.classList.toggle('sidebar-open');
+      // also close actions if open
+      closeActions();
+    }, {passive:false});
+  }
+
+  if(actionsBtn){
+    actionsBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      toggleActions();
+      // close sidebar if open
+      closeSidebar();
+    }, {passive:false});
+  }
+
+  // close popovers on any outside tap/click
+  document.addEventListener('click', function(e){
+    const t = e.target;
+    if(actionsMenu && actionsMenu.classList.contains('open')){
+      if(!actionsMenu.contains(t) && t !== actionsBtn) closeActions();
+    }
+    // close sidebar if click happens outside the panel
+    if(document.body.classList.contains('sidebar-open')){
+      const panel = document.querySelector('aside.panel');
+      if(panel && !panel.contains(t) && t !== sidebarBtn) closeSidebar();
+    }
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ closeActions(); closeSidebar(); }
+  });
+
+  // If user taps a nav button inside the sidebar, close it after navigation.
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a,button');
+    if(!a) return;
+    // close sidebar when using in-app navigation buttons (tabs)
+    if(document.body.classList.contains('sidebar-open')){
+      const panel = document.querySelector('aside.panel');
+      if(panel && panel.contains(a)) closeSidebar();
+    }
+    // close actions when selecting an option
+    if(actionsMenu && actionsMenu.classList.contains('open') && actionsMenu.contains(a)) closeActions();
+  }, true);
+})();
+
 </script>
 
 </html>
