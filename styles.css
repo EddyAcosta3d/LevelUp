@@ -565,3 +565,48 @@ body{
   .shell{ grid-template-columns: 340px minmax(0, 1fr); grid-template-areas: "sidebar content"; }
   .shell.is-details-open{ grid-template-columns: 340px minmax(0, 1fr) 380px; }
 }
+
+/* =========================
+   v17 – Ajustes compactos
+   ========================= */
+
+/* Ocultar barras de scroll (sin desactivar scroll) */
+body, .pages, .list{
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;    /* Firefox */
+}
+body::-webkit-scrollbar,
+.pages::-webkit-scrollbar,
+.list::-webkit-scrollbar{
+  width: 0;
+  height: 0;
+}
+
+/* Botón de eliminar como icono en la tarjeta de foto */
+.card--avatar{ position: relative; }
+.iconBtn{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid rgba(240, 104, 104, 0.55);
+  background: rgba(22, 22, 22, 0.55);
+  color: rgba(255,255,255,0.9);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  cursor: pointer;
+}
+.iconBtn:hover{ background: rgba(26, 26, 26, 0.72); }
+.iconBtn:active{ transform: translateY(1px); }
+
+/* Botones 2D/3D más compactos */
+.segBtn{ padding: 9px 12px; font-size: 13px; }
+
+/* Evitar que los valores de stats se salgan del contenedor */
+.stats{ overflow: hidden; }
+.stat{ min-width: 0; max-width: 100%; }
+.stat__track{ min-width: 0; }
+.segmented{ height: 40px; }

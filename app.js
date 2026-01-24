@@ -52,11 +52,13 @@
   function setActiveRoute(route){
     state.route = route;
     $$('.page').forEach(p => p.classList.toggle('is-active', p.dataset.page === route));
-    $$('.topnav .pill').forEach(b => b.classList.toggle('is-active', b.dataset.route === route));
+    $$('.pill[data-route]').forEach(b => b.classList.toggle('is-active', b.dataset.route === route));
     $$('#bottomNav .bottomNav__btn').forEach(b => b.classList.toggle('is-active', b.dataset.route === route));
-    const titleMap = { fichas:'FICHAS', desafios:'DESAFÍOS', eventos:'EVENTOS', personajes:'PERSONAJES' };
-    $('#pageTitle').textContent = titleMap[route] || route.toUpperCase();
-    $('#dbgRoute').textContent = route;
+    const titleMap = { fichas:'FICHAS', desafios:'DESAFÍOS', eventos:'EVENTOS', personajes:'PERSONAJES', recompensas:'RECOMPENSAS' };
+    const titleEl = $('#pageTitle');
+    if (titleEl) titleEl.textContent = titleMap[route] || route.toUpperCase();
+    const dbgRoute = $('#dbgRoute');
+    if (dbgRoute) dbgRoute.textContent = route;
   }
 
   // Drawer
@@ -347,8 +349,10 @@
 
     $('#txtDesc').value = hero.desc || '';
     $('#txtMeta').value = hero.goal || '';
-    $('#txtBien').value = hero.goodAt || '';
-    $('#txtMejorar').value = hero.improve || '';
+    const txtBien = $('#txtBien');
+    if (txtBien) txtBien.value = hero.goodAt || '';
+    const txtMejorar = $('#txtMejorar');
+    if (txtMejorar) txtMejorar.value = hero.improve || '';
 
     renderStats(hero);
 
@@ -535,7 +539,8 @@
   }
   // Bind
   function bind(){
-    $$('.topnav .pill').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
+    // Cualquier botón "pill" con data-route (topnav + acciones derecha)
+    $$('.pill[data-route]').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
     $$('#bottomNav .bottomNav__btn').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
 
     $('#btnMenu').addEventListener('click', ()=>{

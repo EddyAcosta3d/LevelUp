@@ -46,7 +46,8 @@
       </nav>
 
       <div class="topbar__right">
-        <button class="pill pill--ghost" id="btnPresentacion">❤ Presentación</button>
+        <!-- Reemplaza "Presentación" por acceso directo a Recompensas (pantalla separada por ahora) -->
+        <button class="pill pill--ghost" id="btnRecompensas" data-route="recompensas">🏆 Recompensas</button>
         <button class="pill pill--ghost" id="btnDebugPanel" aria-pressed="false">🧪 Estado</button>
 
         <div class="dropdown">
@@ -82,23 +83,11 @@
       </aside>
 
       <section class="content" id="content" aria-label="Contenido principal">
-        <div class="contentHeader">
-          <div class="contentHeader__left">
-            <h1 class="h1" id="pageTitle">FICHAS</h1>
-            <div class="tabs" role="tablist" aria-label="Pestañas de fichas">
-              <button class="tab is-active" data-subtab="ficha">Ficha</button>
-              <button class="tab" data-subtab="recompensas">Recompensas</button>
-            </div>
-          </div>
-          <div class="contentHeader__right">
-            <button class="pill pill--danger pill--small" id="btnEliminar">🗑 Eliminar</button>
-          </div>
-        </div>
-
         <div class="pages">
           <article class="page is-active" data-page="fichas">
             <div class="cardGrid">
-              <div class="card card--center">
+              <div class="card card--center card--avatar">
+                <button class="iconBtn iconBtn--danger" id="btnEliminar" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
                 <div class="avatar">
                   <div class="avatar__frame">
                     <div class="avatar__placeholder" id="avatarPlaceholder">Sin foto</div>
@@ -171,17 +160,20 @@
                     </div>
                   </div>
 
-                  <div class="twoCols">
-                    <div class="subCard">
-                      <div class="subCard__title">Cosas que ya hago bien</div>
-                      <textarea class="textarea textarea--small" id="txtBien"></textarea>
-                    </div>
-                    <div class="subCard">
-                      <div class="subCard__title">Cosas que quiero mejorar</div>
-                      <textarea class="textarea textarea--small" id="txtMejorar"></textarea>
-                    </div>
-                  </div>
+
                 </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="page" data-page="recompensas">
+            <div class="pageIntro">
+              <h2 class="h2">Recompensas</h2>
+              <p class="muted">Esta sección la vamos a reubicar y diseñar después. Por ahora queda como acceso directo desde el header.</p>
+            </div>
+            <div class="cardGrid">
+              <div class="card">
+                <div class="muted">(Placeholder) Aquí irán las recompensas, tienda, títulos, etc.</div>
               </div>
             </div>
           </article>
