@@ -4,15 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <title>LevelUp — Skeleton</title>
+  <title>LevelUp — Hybrid Skeleton</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <!--
-    LevelUp Skeleton (Fase 1)
-    - Responsive: desktop (3 columnas), tablet (2 columnas), móvil (1 columna + bottom nav)
-    - Sin datos reales: solo placeholders para validar layout
-    - Sin PIN (por ahora). El estado "role" ya existe para agregar PIN luego sin rework.
+    LevelUp Hybrid Skeleton (Base responsive + datos híbridos)
+    - Desktop / iPad / iPhone
+    - Híbrido de datos:
+        1) Intenta cargar ./data/data.json (GitHub Pages) si hay internet
+        2) Si falla, usa la última copia guardada en localStorage
+        3) Siempre puedes importar JSON manual (ideal para iPad offline) y se guarda localmente
+    - Sin PIN por ahora (se agrega después sin reestructurar)
   -->
 
   <div class="app" id="app">
@@ -22,7 +25,6 @@
 
         <div class="brand" aria-label="LevelUp">
           <div class="brand__logo" aria-hidden="true">
-            <!-- Placeholder logo -->
             <svg viewBox="0 0 64 64" width="34" height="34" role="img" aria-label="LU">
               <path d="M32 4l25 14v28L32 60 7 46V18L32 4z" fill="rgba(255,215,120,.12)" stroke="rgba(255,215,120,.55)" stroke-width="2"/>
               <path d="M22 22h20v6H28v14h-6V22zm14 0h6v26h-6V22z" fill="rgba(255,255,255,.85)"/>
@@ -49,10 +51,11 @@
         <div class="dropdown">
           <button class="pill pill--ghost" id="btnDatos" aria-haspopup="menu" aria-expanded="false">💾 Datos ▾</button>
           <div class="dropdown__menu" role="menu" aria-label="Datos" id="menuDatos">
+            <button class="menuitem" role="menuitem" id="btnReloadRemote">Recargar desde GitHub</button>
             <button class="menuitem" role="menuitem" id="btnImportJson">Importar JSON…</button>
-            <button class="menuitem" role="menuitem" id="btnExportJson">Exportar JSON (demo)</button>
+            <button class="menuitem" role="menuitem" id="btnExportJson">Exportar JSON</button>
             <div class="menudivider"></div>
-            <button class="menuitem" role="menuitem" id="btnResetDemo">Reset demo</button>
+            <button class="menuitem" role="menuitem" id="btnResetLocal">Borrar copia local</button>
           </div>
         </div>
 
@@ -61,95 +64,62 @@
     </header>
 
     <main class="shell" id="shell">
-      <!-- Drawer overlay (móvil/tablet) -->
       <div class="overlay" id="overlay" hidden></div>
 
-      <!-- Sidebar -->
       <aside class="sidebar" id="sidebar" aria-label="Panel de personajes">
         <div class="panelHeader">
           <div class="panelHeader__title">PERSONAJES</div>
-          <button class="pill pill--small">+ Nuevo</button>
+          <button class="pill pill--small" id="btnNuevoHeroe">+ Nuevo</button>
         </div>
 
         <div class="segmented" role="tablist" aria-label="Grupos">
-          <button class="segmented__btn is-active" role="tab" aria-selected="true">2D</button>
-          <button class="segmented__btn" role="tab" aria-selected="false">3D</button>
+          <button class="segmented__btn is-active" role="tab" aria-selected="true" data-group="2D">2D</button>
+          <button class="segmented__btn" role="tab" aria-selected="false" data-group="3D">3D</button>
         </div>
 
-        <div class="list" id="heroList">
-          <button class="heroCard is-active">
-            <div class="heroCard__name">Eddy</div>
-            <div class="heroCard__meta">Analista · Nivel 3</div>
-            <div class="heroCard__xp">XP 28/100</div>
-          </button>
-          <button class="heroCard">
-            <div class="heroCard__name">Test</div>
-            <div class="heroCard__meta">Mentor · Nivel 2</div>
-            <div class="heroCard__xp">XP 25/100</div>
-          </button>
-          <button class="heroCard">
-            <div class="heroCard__name">Nuevo héroe</div>
-            <div class="heroCard__meta">Sin rol · Nivel 1</div>
-            <div class="heroCard__xp">XP 0/100</div>
-          </button>
-          <button class="heroCard">
-            <div class="heroCard__name">Nuevo héroe</div>
-            <div class="heroCard__meta">Sin rol · Nivel 1</div>
-            <div class="heroCard__xp">XP 0/100</div>
-          </button>
-          <button class="heroCard">
-            <div class="heroCard__name">Nuevo héroe</div>
-            <div class="heroCard__meta">Sin rol · Nivel 1</div>
-            <div class="heroCard__xp">XP 0/100</div>
-          </button>
-        </div>
+        <div class="list" id="heroList"></div>
       </aside>
 
-      <!-- Content -->
       <section class="content" id="content" aria-label="Contenido principal">
         <div class="contentHeader">
           <div class="contentHeader__left">
             <h1 class="h1" id="pageTitle">FICHAS</h1>
-
             <div class="tabs" role="tablist" aria-label="Pestañas de fichas">
               <button class="tab is-active" data-subtab="ficha">Ficha</button>
               <button class="tab" data-subtab="roles">Roles</button>
               <button class="tab" data-subtab="recompensas">Recompensas</button>
             </div>
           </div>
-
           <div class="contentHeader__right">
-            <button class="pill pill--danger">🗑 Eliminar</button>
+            <button class="pill pill--danger" id="btnEliminar">🗑 Eliminar</button>
           </div>
         </div>
 
-        <!-- Pages -->
         <div class="pages">
-          <!-- FICHAS -->
           <article class="page is-active" data-page="fichas">
             <div class="cardGrid">
               <div class="card card--center">
                 <div class="avatar">
                   <div class="avatar__frame">
-                    <div class="avatar__placeholder">Sin foto</div>
+                    <div class="avatar__placeholder" id="avatarPlaceholder">Sin foto</div>
                   </div>
                   <div class="avatar__actions">
-                    <button class="pill pill--small">📷 Poner foto</button>
-                    <button class="pill pill--small pill--ghost">✎ Editar foto</button>
+                    <button class="pill pill--small" id="btnPonerFoto">📷 Poner foto</button>
+                    <button class="pill pill--small pill--ghost" id="btnEditarFoto">✎ Editar foto</button>
                   </div>
-                  <button class="pill pill--small pill--ghost">Quitar foto</button>
+                  <button class="pill pill--small pill--ghost" id="btnQuitarFoto">Quitar foto</button>
                 </div>
 
-                <div class="heroName">NUEVO HÉROE</div>
+                <div class="heroName" id="heroName">NUEVO HÉROE</div>
 
                 <div class="formCard">
                   <label class="label">Descripción rápida</label>
-                  <textarea class="textarea" placeholder="¿Cómo es? ¿Qué le gusta? ¿En qué es bueno?"></textarea>
+                  <textarea class="textarea" id="txtDesc" placeholder="¿Cómo es? ¿Qué le gusta? ¿En qué es bueno?"></textarea>
 
                   <div class="spacer"></div>
 
                   <label class="label">Meta principal del trimestre</label>
-                  <textarea class="textarea" placeholder="Ej. mejorar tareas, participar más, subir nivel en lectura..."></textarea>
+                  <textarea class="textarea" id="txtMeta" placeholder="Ej. mejorar tareas, participar más, subir nivel en lectura..."></textarea>
                 </div>
               </div>
 
@@ -157,87 +127,56 @@
                 <div class="fields3">
                   <div class="field">
                     <div class="labelSmall">Nombre del héroe</div>
-                    <input class="input" value="Nuevo héroe" />
+                    <input class="input" id="inNombre" value="Nuevo héroe" />
                   </div>
                   <div class="field field--small">
                     <div class="labelSmall">Edad</div>
-                    <input class="input" value="13" />
+                    <input class="input" id="inEdad" value="13" />
                   </div>
                   <div class="field">
                     <div class="labelSmall">Clase / rol</div>
-                    <input class="input" value='Toca "Roles" y elige uno' />
+                    <input class="input" id="inRol" value='Toca "Roles" y elige uno' />
                   </div>
                 </div>
 
-                <div class="stats">
-                  <div class="stat">
-                    <div class="badge">INT</div>
-                    <div class="stat__label">Inteligencia</div>
-                    <div class="stat__track"><div class="stat__dot" style="left:35%"></div></div>
-                    <div class="stat__val">6</div>
-                  </div>
-                  <div class="stat">
-                    <div class="badge">SAB</div>
-                    <div class="stat__label">Lectura</div>
-                    <div class="stat__track"><div class="stat__dot" style="left:60%"></div></div>
-                    <div class="stat__val">10</div>
-                  </div>
-                  <div class="stat">
-                    <div class="badge">CAR</div>
-                    <div class="stat__label">Carisma</div>
-                    <div class="stat__track"><div class="stat__dot" style="left:55%"></div></div>
-                    <div class="stat__val">10</div>
-                  </div>
-                  <div class="stat">
-                    <div class="badge">CON</div>
-                    <div class="stat__label">Responsabilidad</div>
-                    <div class="stat__track"><div class="stat__dot" style="left:55%"></div></div>
-                    <div class="stat__val">10</div>
-                  </div>
-                  <div class="stat stat--wide">
-                    <div class="badge">CRE</div>
-                    <div class="stat__label">Creatividad</div>
-                    <div class="stat__track"><div class="stat__dot" style="left:55%"></div></div>
-                    <div class="stat__val">10</div>
-                  </div>
-                </div>
+                <div class="stats" id="statsBox"></div>
 
                 <div class="xpCard">
                   <div class="xpHeader">
-                    <div class="xpLevel">Lvl 2</div>
-                    <div class="xpText">· XP 18/100</div>
+                    <div class="xpLevel" id="xpLevel">Lvl 1</div>
+                    <div class="xpText" id="xpText">· XP 0/100</div>
                     <div class="xpBtns">
-                      <button class="pill pill--small pill--ghost">-5 XP</button>
-                      <button class="pill pill--small pill--ghost">-1 XP</button>
-                      <button class="pill pill--small pill--ghost">+1 XP</button>
-                      <button class="pill pill--small pill--ghost">+5 XP</button>
+                      <button class="pill pill--small pill--ghost" id="btnXpM5">-5 XP</button>
+                      <button class="pill pill--small pill--ghost" id="btnXpM1">-1 XP</button>
+                      <button class="pill pill--small pill--ghost" id="btnXpP1">+1 XP</button>
+                      <button class="pill pill--small pill--ghost" id="btnXpP5">+5 XP</button>
                     </div>
                   </div>
-                  <div class="xpBar"><div class="xpFill" style="width:18%"></div></div>
+                  <div class="xpBar"><div class="xpFill" id="xpFill" style="width:0%"></div></div>
 
                   <div class="xpFooter">
                     <div class="subCard">
                       <div class="subCard__title">Actividades pequeñas</div>
                       <div class="chipRow">
-                        <button class="pill pill--small">+2 Participación</button>
-                        <button class="pill pill--small">+5 Trabajos</button>
-                        <button class="pill pill--small">+10 Tareas</button>
+                        <button class="pill pill--small" data-xp="2">+2 Participación</button>
+                        <button class="pill pill--small" data-xp="5">+5 Trabajos</button>
+                        <button class="pill pill--small" data-xp="10">+10 Tareas</button>
                       </div>
                     </div>
                     <div class="subCard">
                       <div class="subCard__title">Esta semana:</div>
-                      <div class="subCard__val">0/40 XP</div>
+                      <div class="subCard__val" id="weekXp">0/40 XP</div>
                     </div>
                   </div>
 
                   <div class="twoCols">
                     <div class="subCard">
                       <div class="subCard__title">Cosas que ya hago bien</div>
-                      <textarea class="textarea textarea--small"></textarea>
+                      <textarea class="textarea textarea--small" id="txtBien"></textarea>
                     </div>
                     <div class="subCard">
                       <div class="subCard__title">Cosas que quiero mejorar</div>
-                      <textarea class="textarea textarea--small"></textarea>
+                      <textarea class="textarea textarea--small" id="txtMejorar"></textarea>
                     </div>
                   </div>
                 </div>
@@ -245,127 +184,73 @@
             </div>
           </article>
 
-          <!-- DESAFÍOS -->
           <article class="page" data-page="desafios">
             <div class="pageIntro">
               <h2 class="h2">Desafíos</h2>
               <p class="muted">
-                Aquí solo se ve el <b>nombre</b> del desafío.
-                En modo alumno (viewer) no se mostrará el contenido.
+                En modo alumno (viewer) solo se muestra el <b>nombre</b>.
+                En modo edición (teacher) se ve el detalle.
               </p>
             </div>
 
             <div class="cards2">
               <div class="card">
-                <div class="cardTitle">Disponibles</div>
-                <div class="challengeList">
-                  <div class="challengeItem">
-                    <div class="challengeName">Desafío 1: Lectura breve</div>
-                    <div class="challengeMeta">Estado: bloqueado</div>
-                  </div>
-                  <div class="challengeItem">
-                    <div class="challengeName">Desafío 2: Escritura libre</div>
-                    <div class="challengeMeta">Estado: disponible</div>
-                  </div>
-                  <div class="challengeItem">
-                    <div class="challengeName">Desafío 3: Creatividad</div>
-                    <div class="challengeMeta">Estado: completado</div>
-                  </div>
-                </div>
+                <div class="cardTitle">Lista</div>
+                <div class="challengeList" id="challengeList"></div>
               </div>
 
               <div class="card">
-                <div class="cardTitle">Detalle (solo teacher)</div>
-                <div class="muted">Este panel quedará vacío para alumnos.</div>
-                <div class="ghostBox">Contenido del desafío (placeholder)</div>
-                <div class="ghostBox">Requisitos / Recompensas (placeholder)</div>
+                <div class="cardTitle">Detalle</div>
+                <div class="muted" id="challengeHint">Selecciona un desafío.</div>
+                <div class="ghostBox" id="challengeBody">Contenido del desafío (solo teacher)</div>
               </div>
             </div>
           </article>
 
-          <!-- EVENTOS -->
           <article class="page" data-page="eventos">
             <div class="pageIntro">
               <h2 class="h2">Eventos</h2>
-              <p class="muted">Tarjetas demo. Después las conectamos a JSON y desbloqueos.</p>
+              <p class="muted">Tarjetas (placeholder) listas para desbloqueos.</p>
             </div>
-
-            <div class="gridCards">
-              <div class="tile locked">
-                <div class="tile__img"></div>
-                <div class="tile__name">?????</div>
-                <div class="tile__req">Requisito: Completa 1 desafío</div>
-              </div>
-              <div class="tile locked">
-                <div class="tile__img"></div>
-                <div class="tile__name">?????</div>
-                <div class="tile__req">Requisito: Lvl 2</div>
-              </div>
-              <div class="tile">
-                <div class="tile__img tile__img--unlocked"></div>
-                <div class="tile__name">Evento: Bonus XP</div>
-                <div class="tile__req">Siguiente: Completa 2 desafíos</div>
-              </div>
-              <div class="tile locked">
-                <div class="tile__img"></div>
-                <div class="tile__name">?????</div>
-                <div class="tile__req">Requisito: 40 XP semanal</div>
-              </div>
-            </div>
+            <div class="gridCards" id="eventGrid"></div>
           </article>
 
-          <!-- PERSONAJES -->
           <article class="page" data-page="personajes">
             <div class="pageIntro">
               <h2 class="h2">Personajes</h2>
-              <p class="muted">Vista global (placeholder): lista y filtros.</p>
+              <p class="muted">Vista global (placeholder): lista.</p>
             </div>
 
             <div class="card">
               <div class="cardTitle">Tabla rápida</div>
-              <div class="table">
-                <div class="tr th">
-                  <div>Nombre</div><div>Nivel</div><div>Rol</div><div>XP</div>
-                </div>
-                <div class="tr">
-                  <div>Eddy</div><div>3</div><div>Analista</div><div>28/100</div>
-                </div>
-                <div class="tr">
-                  <div>Test</div><div>2</div><div>Mentor</div><div>25/100</div>
-                </div>
-                <div class="tr">
-                  <div>Nuevo héroe</div><div>1</div><div>—</div><div>0/100</div>
-                </div>
-              </div>
+              <div class="table" id="peopleTable"></div>
             </div>
           </article>
         </div>
       </section>
 
-      <!-- Right panel -->
       <aside class="details" id="details" aria-label="Panel derecho">
-        <div class="card">
-          <div class="cardTitle">Panel derecho</div>
-          <div class="muted">
-            En desktop queda fijo a la derecha.
-            En iPad (tablet) se vuelve “debajo” para que no se desacomode.
-          </div>
-          <div class="ghostBox">Acciones rápidas (placeholder)</div>
-          <div class="ghostBox">Bloqueos / permisos (placeholder)</div>
-        </div>
-
         <div class="card">
           <div class="cardTitle">Estado</div>
           <div class="kv">
             <div class="k">Dispositivo</div><div class="v" id="dbgDevice">—</div>
             <div class="k">Ruta</div><div class="v" id="dbgRoute">fichas</div>
             <div class="k">Rol</div><div class="v" id="dbgRole">viewer</div>
+            <div class="k">Datos</div><div class="v" id="dbgDataSrc">—</div>
+            <div class="k">Update</div><div class="v" id="dbgUpdated">—</div>
           </div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">Notas</div>
+          <div class="muted">
+            Híbrido: GitHub cuando hay internet, localStorage cuando no, e importación manual para iPad offline.
+          </div>
+          <div class="ghostBox">PIN se agrega en fase siguiente</div>
         </div>
       </aside>
     </main>
 
-    <!-- Bottom nav (móvil) -->
     <nav class="bottomNav" id="bottomNav" aria-label="Navegación inferior">
       <button class="bottomNav__btn is-active" data-route="fichas">Fichas</button>
       <button class="bottomNav__btn" data-route="desafios">Desafíos</button>
@@ -373,7 +258,6 @@
       <button class="bottomNav__btn" data-route="personajes">Personajes</button>
     </nav>
 
-    <!-- Hidden file input (Import JSON) -->
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
