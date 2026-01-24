@@ -20,6 +20,7 @@
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
+    isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
   };
@@ -67,6 +68,33 @@
   function isDrawerLayout(){ return window.matchMedia('(max-width: 980px)').matches; }
   function closeDrawer(){ $('#shell').classList.remove('is-drawer-open'); $('#overlay').hidden = true; }
   function openDrawer(){ $('#shell').classList.add('is-drawer-open'); $('#overlay').hidden = false; }
+
+  function isDetailsAvailable(){ return window.matchMedia('(min-width: 1181px)').matches; }
+  function syncDetailsUI(){
+    const shell = $('#shell');
+    const btn = $('#btnDebugPanel');
+    if (!shell || !btn) return;
+
+    const canShow = isDetailsAvailable();
+    if (!canShow){
+      state.isDetailsOpen = false;
+      shell.classList.remove('is-details-open');
+      btn.classList.remove('is-active');
+      btn.setAttribute('aria-pressed','false');
+      btn.hidden = true;
+      return;
+    }
+
+    btn.hidden = false;
+    shell.classList.toggle('is-details-open', state.isDetailsOpen);
+    btn.classList.toggle('is-active', state.isDetailsOpen);
+    btn.setAttribute('aria-pressed', String(state.isDetailsOpen));
+  }
+  function toggleDetails(){
+    if (!isDetailsAvailable()) return;
+    state.isDetailsOpen = !state.isDetailsOpen;
+    syncDetailsUI();
+  }
 
   // Debug
   function updateDeviceDebug(){
@@ -213,10 +241,20 @@
     heroes.forEach(hero => {
       const btn = document.createElement('button');
       btn.className = 'heroCard' + (hero.id === state.selectedHeroId ? ' is-active' : '');
+      const xp = Number(hero.xp ?? 0);
+      const xpMax = Number(hero.xpMax ?? 100);
+      const pct = xpMax > 0 ? Math.max(0, Math.min(100, (xp / xpMax) * 100)) : 0;
       btn.innerHTML = `
-        <div class="heroCard__name">${escapeHtml(hero.name || 'Nuevo héroe')}</div>
-        <div class="heroCard__meta">${escapeHtml(heroLabel(hero))}</div>
-        <div class="heroCard__xp">XP ${(hero.xp ?? 0)}/${(hero.xpMax ?? 100)}</div>
+        <div class="heroCard__row">
+          <div>
+            <div class="heroCard__name">${escapeHtml(hero.name || 'Nuevo héroe')}</div>
+            <div class="heroCard__meta">${escapeHtml(heroLabel(hero))}</div>
+          </div>
+          <div class="heroCard__badge">XP ${xp}/${xpMax}</div>
+        </div>
+        <div class="heroCard__progress">
+          <div class="heroCard__fill" style="width:${pct}%"></div>
+        </div>
       `;
       btn.addEventListener('click', ()=>{
         state.selectedHeroId = hero.id;
@@ -509,6 +547,8 @@
       setRole(state.role === 'viewer' ? 'teacher' : 'viewer');
     });
 
+    $('#btnDebugPanel').addEventListener('click', toggleDetails);
+
     // XP demo
     $('#btnXpM5').addEventListener('click', ()=> bumpHeroXp(-5));
     $('#btnXpM1').addEventListener('click', ()=> bumpHeroXp(-1));
@@ -521,6 +561,7 @@
     window.addEventListener('resize', ()=>{
       updateDeviceDebug();
       if (!isDrawerLayout()) closeDrawer();
+      syncDetailsUI();
     });
 
     document.addEventListener('keydown', (e)=>{
@@ -536,8 +577,10 @@
     setActiveRoute(state.route);
     setActiveSubtab(state.subtab);
     updateDeviceDebug();
+    syncDetailsUI();
     await loadData({forceRemote:false});
     setRole(state.role);
+    syncDetailsUI();
   }
 
   init();
