@@ -566,60 +566,77 @@ body{
 }
 
 
+
 /* =========================
-   PATCH v8 — Layout fixes + cleanup
-   1) Remove internal scroll on desktop (use normal page scroll)
-   2) Compact desktop sizing to reduce need for scroll
-   3) Fix CRE (stat--wide) to NOT stretch full width
-   4) Safety: hide any remaining .tabs
+   PATCH v9 — layout polish + scrollbar hiding + stats grid
    ========================= */
 
-/* Safety: if any sub-tabs remain, keep them hidden */
-.tabs{ display:none !important; }
+/* 1) Hide scrollbars everywhere (keep scrolling) */
+html, body{
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE/Edge legacy */
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar{ width: 0; height: 0; }
 
-/* Fix CRE wide stat: keep same visual width as others */
+.pages, .sidebar__list, .list, .panelList{
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.pages::-webkit-scrollbar,
+.sidebar__list::-webkit-scrollbar,
+.list::-webkit-scrollbar,
+.panelList::-webkit-scrollbar{
+  width: 0; height: 0; display: none;
+}
+
+/* 2) Prevent cards "sticking out" of the main container */
+.shell{ overflow: hidden; }
+.content{ overflow: hidden; }
+.pages{ padding-bottom: 18px; } /* keeps the bottom rounded edge clean */
+
+/* 3) Center the photo block perfectly */
+.avatar{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.avatar__frame{ margin: 0 auto; }
+
+/* 4) Header title + delete button smaller (desktop + tablet) */
+.h1{
+  font-size: 18px;
+  letter-spacing: 3px;
+}
+#btnEliminar{
+  padding: 10px 14px;
+  font-size: 13px;
+  border-radius: 16px;
+}
+
+/* 5) Make hero name ("EDDY") a bit smaller */
+.heroName{
+  font-size: 18px;
+  letter-spacing: 3px;
+}
+
+/* 6) Stats layout: always two columns without any "wide" row */
 .stat--wide{
-  grid-column: 1 / -1;
-  justify-self: center;
-  width: min(520px, 100%);
+  grid-column: auto;   /* disable the full-width behavior */
+  width: auto;
+  justify-self: stretch;
 }
 
-/* Desktop: avoid internal scrollbars in content area */
+/* Keep each slider visually consistent */
+.stat{
+  grid-template-columns: 44px minmax(180px, 1fr) 36px;
+}
+
+/* Extra desktop compactness */
 @media (min-width: 1100px){
-  .shell{ overflow: visible; }
-  .content{ overflow: visible; }
-  .pages{ overflow: visible; padding-right: 0; scrollbar-gutter: auto; }
-
-  /* Reduce vertical bulk (fit-first) */
-  :root{ --gap: 14px; }
-
-  .topbar{ min-height: 66px; padding: 8px 12px; }
-  .content{ padding: 12px; }
-  .panel{ padding: 14px; }
-  .card{ padding: 12px; }
-
-  .avatar__frame{ width: 180px; height: 180px; border-radius: 26px; }
-  .heroName{ font-size: 28px; letter-spacing: 4px; margin: 8px 0 6px; }
-
-  .fields3{ gap: 10px; margin-bottom: 10px; }
-  .stats{ gap: 10px 12px; padding: 10px; }
-
-  .xpBar{ height: 12px; margin: 10px 0 10px 0; }
-  .xpRow{ margin-top: 8px; }
-
-  .xpFooter{ grid-template-columns: 1fr 190px; gap: 10px; margin-bottom: 10px; }
-  .subCard{ padding: 10px; }
-  .subCard__val{ font-size: 22px; }
-
-  .twoCols{ gap: 10px; }
-  .textarea{ min-height: 72px; }
-}
-
-/* Extra-compact for shorter desktops */
-@media (min-width: 1100px) and (max-height: 820px){
-  .avatar__frame{ width: 170px; height: 170px; }
-  .textarea{ min-height: 66px; }
-  .heroName{ font-size: 26px; }
-  .xpFooter{ grid-template-columns: 1fr 180px; }
+  .avatar__frame{ width: 190px; height: 190px; }
+  .h1{ font-size: 17px; letter-spacing: 3px; }
+  #btnEliminar{ padding: 9px 12px; font-size: 12.5px; }
+  .heroName{ font-size: 17px; letter-spacing: 3px; }
 }
 
