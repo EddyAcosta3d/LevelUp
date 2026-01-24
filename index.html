@@ -1,280 +1,199 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="dark" />
-  <title>LevelUp — Hybrid Skeleton</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <!--
-    LevelUp Hybrid Skeleton (Base responsive + datos híbridos)
-    - Desktop / iPad / iPhone
-    - Híbrido de datos:
-        1) Intenta cargar ./data/data.json (GitHub Pages) si hay internet
-        2) Si falla, usa la última copia guardada en localStorage
-        3) Siempre puedes importar JSON manual (ideal para iPad offline) y se guarda localmente
-    - Sin PIN por ahora (se agrega después sin reestructurar)
-  -->
-
-  <div class="app" id="app">
-    <header class="topbar" id="topbar">
-      <div class="topbar__left">
-        <button class="iconbtn topbar__menu" id="btnMenu" aria-label="Abrir menú lateral" title="Menú">☰</button>
-
-        <div class="brand" aria-label="LevelUp">
-          <div class="brand__logo" aria-hidden="true">
-            <svg viewBox="0 0 64 64" width="34" height="34" role="img" aria-label="LU">
-              <path d="M32 4l25 14v28L32 60 7 46V18L32 4z" fill="rgba(255,215,120,.12)" stroke="rgba(255,215,120,.55)" stroke-width="2"/>
-              <path d="M22 22h20v6H28v14h-6V22zm14 0h6v26h-6V22z" fill="rgba(255,255,255,.85)"/>
-            </svg>
-          </div>
-          <div class="brand__text">
-            <div class="brand__title">MISIONES · RETOS · RECOMPENSAS</div>
-            <div class="brand__subtitle" id="brandSubtitle">LevelUp</div>
-          </div>
-        </div>
-      </div>
-
-      <nav class="topnav" aria-label="Navegación principal">
-        <button class="pill is-active" data-route="fichas">Fichas</button>
-        <button class="pill" data-route="desafios">Desafíos</button>
-        <button class="pill" data-route="eventos">Eventos</button>
-        <button class="pill" data-route="personajes">Personajes</button>
-      </nav>
-
-      <div class="topbar__right">
-        <button class="pill pill--ghost" id="btnPresentacion">❤ Presentación</button>
-        <button class="pill pill--ghost" id="btnDebugPanel" aria-pressed="false">🧪 Estado</button>
-
-        <div class="dropdown">
-          <button class="pill pill--ghost" id="btnDatos" aria-haspopup="menu" aria-expanded="false">💾 Datos ▾</button>
-          <div class="dropdown__menu" role="menu" aria-label="Datos" id="menuDatos">
-            <button class="menuitem" role="menuitem" id="btnReloadRemote">Recargar desde GitHub</button>
-            <button class="menuitem" role="menuitem" id="btnImportJson">Importar JSON…</button>
-            <button class="menuitem" role="menuitem" id="btnExportJson">Exportar JSON</button>
-            <div class="menudivider"></div>
-            <button class="menuitem" role="menuitem" id="btnResetLocal">Borrar copia local</button>
-          </div>
-        </div>
-
-        <button class="pill pill--danger" id="btnEdicion">🔒 Edición</button>
-      </div>
-    </header>
-
-    <main class="shell" id="shell">
-      <div class="overlay" id="overlay" hidden></div>
-
-      <aside class="sidebar" id="sidebar" aria-label="Panel de personajes">
-        <div class="panelHeader">
-          <div class="panelHeader__title">PERSONAJES</div>
-          <button class="pill pill--small" id="btnNuevoHeroe">+ Nuevo</button>
-        </div>
-
-        <div class="segmented" role="tablist" aria-label="Grupos">
-          <button class="segmented__btn is-active" role="tab" aria-selected="true" data-group="2D">2D</button>
-          <button class="segmented__btn" role="tab" aria-selected="false" data-group="3D">3D</button>
-        </div>
-
-        <div class="list" id="heroList"></div>
-      </aside>
-
-      <section class="content" id="content" aria-label="Contenido principal">
-        <div class="contentHeader">
-          <div class="contentHeader__left">
-            <h1 class="h1" id="pageTitle">FICHAS</h1>
-            <div class="tabs" role="tablist" aria-label="Pestañas de fichas">
-              <button class="tab is-active" data-subtab="ficha">Ficha</button>
-              <button class="tab" data-subtab="recompensas">Recompensas</button>
-            </div>
-          </div>
-          <div class="contentHeader__right">
-            <button class="pill pill--danger" id="btnEliminar">🗑 Eliminar</button>
-          </div>
-        </div>
-
-        <div class="pages">
-          <article class="page is-active" data-page="fichas">
-            <div class="cardGrid">
-              <div class="card card--center">
-                <div class="avatar">
-                  <div class="avatar__frame">
-                    <div class="avatar__placeholder" id="avatarPlaceholder">Sin foto</div>
-                  </div>
-                  <div class="avatar__actions">
-                    <button class="pill pill--small" id="btnPonerFoto">📷 Poner foto</button>
-                    <button class="pill pill--small pill--ghost" id="btnEditarFoto">✎ Editar foto</button>
-                  </div>
-                  <div class="avatar__actions avatar__actions--secondary">
-                    <button class="pill pill--small pill--ghost" id="btnQuitarFoto">Quitar foto</button>
-                  </div>
-                </div>
-
-                <div class="heroName" id="heroName">NUEVO HÉROE</div>
-
-                <div class="formCard">
-                  <label class="label">Descripción rápida</label>
-                  <textarea class="textarea" id="txtDesc" placeholder="¿Cómo es? ¿Qué le gusta? ¿En qué es bueno?"></textarea>
-
-                  <div class="spacer"></div>
-
-                  <label class="label">Meta principal del trimestre</label>
-                  <textarea class="textarea" id="txtMeta" placeholder="Ej. mejorar tareas, participar más, subir nivel en lectura..."></textarea>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="fields3">
-                  <div class="field">
-                    <div class="labelSmall">Nombre del héroe</div>
-                    <input class="input" id="inNombre" value="Nuevo héroe" />
-                  </div>
-                  <div class="field field--small">
-                    <div class="labelSmall">Edad</div>
-                    <input class="input" id="inEdad" value="13" />
-                  </div>
-                  <div class="field">
-                    <div class="labelSmall">Clase / rol</div>
-                    <input class="input input--select" id="inRol" value='Selecciona un rol' readonly aria-haspopup="dialog" aria-controls="roleModal" />
-                  </div>
-                </div>
-
-                <div class="stats" id="statsBox"></div>
-
-                <div class="xpCard">
-                  <div class="xpHeader">
-                    <div class="xpLevel" id="xpLevel">Lvl 1</div>
-                    <div class="xpText" id="xpText">· XP 0/100</div>
-                    <div class="xpBtns">
-                      <button class="pill pill--small pill--ghost" id="btnXpM5">-5 XP</button>
-                      <button class="pill pill--small pill--ghost" id="btnXpM1">-1 XP</button>
-                      <button class="pill pill--small pill--ghost" id="btnXpP1">+1 XP</button>
-                      <button class="pill pill--small pill--ghost" id="btnXpP5">+5 XP</button>
-                    </div>
-                  </div>
-                  <div class="xpBar"><div class="xpFill" id="xpFill" style="width:0%"></div></div>
-
-                  <div class="xpFooter">
-                    <div class="subCard">
-                      <div class="subCard__title">Actividades pequeñas</div>
-                      <div class="chipRow">
-                        <button class="pill pill--small" data-xp="2">+2 Participación</button>
-                        <button class="pill pill--small" data-xp="5">+5 Trabajos</button>
-                        <button class="pill pill--small" data-xp="10">+10 Tareas</button>
-                      </div>
-                    </div>
-                    <div class="subCard">
-                      <div class="subCard__title">Esta semana:</div>
-                      <div class="subCard__val" id="weekXp">0/40 XP</div>
-                    </div>
-                  </div>
-
-                  <div class="twoCols">
-                    <div class="subCard">
-                      <div class="subCard__title">Cosas que ya hago bien</div>
-                      <textarea class="textarea textarea--small" id="txtBien"></textarea>
-                    </div>
-                    <div class="subCard">
-                      <div class="subCard__title">Cosas que quiero mejorar</div>
-                      <textarea class="textarea textarea--small" id="txtMejorar"></textarea>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="page" data-page="desafios">
-            <div class="pageIntro">
-              <h2 class="h2">Desafíos</h2>
-              <p class="muted">
-                En modo alumno (viewer) solo se muestra el <b>nombre</b>.
-                En modo edición (teacher) se ve el detalle.
-              </p>
-            </div>
-
-            <div class="cards2">
-              <div class="card">
-                <div class="cardTitle">Lista</div>
-                <div class="challengeList" id="challengeList"></div>
-              </div>
-
-              <div class="card">
-                <div class="cardTitle">Detalle</div>
-                <div class="muted" id="challengeHint">Selecciona un desafío.</div>
-                <div class="ghostBox" id="challengeBody">Contenido del desafío (solo teacher)</div>
-              </div>
-            </div>
-          </article>
-
-          <article class="page" data-page="eventos">
-            <div class="pageIntro">
-              <h2 class="h2">Eventos</h2>
-              <p class="muted">Tarjetas (placeholder) listas para desbloqueos.</p>
-            </div>
-            <div class="gridCards" id="eventGrid"></div>
-          </article>
-
-          <article class="page" data-page="personajes">
-            <div class="pageIntro">
-              <h2 class="h2">Personajes</h2>
-              <p class="muted">Vista global (placeholder): lista.</p>
-            </div>
-
-            <div class="card">
-              <div class="cardTitle">Tabla rápida</div>
-              <div class="table" id="peopleTable"></div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <aside class="details" id="details" aria-label="Panel derecho">
-        <div class="card">
-          <div class="cardTitle">Estado</div>
-          <div class="kv">
-            <div class="k">Dispositivo</div><div class="v" id="dbgDevice">—</div>
-            <div class="k">Ruta</div><div class="v" id="dbgRoute">fichas</div>
-            <div class="k">Rol</div><div class="v" id="dbgRole">viewer</div>
-            <div class="k">Datos</div><div class="v" id="dbgDataSrc">—</div>
-            <div class="k">Update</div><div class="v" id="dbgUpdated">—</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="cardTitle">Notas</div>
-          <div class="muted">
-            Híbrido: GitHub cuando hay internet, localStorage cuando no, e importación manual para iPad offline.
-          </div>
-          <div class="ghostBox">PIN se agrega en fase siguiente</div>
-        </div>
-      </aside>
-    </main>
-
-    <nav class="bottomNav" id="bottomNav" aria-label="Navegación inferior">
-      <button class="bottomNav__btn is-active" data-route="fichas">Fichas</button>
-      <button class="bottomNav__btn" data-route="desafios">Desafíos</button>
-      <button class="bottomNav__btn" data-route="eventos">Eventos</button>
-      <button class="bottomNav__btn" data-route="personajes">Personajes</button>
-    </nav>
-
-    <div class="modal" id="roleModal" hidden>
-      <div class="modal__backdrop" data-close-role-modal></div>
-      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle">
-        <div class="modal__header">
-          <div class="cardTitle" id="roleModalTitle">Selecciona un rol</div>
-          <button class="pill pill--small pill--ghost" id="btnCloseRoleModal" type="button">Cerrar</button>
-        </div>
-        <div class="modal__body">
-          <div class="roleList" id="roleList"></div>
-        </div>
-      </div>
-    </div>
-
-    <input type="file" id="fileJson" accept="application/json" hidden />
-  </div>
-
-  <script src="app.js"></script>
-</body>
-</html>
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/index.html b/index.html
+index ae88a952000bafe0eaf3d5d200104e077d341326..614e28c259e9bb63f731491d1f2ca3dd08fdbcaa 100644
+--- a/index.html
++++ b/index.html
+@@ -24,140 +24,141 @@
+         <button class="iconbtn topbar__menu" id="btnMenu" aria-label="Abrir menú lateral" title="Menú">☰</button>
+ 
+         <div class="brand" aria-label="LevelUp">
+           <div class="brand__logo" aria-hidden="true">
+             <svg viewBox="0 0 64 64" width="34" height="34" role="img" aria-label="LU">
+               <path d="M32 4l25 14v28L32 60 7 46V18L32 4z" fill="rgba(255,215,120,.12)" stroke="rgba(255,215,120,.55)" stroke-width="2"/>
+               <path d="M22 22h20v6H28v14h-6V22zm14 0h6v26h-6V22z" fill="rgba(255,255,255,.85)"/>
+             </svg>
+           </div>
+           <div class="brand__text">
+             <div class="brand__title">MISIONES · RETOS · RECOMPENSAS</div>
+             <div class="brand__subtitle" id="brandSubtitle">LevelUp</div>
+           </div>
+         </div>
+       </div>
+ 
+       <nav class="topnav" aria-label="Navegación principal">
+         <button class="pill is-active" data-route="fichas">Fichas</button>
+         <button class="pill" data-route="desafios">Desafíos</button>
+         <button class="pill" data-route="eventos">Eventos</button>
+         <button class="pill" data-route="personajes">Personajes</button>
+       </nav>
+ 
+       <div class="topbar__right">
+         <button class="pill pill--ghost" id="btnPresentacion">❤ Presentación</button>
+-        <button class="pill pill--ghost" id="btnTema">🎨 Tema</button>
++        <button class="pill pill--ghost" id="btnDebugPanel" aria-pressed="false">🧪 Estado</button>
+ 
+         <div class="dropdown">
+           <button class="pill pill--ghost" id="btnDatos" aria-haspopup="menu" aria-expanded="false">💾 Datos ▾</button>
+           <div class="dropdown__menu" role="menu" aria-label="Datos" id="menuDatos">
+             <button class="menuitem" role="menuitem" id="btnReloadRemote">Recargar desde GitHub</button>
+             <button class="menuitem" role="menuitem" id="btnImportJson">Importar JSON…</button>
+             <button class="menuitem" role="menuitem" id="btnExportJson">Exportar JSON</button>
+             <div class="menudivider"></div>
+             <button class="menuitem" role="menuitem" id="btnResetLocal">Borrar copia local</button>
+           </div>
+         </div>
+ 
+         <button class="pill pill--danger" id="btnEdicion">🔒 Edición</button>
+       </div>
+     </header>
+ 
+     <main class="shell" id="shell">
+       <div class="overlay" id="overlay" hidden></div>
+ 
+       <aside class="sidebar" id="sidebar" aria-label="Panel de personajes">
+         <div class="panelHeader">
+           <div class="panelHeader__title">PERSONAJES</div>
+           <button class="pill pill--small" id="btnNuevoHeroe">+ Nuevo</button>
+         </div>
+ 
+         <div class="segmented" role="tablist" aria-label="Grupos">
+           <button class="segmented__btn is-active" role="tab" aria-selected="true" data-group="2D">2D</button>
+           <button class="segmented__btn" role="tab" aria-selected="false" data-group="3D">3D</button>
+         </div>
+ 
+         <div class="list" id="heroList"></div>
+       </aside>
+ 
+       <section class="content" id="content" aria-label="Contenido principal">
+         <div class="contentHeader">
+           <div class="contentHeader__left">
+             <h1 class="h1" id="pageTitle">FICHAS</h1>
+             <div class="tabs" role="tablist" aria-label="Pestañas de fichas">
+               <button class="tab is-active" data-subtab="ficha">Ficha</button>
+-              <button class="tab" data-subtab="roles">Roles</button>
+               <button class="tab" data-subtab="recompensas">Recompensas</button>
+             </div>
+           </div>
+           <div class="contentHeader__right">
+             <button class="pill pill--danger" id="btnEliminar">🗑 Eliminar</button>
+           </div>
+         </div>
+ 
+         <div class="pages">
+           <article class="page is-active" data-page="fichas">
+             <div class="cardGrid">
+               <div class="card card--center">
+                 <div class="avatar">
+                   <div class="avatar__frame">
+                     <div class="avatar__placeholder" id="avatarPlaceholder">Sin foto</div>
+                   </div>
+                   <div class="avatar__actions">
+                     <button class="pill pill--small" id="btnPonerFoto">📷 Poner foto</button>
+                     <button class="pill pill--small pill--ghost" id="btnEditarFoto">✎ Editar foto</button>
+                   </div>
+-                  <button class="pill pill--small pill--ghost" id="btnQuitarFoto">Quitar foto</button>
++                  <div class="avatar__actions avatar__actions--secondary">
++                    <button class="pill pill--small pill--ghost" id="btnQuitarFoto">Quitar foto</button>
++                  </div>
+                 </div>
+ 
+                 <div class="heroName" id="heroName">NUEVO HÉROE</div>
+ 
+                 <div class="formCard">
+                   <label class="label">Descripción rápida</label>
+                   <textarea class="textarea" id="txtDesc" placeholder="¿Cómo es? ¿Qué le gusta? ¿En qué es bueno?"></textarea>
+ 
+                   <div class="spacer"></div>
+ 
+                   <label class="label">Meta principal del trimestre</label>
+                   <textarea class="textarea" id="txtMeta" placeholder="Ej. mejorar tareas, participar más, subir nivel en lectura..."></textarea>
+                 </div>
+               </div>
+ 
+               <div class="card">
+                 <div class="fields3">
+                   <div class="field">
+                     <div class="labelSmall">Nombre del héroe</div>
+                     <input class="input" id="inNombre" value="Nuevo héroe" />
+                   </div>
+                   <div class="field field--small">
+                     <div class="labelSmall">Edad</div>
+                     <input class="input" id="inEdad" value="13" />
+                   </div>
+                   <div class="field">
+                     <div class="labelSmall">Clase / rol</div>
+-                    <input class="input" id="inRol" value='Toca "Roles" y elige uno' />
++                    <input class="input input--select" id="inRol" value='Selecciona un rol' readonly />
+                   </div>
+                 </div>
+ 
+                 <div class="stats" id="statsBox"></div>
+ 
+                 <div class="xpCard">
+                   <div class="xpHeader">
+                     <div class="xpLevel" id="xpLevel">Lvl 1</div>
+                     <div class="xpText" id="xpText">· XP 0/100</div>
+                     <div class="xpBtns">
+                       <button class="pill pill--small pill--ghost" id="btnXpM5">-5 XP</button>
+                       <button class="pill pill--small pill--ghost" id="btnXpM1">-1 XP</button>
+                       <button class="pill pill--small pill--ghost" id="btnXpP1">+1 XP</button>
+                       <button class="pill pill--small pill--ghost" id="btnXpP5">+5 XP</button>
+                     </div>
+                   </div>
+                   <div class="xpBar"><div class="xpFill" id="xpFill" style="width:0%"></div></div>
+ 
+                   <div class="xpFooter">
+                     <div class="subCard">
+                       <div class="subCard__title">Actividades pequeñas</div>
+                       <div class="chipRow">
+                         <button class="pill pill--small" data-xp="2">+2 Participación</button>
+                         <button class="pill pill--small" data-xp="5">+5 Trabajos</button>
+                         <button class="pill pill--small" data-xp="10">+10 Tareas</button>
+@@ -236,31 +237,44 @@
+             <div class="k">Dispositivo</div><div class="v" id="dbgDevice">—</div>
+             <div class="k">Ruta</div><div class="v" id="dbgRoute">fichas</div>
+             <div class="k">Rol</div><div class="v" id="dbgRole">viewer</div>
+             <div class="k">Datos</div><div class="v" id="dbgDataSrc">—</div>
+             <div class="k">Update</div><div class="v" id="dbgUpdated">—</div>
+           </div>
+         </div>
+ 
+         <div class="card">
+           <div class="cardTitle">Notas</div>
+           <div class="muted">
+             Híbrido: GitHub cuando hay internet, localStorage cuando no, e importación manual para iPad offline.
+           </div>
+           <div class="ghostBox">PIN se agrega en fase siguiente</div>
+         </div>
+       </aside>
+     </main>
+ 
+     <nav class="bottomNav" id="bottomNav" aria-label="Navegación inferior">
+       <button class="bottomNav__btn is-active" data-route="fichas">Fichas</button>
+       <button class="bottomNav__btn" data-route="desafios">Desafíos</button>
+       <button class="bottomNav__btn" data-route="eventos">Eventos</button>
+       <button class="bottomNav__btn" data-route="personajes">Personajes</button>
+     </nav>
+ 
++    <div class="modal" id="roleModal" hidden>
++      <div class="modal__backdrop" data-close-role-modal></div>
++      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle">
++        <div class="modal__header">
++          <div class="cardTitle" id="roleModalTitle">Selecciona un rol</div>
++          <button class="pill pill--small pill--ghost" id="btnCloseRoleModal" type="button">Cerrar</button>
++        </div>
++        <div class="modal__body">
++          <div class="roleList" id="roleList"></div>
++        </div>
++      </div>
++    </div>
++
+     <input type="file" id="fileJson" accept="application/json" hidden />
+   </div>
+ 
+   <script src="app.js"></script>
+ </body>
+ </html>
+ 
+EOF
+)
