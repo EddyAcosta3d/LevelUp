@@ -32,9 +32,9 @@
       meta: { app: 'LevelUp', version: 'hybrid-skeleton-v1', updatedAt: new Date().toISOString() },
       heroes: [
         { id:'h1', group:'2D', name:'Eddy', age:12, role:'Analista', level:3, xp:28, xpMax:100,
-          stats:{ INT:5, SAB:6, CAR:5, RES:7, CRE:8 }, weekXp:40, weekXpMax:40, desc:'', goal:'', goodAt:'', improve:'', rewards:['Racha de tareas', 'Lectura destacada'] },
+          stats:{ INT:5, SAB:6, CAR:5, RES:7, CRE:8 }, weekXp:40, weekXpMax:40, desc:'', goal:'', goodAt:'', improve:'' },
         { id:'h2', group:'2D', name:'Test', age:12, role:'Mentor', level:2, xp:25, xpMax:100,
-          stats:{ INT:4, SAB:4, CAR:4, RES:4, CRE:4 }, weekXp:0, weekXpMax:40, desc:'', goal:'', goodAt:'', improve:'', rewards:[] }
+          stats:{ INT:4, SAB:4, CAR:4, RES:4, CRE:4 }, weekXp:0, weekXpMax:40, desc:'', goal:'', goodAt:'', improve:'' }
       ],
       challenges: [
         { id:'c1', title:'Desafío 1: Lectura breve', status:'locked', body:'(contenido teacher) ...' },
@@ -335,44 +335,6 @@
     modal.hidden = true;
   }
 
-  function openRewardsModal(){
-    const modal = $('#rewardsModal');
-    if (!modal) return;
-    renderRewards();
-    modal.hidden = false;
-  }
-  function closeRewardsModal(){
-    const modal = $('#rewardsModal');
-    if (!modal) return;
-    modal.hidden = true;
-  }
-
-  function renderRewards(){
-    const hero = currentHero();
-    const list = $('#rewardsList');
-    const title = $('#rewardsTitle');
-    if (!list || !title) return;
-
-    const heroName = hero?.name || 'Héroe';
-    title.textContent = `Recompensas · ${heroName}`;
-
-    const rewards = Array.isArray(hero?.rewards)
-      ? hero.rewards
-      : [];
-
-    if (!rewards.length){
-      list.innerHTML = '<div class="muted">Aún no hay recompensas registradas.</div>';
-      return;
-    }
-
-    list.innerHTML = rewards.map(r => `
-      <div class="rewardItem">
-        <div class="rewardItem__icon" aria-hidden="true">🏅</div>
-        <div class="rewardItem__text">${escapeHtml(r)}</div>
-      </div>
-    `).join('');
-  }
-
   function renderHeroDetail(){
     const hero = currentHero();
     if (!hero) return;
@@ -402,7 +364,6 @@
 
     renderRewards();
   }
-
   function renderChallenges(){
     const list = $('#challengeList');
     list.innerHTML = '';
@@ -562,7 +523,6 @@
     URL.revokeObjectURL(a.href);
     toast('Exportado JSON');
   }
-
   // Bind
   function bind(){
     $$('.topnav .pill').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
@@ -624,28 +584,15 @@
 
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 
-    const rolInput = $('#inRol');
-    if (rolInput){
-      rolInput.addEventListener('click', openRoleModal);
-      rolInput.addEventListener('keydown', (e)=>{
-        if (e.key === 'Enter' || e.key === ' '){
-          e.preventDefault();
-          openRoleModal();
-        }
-      });
-    }
+    $('#inRol').addEventListener('click', openRoleModal);
+    $('#inRol').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        openRoleModal();
+      }
+    });
     $('#btnCloseRoleModal').addEventListener('click', closeRoleModal);
     $$('[data-close-role-modal]').forEach(el=> el.addEventListener('click', closeRoleModal));
-
-    const rewardsBtn = $('#btnRewards');
-    if (rewardsBtn){
-      rewardsBtn.addEventListener('click', openRewardsModal);
-    }
-    const rewardsClose = $('#btnCloseRewardsModal');
-    if (rewardsClose){
-      rewardsClose.addEventListener('click', closeRewardsModal);
-    }
-    $$('[data-close-rewards-modal]').forEach(el=> el.addEventListener('click', closeRewardsModal));
 
     // XP demo
     $('#btnXpM5').addEventListener('click', ()=> bumpHeroXp(-5));
@@ -667,7 +614,6 @@
         closeDrawer();
         closeDatos();
         closeRoleModal();
-        closeRewardsModal();
       }
     });
   }
