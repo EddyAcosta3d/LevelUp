@@ -3244,7 +3244,7 @@ body.mobile-portrait #bottomNav{
 }
 
 
-/* ===== LU Mobile fixes V.00.05.63 ===== */
+/* ===== LU Mobile fixes V.00.05.64 ===== */
 .gate-version{
   margin-top: 10px;
   font-size: 12px;
@@ -3340,7 +3340,7 @@ body.lu-mobile-menu-open #mobileMenuOverlay{ display:block; }
 
 
 <style id="lu-hotfix-63">
-/* Hotfix V.00.05.63: mobile header overlay + gate version placement */
+/* Hotfix V.00.05.64: mobile header overlay + gate version placement */
 #mobileMenuOverlay{
   position:fixed; inset:0;
   background:rgba(0,0,0,.45);
@@ -3374,6 +3374,60 @@ body.lu-mobile-menu-open #mobileActionsMenu{ display:block !important; }
 }
 </style>
 
+<style id="lu-mobile-fix-0064">
+:root{--luMobileTopbarH:64px;}
+html,body{height:100%;}
+body{min-height:100dvh;}
+
+/* Gate version pinned to bottom of card */
+.gate-card{position:relative; padding-bottom:52px !important;}
+.gate-version{position:absolute; left:0; right:0; bottom:16px; text-align:center; opacity:.55; font-size:12px; letter-spacing:.14em;}
+
+@media (max-width: 820px){
+  /* Prevent desktop header buttons from wrapping into a 2nd row */
+  header.topbar{height:var(--luMobileTopbarH) !important; padding:10px 12px !important; align-items:center !important;}
+  header.topbar .center{display:none !important;}
+  header.topbar .right{flex-wrap:nowrap !important;}
+
+  /* Hide desktop actions on mobile */
+  #presentationBtn,#themeBtn,#editLockBtn, header.topbar .right .menuWrap{display:none !important;}
+
+  /* Show only the mobile toggles and keep logo centered */
+  header.topbar{position:fixed !important; top:max(0px, env(safe-area-inset-top)) !important; left:0 !important; right:0 !important; transform:none !important; width:auto !important;}
+  header.topbar .left{flex:1 1 auto !important; justify-content:center !important;}
+  header.topbar .left .brand{margin:0 !important;}
+
+  /* Place hamburger at the right, sidebar toggle at the left */
+  #sidebarToggleBtn{display:inline-flex !important; position:absolute !important; left:12px !important; top:50% !important; transform:translateY(-50%) !important;}
+  #mobileMenuBtn{display:inline-flex !important; position:absolute !important; right:12px !important; top:50% !important; transform:translateY(-50%) !important;}
+
+  /* Mobile actions menu: fixed overlay below the topbar */
+  #mobileMenuOverlay{position:fixed !important; inset:0 !important; background:rgba(0,0,0,.45) !important; display:none !important; z-index:10040 !important;}
+  body.lu-mobile-menu-open #mobileMenuOverlay{display:block !important;}
+
+  #mobileActionsMenu{
+    position:fixed !important;
+    top:calc(env(safe-area-inset-top, 0px) + var(--luMobileTopbarH) + 8px) !important;
+    left:12px !important; right:12px !important;
+    display:none !important;
+    z-index:10050 !important;
+    max-height:calc(100dvh - (env(safe-area-inset-top, 0px) + var(--luMobileTopbarH) + env(safe-area-inset-bottom, 0px) + 24px)) !important;
+    overflow:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+  }
+  body.lu-mobile-menu-open #mobileActionsMenu{display:block !important;}
+
+  /* Push page content below the fixed topbar */
+  body{padding-top:calc(env(safe-area-inset-top, 0px) + var(--luMobileTopbarH) + 12px) !important;}
+}
+
+@media (min-width: 821px){
+  /* Never show mobile overlay/menu on desktop */
+  #mobileMenuOverlay{display:none !important;}
+  #mobileActionsMenu{display:none !important;}
+  #mobileMenuBtn{display:none !important;}
+}
+</style>
 </head>
 
 
@@ -10667,11 +10721,11 @@ ${where}`, stack);
 
 
 <script>
-/* ===== LU Mobile Header + Gate Version (V.00.05.63) ===== */
+/* ===== LU Mobile Header + Gate Version (V.00.05.64) ===== */
 (function(){
   // version
   try {
-    var ver = "V.00.05.63";
+    var ver = "V.00.05.64";
     var gv = document.getElementById("gateVersion");
     if (gv) gv.textContent = ver;
     window.LU_APP_VERSION = ver;
@@ -10748,6 +10802,30 @@ ${where}`, stack);
 })();
 </script>
 
+<script id="lu-mobile-fix-0064-js">
+(function(){
+  const body = document.body;
+  const isMobile = () => window.matchMedia && window.matchMedia("(max-width: 820px)").matches;
+  const closeMenu = () => body.classList.remove("lu-mobile-menu-open");
+
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("#bottomNav") || e.target.closest(".tabs") || e.target.closest(".nav-tabs") || e.target.closest(".nav")) {
+      closeMenu();
+    }
+  }, true);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+
+  window.addEventListener("resize", () => {
+    if (!isMobile()) closeMenu();
+  });
+
+  const overlay = document.getElementById("mobileMenuOverlay");
+  if (overlay) overlay.addEventListener("click", closeMenu);
+})();
+</script>
 </body>
 
 <script>
