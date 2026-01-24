@@ -1,525 +1,601 @@
 {
   "meta": {
     "app": "LevelUp",
-    "version": "demo-seed-v12",
-    "updatedAt": "2026-01-24T21:42:15.663264Z"
+    "version": "STABLE_RESET_v14",
+    "updatedAt": "2026-01-24T22:00:51.135673Z"
   },
-  "groups": [
+  "heroes": [
     {
-      "id": "2D",
-      "label": "2D",
-      "heroes": [
-        {
-          "id": "2d-01",
-          "name": "Eddy",
-          "age": 13,
-          "role": "Hechicero",
-          "level": 5,
-          "xp": 89,
-          "xpMax": 100,
-          "weeklyXp": 32,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 2,
-            "car": 1,
-            "cre": 2,
-            "sab": 4,
-            "res": 8
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-02",
-          "name": "Sofi",
-          "age": 14,
-          "role": "Analista",
-          "level": 4,
-          "xp": 78,
-          "xpMax": 100,
-          "weeklyXp": 16,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 10,
-            "car": 3,
-            "cre": 6,
-            "sab": 7,
-            "res": 9
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-03",
-          "name": "Luis",
-          "age": 14,
-          "role": "Analista",
-          "level": 2,
-          "xp": 8,
-          "xpMax": 100,
-          "weeklyXp": 8,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 9,
-            "car": 10,
-            "cre": 9,
-            "sab": 9,
-            "res": 8
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-04",
-          "name": "Ana",
-          "age": 12,
-          "role": "Bardo",
-          "level": 1,
-          "xp": 18,
-          "xpMax": 100,
-          "weeklyXp": 28,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 8,
-            "car": 8,
-            "cre": 9,
-            "sab": 9,
-            "res": 6
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-05",
-          "name": "Diego",
-          "age": 13,
-          "role": "Guerrero",
-          "level": 5,
-          "xp": 78,
-          "xpMax": 100,
-          "weeklyXp": 34,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 1,
-            "car": 6,
-            "cre": 10,
-            "sab": 4,
-            "res": 4
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-06",
-          "name": "Mia",
-          "age": 12,
-          "role": "Explorador",
-          "level": 2,
-          "xp": 17,
-          "xpMax": 100,
-          "weeklyXp": 29,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 4,
-            "car": 9,
-            "cre": 1,
-            "sab": 2,
-            "res": 6
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-07",
-          "name": "Kevin",
-          "age": 14,
-          "role": "Mentor",
-          "level": 3,
-          "xp": 74,
-          "xpMax": 100,
-          "weeklyXp": 19,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 5,
-            "car": 9,
-            "cre": 7,
-            "sab": 2,
-            "res": 4
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-08",
-          "name": "Valeria",
-          "age": 13,
-          "role": "Hechicero",
-          "level": 1,
-          "xp": 17,
-          "xpMax": 100,
-          "weeklyXp": 7,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 2,
-            "car": 1,
-            "cre": 6,
-            "sab": 5,
-            "res": 9
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-09",
-          "name": "Bruno",
-          "age": 14,
-          "role": "Mentor",
-          "level": 1,
-          "xp": 91,
-          "xpMax": 100,
-          "weeklyXp": 15,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 1,
-            "car": 5,
-            "cre": 10,
-            "sab": 8,
-            "res": 10
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-10",
-          "name": "Danna",
-          "age": 14,
-          "role": "Explorador",
-          "level": 3,
-          "xp": 2,
-          "xpMax": 100,
-          "weeklyXp": 12,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 5,
-            "car": 5,
-            "cre": 4,
-            "sab": 1,
-            "res": 5
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-11",
-          "name": "Raul",
-          "age": 14,
-          "role": "Bardo",
-          "level": 4,
-          "xp": 51,
-          "xpMax": 100,
-          "weeklyXp": 30,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 3,
-            "car": 10,
-            "cre": 5,
-            "sab": 10,
-            "res": 10
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "2d-12",
-          "name": "Karla",
-          "age": 13,
-          "role": "Analista",
-          "level": 1,
-          "xp": 41,
-          "xpMax": 100,
-          "weeklyXp": 12,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 1,
-            "car": 9,
-            "cre": 2,
-            "sab": 4,
-            "res": 3
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        }
-      ]
+      "id": "h1",
+      "group": "2D",
+      "name": "Eddy",
+      "age": 12,
+      "role": "Hechicero",
+      "level": 3,
+      "xp": 94,
+      "xpMax": 100,
+      "stats": {
+        "INT": 5,
+        "SAB": 5,
+        "CAR": 2,
+        "RES": 8,
+        "CRE": 5
+      },
+      "weekXp": 29,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
     },
     {
-      "id": "3D",
-      "label": "3D",
-      "heroes": [
-        {
-          "id": "3d-01",
-          "name": "Test",
-          "age": 14,
-          "role": "Bardo",
-          "level": 2,
-          "xp": 55,
-          "xpMax": 100,
-          "weeklyXp": 13,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 4,
-            "car": 3,
-            "cre": 5,
-            "sab": 5,
-            "res": 6
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-02",
-          "name": "Luna",
-          "age": 12,
-          "role": "Bardo",
-          "level": 3,
-          "xp": 51,
-          "xpMax": 100,
-          "weeklyXp": 31,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 10,
-            "car": 10,
-            "cre": 7,
-            "sab": 3,
-            "res": 3
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-03",
-          "name": "Mateo",
-          "age": 14,
-          "role": "Hechicero",
-          "level": 5,
-          "xp": 72,
-          "xpMax": 100,
-          "weeklyXp": 3,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 8,
-            "car": 4,
-            "cre": 2,
-            "sab": 1,
-            "res": 2
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-04",
-          "name": "Sara",
-          "age": 12,
-          "role": "Guerrero",
-          "level": 2,
-          "xp": 0,
-          "xpMax": 100,
-          "weeklyXp": 35,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 5,
-            "car": 8,
-            "cre": 2,
-            "sab": 3,
-            "res": 3
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-05",
-          "name": "Javier",
-          "age": 14,
-          "role": "Mentor",
-          "level": 1,
-          "xp": 94,
-          "xpMax": 100,
-          "weeklyXp": 22,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 4,
-            "car": 7,
-            "cre": 3,
-            "sab": 10,
-            "res": 2
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-06",
-          "name": "Nadia",
-          "age": 12,
-          "role": "Hechicero",
-          "level": 6,
-          "xp": 28,
-          "xpMax": 100,
-          "weeklyXp": 37,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 4,
-            "car": 5,
-            "cre": 5,
-            "sab": 7,
-            "res": 2
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-07",
-          "name": "Hugo",
-          "age": 14,
-          "role": "Bardo",
-          "level": 6,
-          "xp": 97,
-          "xpMax": 100,
-          "weeklyXp": 36,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 10,
-            "car": 1,
-            "cre": 8,
-            "sab": 3,
-            "res": 9
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-08",
-          "name": "Paola",
-          "age": 12,
-          "role": "Hechicero",
-          "level": 2,
-          "xp": 32,
-          "xpMax": 100,
-          "weeklyXp": 25,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 1,
-            "car": 9,
-            "cre": 2,
-            "sab": 5,
-            "res": 1
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-09",
-          "name": "Rene",
-          "age": 12,
-          "role": "Mentor",
-          "level": 6,
-          "xp": 22,
-          "xpMax": 100,
-          "weeklyXp": 27,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 6,
-            "car": 6,
-            "cre": 7,
-            "sab": 4,
-            "res": 9
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-10",
-          "name": "Ivanna",
-          "age": 13,
-          "role": "Hechicero",
-          "level": 3,
-          "xp": 13,
-          "xpMax": 100,
-          "weeklyXp": 24,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 6,
-            "car": 2,
-            "cre": 6,
-            "sab": 5,
-            "res": 5
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-11",
-          "name": "Oscar",
-          "age": 14,
-          "role": "Explorador",
-          "level": 5,
-          "xp": 27,
-          "xpMax": 100,
-          "weeklyXp": 2,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 3,
-            "car": 3,
-            "cre": 10,
-            "sab": 4,
-            "res": 9
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        },
-        {
-          "id": "3d-12",
-          "name": "Ximena",
-          "age": 12,
-          "role": "Bardo",
-          "level": 4,
-          "xp": 45,
-          "xpMax": 100,
-          "weeklyXp": 2,
-          "weeklyXpMax": 40,
-          "stats": {
-            "int": 7,
-            "car": 7,
-            "cre": 9,
-            "sab": 7,
-            "res": 7
-          },
-          "photo": null,
-          "desc": "",
-          "goal": ""
-        }
-      ]
+      "id": "h2",
+      "group": "2D",
+      "name": "Sofi",
+      "age": 14,
+      "role": "Sanador",
+      "level": 4,
+      "xp": 99,
+      "xpMax": 100,
+      "stats": {
+        "INT": 2,
+        "SAB": 5,
+        "CAR": 4,
+        "RES": 6,
+        "CRE": 6
+      },
+      "weekXp": 16,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h3",
+      "group": "2D",
+      "name": "Luis",
+      "age": 13,
+      "role": "Guerrero",
+      "level": 2,
+      "xp": 70,
+      "xpMax": 100,
+      "stats": {
+        "INT": 5,
+        "SAB": 3,
+        "CAR": 1,
+        "RES": 2,
+        "CRE": 2
+      },
+      "weekXp": 38,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h4",
+      "group": "2D",
+      "name": "Ana",
+      "age": 13,
+      "role": "Analista",
+      "level": 1,
+      "xp": 35,
+      "xpMax": 100,
+      "stats": {
+        "INT": 4,
+        "SAB": 7,
+        "CAR": 7,
+        "RES": 10,
+        "CRE": 8
+      },
+      "weekXp": 38,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h5",
+      "group": "2D",
+      "name": "Diego",
+      "age": 12,
+      "role": "Explorador",
+      "level": 5,
+      "xp": 75,
+      "xpMax": 100,
+      "stats": {
+        "INT": 6,
+        "SAB": 3,
+        "CAR": 2,
+        "RES": 8,
+        "CRE": 9
+      },
+      "weekXp": 12,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h6",
+      "group": "2D",
+      "name": "Mia",
+      "age": 13,
+      "role": "Inventor",
+      "level": 5,
+      "xp": 27,
+      "xpMax": 100,
+      "stats": {
+        "INT": 8,
+        "SAB": 5,
+        "CAR": 9,
+        "RES": 5,
+        "CRE": 2
+      },
+      "weekXp": 7,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h7",
+      "group": "2D",
+      "name": "Karla",
+      "age": 12,
+      "role": "Mentor",
+      "level": 3,
+      "xp": 15,
+      "xpMax": 100,
+      "stats": {
+        "INT": 1,
+        "SAB": 3,
+        "CAR": 7,
+        "RES": 2,
+        "CRE": 9
+      },
+      "weekXp": 37,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h8",
+      "group": "2D",
+      "name": "Hugo",
+      "age": 12,
+      "role": "Sanador",
+      "level": 4,
+      "xp": 87,
+      "xpMax": 100,
+      "stats": {
+        "INT": 3,
+        "SAB": 9,
+        "CAR": 7,
+        "RES": 8,
+        "CRE": 5
+      },
+      "weekXp": 31,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h9",
+      "group": "2D",
+      "name": "Valeria",
+      "age": 13,
+      "role": "Sanador",
+      "level": 4,
+      "xp": 76,
+      "xpMax": 100,
+      "stats": {
+        "INT": 2,
+        "SAB": 5,
+        "CAR": 8,
+        "RES": 7,
+        "CRE": 4
+      },
+      "weekXp": 28,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h10",
+      "group": "2D",
+      "name": "Bruno",
+      "age": 14,
+      "role": "Inventor",
+      "level": 1,
+      "xp": 72,
+      "xpMax": 100,
+      "stats": {
+        "INT": 3,
+        "SAB": 8,
+        "CAR": 5,
+        "RES": 10,
+        "CRE": 8
+      },
+      "weekXp": 1,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h11",
+      "group": "2D",
+      "name": "Dany",
+      "age": 14,
+      "role": "Sanador",
+      "level": 4,
+      "xp": 2,
+      "xpMax": 100,
+      "stats": {
+        "INT": 6,
+        "SAB": 10,
+        "CAR": 6,
+        "RES": 8,
+        "CRE": 5
+      },
+      "weekXp": 22,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h12",
+      "group": "2D",
+      "name": "Rafa",
+      "age": 13,
+      "role": "Hechicero",
+      "level": 1,
+      "xp": 80,
+      "xpMax": 100,
+      "stats": {
+        "INT": 9,
+        "SAB": 8,
+        "CAR": 5,
+        "RES": 2,
+        "CRE": 7
+      },
+      "weekXp": 6,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h13",
+      "group": "3D",
+      "name": "Alex",
+      "age": 12,
+      "role": "Hechicero",
+      "level": 3,
+      "xp": 3,
+      "xpMax": 100,
+      "stats": {
+        "INT": 1,
+        "SAB": 10,
+        "CAR": 9,
+        "RES": 5,
+        "CRE": 9
+      },
+      "weekXp": 22,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h14",
+      "group": "3D",
+      "name": "Nico",
+      "age": 13,
+      "role": "Explorador",
+      "level": 1,
+      "xp": 18,
+      "xpMax": 100,
+      "stats": {
+        "INT": 4,
+        "SAB": 1,
+        "CAR": 4,
+        "RES": 5,
+        "CRE": 9
+      },
+      "weekXp": 16,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h15",
+      "group": "3D",
+      "name": "Paola",
+      "age": 12,
+      "role": "Hechicero",
+      "level": 2,
+      "xp": 77,
+      "xpMax": 100,
+      "stats": {
+        "INT": 6,
+        "SAB": 5,
+        "CAR": 6,
+        "RES": 1,
+        "CRE": 9
+      },
+      "weekXp": 38,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h16",
+      "group": "3D",
+      "name": "Iván",
+      "age": 14,
+      "role": "Guerrero",
+      "level": 5,
+      "xp": 82,
+      "xpMax": 100,
+      "stats": {
+        "INT": 4,
+        "SAB": 6,
+        "CAR": 8,
+        "RES": 7,
+        "CRE": 4
+      },
+      "weekXp": 24,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h17",
+      "group": "3D",
+      "name": "Luna",
+      "age": 14,
+      "role": "Estratega",
+      "level": 4,
+      "xp": 78,
+      "xpMax": 100,
+      "stats": {
+        "INT": 1,
+        "SAB": 4,
+        "CAR": 7,
+        "RES": 8,
+        "CRE": 6
+      },
+      "weekXp": 5,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h18",
+      "group": "3D",
+      "name": "Santi",
+      "age": 13,
+      "role": "Explorador",
+      "level": 2,
+      "xp": 25,
+      "xpMax": 100,
+      "stats": {
+        "INT": 1,
+        "SAB": 3,
+        "CAR": 4,
+        "RES": 5,
+        "CRE": 8
+      },
+      "weekXp": 28,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h19",
+      "group": "3D",
+      "name": "Fer",
+      "age": 12,
+      "role": "Sanador",
+      "level": 1,
+      "xp": 13,
+      "xpMax": 100,
+      "stats": {
+        "INT": 5,
+        "SAB": 6,
+        "CAR": 9,
+        "RES": 7,
+        "CRE": 7
+      },
+      "weekXp": 8,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h20",
+      "group": "3D",
+      "name": "Gio",
+      "age": 13,
+      "role": "Hechicero",
+      "level": 1,
+      "xp": 18,
+      "xpMax": 100,
+      "stats": {
+        "INT": 3,
+        "SAB": 3,
+        "CAR": 1,
+        "RES": 4,
+        "CRE": 6
+      },
+      "weekXp": 38,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h21",
+      "group": "3D",
+      "name": "Mauro",
+      "age": 14,
+      "role": "Analista",
+      "level": 5,
+      "xp": 52,
+      "xpMax": 100,
+      "stats": {
+        "INT": 8,
+        "SAB": 5,
+        "CAR": 8,
+        "RES": 6,
+        "CRE": 2
+      },
+      "weekXp": 23,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h22",
+      "group": "3D",
+      "name": "Sara",
+      "age": 12,
+      "role": "Explorador",
+      "level": 1,
+      "xp": 54,
+      "xpMax": 100,
+      "stats": {
+        "INT": 2,
+        "SAB": 1,
+        "CAR": 3,
+        "RES": 2,
+        "CRE": 1
+      },
+      "weekXp": 19,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h23",
+      "group": "3D",
+      "name": "Leo",
+      "age": 12,
+      "role": "Guerrero",
+      "level": 4,
+      "xp": 75,
+      "xpMax": 100,
+      "stats": {
+        "INT": 3,
+        "SAB": 1,
+        "CAR": 8,
+        "RES": 8,
+        "CRE": 8
+      },
+      "weekXp": 33,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    },
+    {
+      "id": "h24",
+      "group": "3D",
+      "name": "Camila",
+      "age": 12,
+      "role": "Mentor",
+      "level": 1,
+      "xp": 34,
+      "xpMax": 100,
+      "stats": {
+        "INT": 4,
+        "SAB": 5,
+        "CAR": 10,
+        "RES": 9,
+        "CRE": 1
+      },
+      "weekXp": 35,
+      "weekXpMax": 40,
+      "desc": "",
+      "goal": "",
+      "goodAt": "",
+      "improve": ""
+    }
+  ],
+  "challenges": [
+    {
+      "id": "c1",
+      "title": "Desafío 1: Lectura breve",
+      "status": "available",
+      "body": "(contenido teacher) ..."
+    },
+    {
+      "id": "c2",
+      "title": "Desafío 2: Escritura libre",
+      "status": "locked",
+      "body": "(contenido teacher) ..."
+    },
+    {
+      "id": "c3",
+      "title": "Desafío 3: Problema de lógica",
+      "status": "locked",
+      "body": "(contenido teacher) ..."
+    }
+  ],
+  "events": [
+    {
+      "id": "e1",
+      "title": "?????",
+      "locked": true,
+      "req": "Requisito: Completa 1 desafío"
+    },
+    {
+      "id": "e2",
+      "title": "Evento: Bonus XP",
+      "locked": true,
+      "req": "Requisito: Llega a Nivel 3"
+    },
+    {
+      "id": "e3",
+      "title": "Evento: Jefe semanal",
+      "locked": false,
+      "req": "Siguiente: Completa 2 desafíos"
     }
   ]
 }

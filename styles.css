@@ -164,41 +164,27 @@ body{
 }
 .shell.is-details-open .details{ display:flex; }
 
-.pages{ overflow:auto; overflow-x:hidden; padding-right: 0; scrollbar-gutter: stable; }
+.pages{ overflow:auto; overflow-x:hidden; padding-right: 6px; scrollbar-gutter: stable; }
 /* Sidebar bits */
-.panelHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding: 0 0 6px 0;
-}
+.panelHeader{ display:flex; align-items:center; justify-content:space-between; padding: 2px 0 10px 0; }
 .panelHeader__title{ letter-spacing: 2px; font-size: 13px; opacity: .85; }
 
 .segmented{
-  display:flex;
-  gap: 6px;
-  padding: 8px;
-  border-radius: 999px;
+  display:flex; gap: 8px; padding: 10px; border-radius: 999px;
   background: rgba(0,0,0,0.20);
   border: 1px solid rgba(255,215,120,0.10);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .segmented__btn{
-  flex:1;
-  border:none;
-  padding: 8px 10px;
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(255,255,255,0.55);
-  cursor:pointer;
-  font-size: 12px;
+  flex:1; border:none; padding: 10px 12px; border-radius: 999px;
+  background: transparent; color: rgba(255,255,255,0.55); cursor:pointer;
 }
 .segmented__btn.is-active{
   background: rgba(255,215,120,0.10);
   color: var(--text);
   border: 1px solid rgba(255,215,120,0.20);
 }
-.list{ overflow:auto; padding-right: 0; }
+.list{ overflow:auto; padding-right: 6px; }
 .heroCard{
   width:100%;
   text-align:left;
@@ -249,21 +235,9 @@ body{
 }
 
 /* Content header */
-.contentHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap: 10px;
-  padding: 0 0 6px 0;
-}
-.contentHeader__left{
-  display:flex; align-items:center; gap: 14px;
-}
-.h1{
-  font-size: 15px;
-  letter-spacing: 2px;
-  margin: 0;
-}
+.contentHeader{ display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; padding: 2px 0 10px 0; }
+.contentHeader__left{ display:flex; align-items:flex-start; gap: 14px; }
+.h1{ margin:0; font-size: 18px; letter-spacing: 3px; opacity:.9; }
 
 .tabs{
   display:flex; gap: 8px; padding: 6px; border-radius: 999px;
@@ -308,12 +282,7 @@ body{
 .avatar__actions{ display:flex; gap: 10px; flex-wrap:wrap; justify-content:center; width:100%; }
 .avatar__actions--secondary{ margin-top: -2px; }
 
-.heroName{
-  font-size: 18px;
-  letter-spacing: 3px;
-  text-align:center;
-  margin: 10px 0 8px;
-}
+.heroName{ font-size: 22px; letter-spacing: 4px; font-weight: 800; opacity: .9; }
 
 .formCard{
   width:100%;
@@ -347,16 +316,14 @@ body{
 }
 .input--select:focus{ outline: none; border-color: rgba(255,215,120,0.32); }
 .textarea{
-  width: 100%;
-  min-height: 76px;
-  padding: 12px 14px;
+  width:100%;
+  min-height: 94px;
   border-radius: 16px;
-  border: 1px solid rgba(255,215,120,0.10);
-  background: rgba(0,0,0,0.26);
-  color: rgba(255,255,255,0.86);
-  outline: none;
-  resize: none;
-  line-height: 1.35;
+  padding: 12px 12px;
+  border: 1px solid rgba(255,215,120,0.16);
+  background: rgba(0,0,0,0.22);
+  color: var(--text);
+  resize: vertical;
 }
 .textarea--small{ min-height: 88px; }
 .spacer{ height: 10px; }
@@ -365,36 +332,20 @@ body{
 .fields3 .field{ min-width: 0; }
 
 .stats{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: repeat(3, auto);
-  grid-auto-flow: column;
-  gap: 10px 14px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,215,120,0.12);
-  background: rgba(0,0,0,0.22);
-  overflow: hidden;
+  display:grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
+  padding: 10px; border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015));
+  border: 1px solid rgba(255,215,120,0.14);
+  box-shadow: var(--glow);
 }
-.stat{
-  display:grid;
-  grid-template-columns: 50px minmax(0, 1fr) 46px;
-  align-items:center;
-  gap: 10px;
-}
+.stat{ display:grid; grid-template-columns: 44px minmax(0, 1fr) 36px; align-items:center; gap: 10px; }
 .stat--wide{ grid-column: 1 / -1; }
 .badge{
   width: 40px; height: 28px; border-radius: 10px; display:grid; place-items:center;
   font-size: 12px; border: 1px solid rgba(255,215,120,0.22); background: rgba(255,215,120,0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 .stat__track{ position:relative; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.10); border: 1px solid rgba(0,0,0,0.40); min-width:0; }
-.stat__val{
-  text-align:right;
-  font-weight:700;
-  color: rgba(255,255,255,0.9);
-  min-width: 40px;
-  white-space: nowrap;
-}
+.stat__val{ text-align:right; font-weight: 700; }
 .stat__dot{
   position:absolute; top: 50%; transform: translate(-50%, -50%);
   width: 14px; height: 14px; border-radius: 999px;
@@ -407,12 +358,9 @@ body{
 .xpText{ opacity:.75; }
 .xpBtns{ margin-left:auto; display:flex; gap: 8px; flex-wrap:wrap; }
 .xpBar{
-  height: 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,215,120,0.12);
-  background: rgba(0,0,0,0.26);
-  overflow:hidden;
-  margin: 10px 0 12px;
+  height: 14px; border-radius: 999px; background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,215,120,0.16); overflow:hidden; margin: 12px 0 14px 0;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.35) inset;
 }
 .xpFill{ height:100%; background: linear-gradient(90deg, rgba(255,215,120,0.32), rgba(80,255,140,0.62)); box-shadow: 0 0 18px rgba(120,255,170,0.18); }
 
@@ -562,12 +510,6 @@ body{
     transition: transform .18s ease;
   }
   .shell.is-drawer-open .sidebar{ transform: translateX(0); }
-
-  .stats{
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-    grid-auto-flow: row;
-  }
 }
 
 /* Drawer layouts */
@@ -621,58 +563,4 @@ body{
   :root{ --maxw: 1660px; }
   .shell{ grid-template-columns: 340px minmax(0, 1fr); grid-template-areas: "sidebar content"; }
   .shell.is-details-open{ grid-template-columns: 340px minmax(0, 1fr) 380px; }
-}
-
-/* Hide scrollbars (keep scroll behavior) */
-html, body, .shell, .pages, .list, .content {
-  scrollbar-width: none; /* Firefox */
-}
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-.shell::-webkit-scrollbar,
-.pages::-webkit-scrollbar,
-.list::-webkit-scrollbar,
-.content::-webkit-scrollbar{
-  width: 0;
-  height: 0;
-}
-
-
-/* ===== Patch v11 (hotfix): restore JS + responsive stats + hide scrollbars ===== */
-
-/* Hide scrollbars but keep scrolling */
-.pages, .list, .panel, .panelScroll, .main, .content {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.pages::-webkit-scrollbar,
-.list::-webkit-scrollbar,
-.panel::-webkit-scrollbar,
-.panelScroll::-webkit-scrollbar,
-.main::-webkit-scrollbar,
-.content::-webkit-scrollbar{
-  width: 0;
-  height: 0;
-}
-
-/* Stats: prevent numbers from spilling on iPad widths */
-@media (max-width: 1024px){
-  .stat{
-    grid-template-columns: 44px minmax(0,1fr) 34px;
-    gap: 8px;
-  }
-  .badge{
-    min-width: 34px;
-    height: 26px;
-    padding: 0 8px;
-    font-size: 11px;
-    border-radius: 10px;
-  }
-  .stat__val{
-    min-width: 28px;
-    font-size: 12px;
-  }
-}
-.statsPanel{
-  overflow: hidden;
 }

@@ -4,8 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <title>LevelUp — Hybrid Skeleton</title>
-  <link rel="stylesheet" href="./styles.css" />
+  <!-- LevelUp STABLE_RESET_v14 -->
+<title>LevelUp — Hybrid Skeleton</title>
+  <link rel="stylesheet" href="./styles.css?v=14" />
 </head>
 <body>
   <!--
@@ -84,7 +85,11 @@
         <div class="contentHeader">
           <div class="contentHeader__left">
             <h1 class="h1" id="pageTitle">FICHAS</h1>
-</div>
+            <div class="tabs" role="tablist" aria-label="Pestañas de fichas">
+              <button class="tab is-active" data-subtab="ficha">Ficha</button>
+              <button class="tab" data-subtab="recompensas">Recompensas</button>
+            </div>
+          </div>
           <div class="contentHeader__right">
             <button class="pill pill--danger" id="btnEliminar">🗑 Eliminar</button>
           </div>
@@ -165,7 +170,17 @@
                       <div class="subCard__val" id="weekXp">0/40 XP</div>
                     </div>
                   </div>
-</div>
+
+                  <div class="twoCols">
+                    <div class="subCard">
+                      <div class="subCard__title">Cosas que ya hago bien</div>
+                      <textarea class="textarea textarea--small" id="txtBien"></textarea>
+                    </div>
+                    <div class="subCard">
+                      <div class="subCard__title">Cosas que quiero mejorar</div>
+                      <textarea class="textarea textarea--small" id="txtMejorar"></textarea>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -261,45 +276,6 @@
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script>window.__LEVELUP_APP_LOADED__=false;</script>
-  <script src="./app.js" defer></script>
-
-<script>
-(() => {
-  const show = (msg) => {
-    let el = document.getElementById('jsFailBanner');
-    if(!el){
-      el = document.createElement('div');
-      el.id = 'jsFailBanner';
-      el.style.cssText = [
-        'position:fixed','right:14px','bottom:14px','z-index:9999',
-        'max-width:360px','padding:10px 12px','border-radius:12px',
-        'background:rgba(0,0,0,.82)','backdrop-filter:blur(6px)',
-        'border:1px solid rgba(255,200,120,.35)','color:#fff',
-        'font:13px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial',
-        'box-shadow:0 10px 30px rgba(0,0,0,.45)'
-      ].join(';');
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-  };
-
-  // If the main app script doesn't run, give a self-service hint.
-  setTimeout(() => {
-    if(!window.__LEVELUP_APP_LOADED__){
-      show('⚠️ No cargó app.js. Revisa que exista "app.js" en el ROOT del repo (misma carpeta que index.html) y que en index.html diga: <script src="./app.js" defer>. En GitHub el nombre distingue MAYÚSCULAS/minúsculas.');
-    }
-  }, 1400);
-
-  // If it loads, show a tiny "OK" for 2s then hide.
-  setTimeout(() => {
-    if(window.__LEVELUP_APP_LOADED__){
-      show('✅ JS cargado');
-      setTimeout(()=>{ const el=document.getElementById('jsFailBanner'); if(el) el.remove(); }, 2000);
-    }
-  }, 1700);
-})();
-</script>
-
+  <script src="./app.js?v=14" defer></script>
 </body>
 </html>
