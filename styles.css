@@ -459,19 +459,14 @@ body{
 /* Bottom nav (solo móvil) */
 .bottomNav{
   display:none;
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(12px + var(--safe-bottom));
-  z-index: 60;
-  padding: 10px;
   gap: 10px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(20,20,20,.72);
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,215,120,0.12);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0,0,0,.55);
 }
 .bottomNav__btn{
   flex:1;
@@ -499,8 +494,6 @@ body{
 
 /* Drawer layouts */
 @media (max-width: 980px){
-  .bottomNav{ display:flex; }
-
   .brand__title{ display:none; }
   .topnav{ display:none; }
   .topbar__menu{ display:inline-grid; place-items:center; }
@@ -517,8 +510,6 @@ body{
     transition: transform .18s ease;
   }
   .shell.is-drawer-open .sidebar{ transform: translateX(0); }
-  .app{ padding-bottom: calc(92px + var(--safe-bottom)); }
-
 }
 
 /* Drawer layouts */
@@ -533,9 +524,6 @@ body{
 
 /* Mobile */
 @media (max-width: 640px){
-  .bottomNav{ left: 10px; right: 10px; padding: 8px; gap: 8px; }
-  .bottomNav button{ min-height: 44px; font-size: 14px; }
-
   :root{ --gap: 12px; }
   .topbar__right .pill, .topbar__right .dropdown{ display:none; }
   .brand__subtitle{ display:none; }
@@ -577,102 +565,47 @@ body{
   .shell.is-details-open{ grid-template-columns: 340px minmax(0, 1fr) 380px; }
 }
 
-.bottomNav button{
-  flex: 1 1 0;
-  min-height: 46px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(0,0,0,.20);
-  color: var(--text);
-  font-weight: 600;
-  letter-spacing: .3px;
-  font-size: 15px;
-}
-
-.bottomNav button.active{ background: rgba(206,168,86,.18); border-color: rgba(206,168,86,.35); }
-
 
 /* =========================
-   Desktop compact mode
-   Goal: fit ficha content in common 1080p height without sacrificing readability
-   Applies only when viewport height is limited.
-   ========================= */
-@media (min-width: 1100px) and (max-height: 900px){
-  /* tighten global paddings */
-  .app{ gap: 14px; padding: 14px; }
-  .header{ padding: 12px 14px; }
-
-  /* cards: less padding + less vertical margin */
-  .card{ padding: 14px; }
-  .cardTitle{ margin-bottom: 10px; }
-  .tabs{ margin: 8px 0 10px; }
-
-  /* hero photo area */
-  .photoBox{ width: 220px; height: 220px; margin: 8px auto 10px; }
-  .heroName{ font-size: 30px; letter-spacing: 5px; margin: 10px 0 8px; }
-
-  /* textareas: reduce min heights */
-  .textarea{ min-height: 88px; }
-  .textarea--small{ min-height: 86px; }
-
-  /* stats panel: reduce spacing */
-  .formRow{ gap: 10px; margin-bottom: 10px; }
-  .statRow{ gap: 10px; margin-top: 10px; }
-  .xpRow{ margin-top: 10px; }
-  .xpBar{ margin-top: 10px; }
-
-  /* XP footer layout: make weekly XP a compact badge */
-  .xpFooter{
-    gap: 10px;
-    align-items: stretch;
-  }
-  .xpFooter .subCard{
-    padding: 12px;
-  }
-  .xpFooter .subCard:nth-child(2){
-    flex: 0 0 190px;
-    text-align: left;
-    display: grid;
-    align-content: center;
-    justify-items: start;
-    padding: 12px 14px;
-  }
-  .subCard__title{ font-size: 13px; opacity:.85; }
-  .subCard__val{ font-size: 22px; }
-
-  /* smaller activity pills */
-  .pill--small{ padding: 8px 10px; font-size: 13px; }
-
-  /* twoCols: tighten gap */
-  .twoCols{ gap: 10px; margin-top: 10px; }
-}
-
-/* =========================
-   Desktop XP weekly placement improvement (all desktop sizes)
-   Keep weekly XP compact and aligned; allow activities to breathe.
+   Desktop fit-first layout
+   Aim: reduce vertical bulk so the ficha is mostly visible on load.
    ========================= */
 @media (min-width: 1100px){
-  .xpFooter{
-    display: grid;
-    grid-template-columns: 1fr auto;
-  }
-  .xpFooter .subCard:nth-child(2){
-    min-width: 180px;
-    max-width: 220px;
-  }
-  .xpFooter .subCard:nth-child(1) .chipRow{
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-}
+  .app{ padding: 14px; gap: 14px; }
+  .header{ padding: 12px 14px; }
 
-/* =========================
-   Mobile/Tablet: keep weekly XP readable but not huge
-   ========================= */
-@media (max-width: 980px){
+  .card{ padding: 14px; }
+  .tabs{ display:none !important; } /* keep hidden in case it exists anywhere */
+
+  /* Photo + name */
+  .photoBox{ width: 210px; height: 210px; margin: 8px auto 10px; }
+  .heroName{ font-size: 30px; letter-spacing: 5px; margin: 10px 0 8px; }
+
+  /* Text areas */
+  .textarea{ min-height: 74px; }
+  .textarea--small{ min-height: 74px; }
+
+  /* Forms & stats spacing */
+  .fields3{ gap: 10px; margin-bottom: 10px; }
+  .stats{ gap: 10px 12px; padding: 10px; }
+  .xpRow{ margin-top: 10px; }
+  .xpBar{ margin-top: 10px; }
+  .twoCols{ gap: 10px; margin-top: 10px; }
+
+  /* XP footer: compact weekly XP card */
+  .xpFooter{ display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  .xpFooter .subCard:nth-child(2){ min-width: 170px; max-width: 210px; }
   .subCard__val{ font-size: 22px; }
+
+  /* Pills a bit smaller to save height */
+  .pill--small{ padding: 8px 10px; font-size: 13px; }
 }
 
+/* Extra-compact for shorter viewports (laptops / browser chrome) */
+@media (min-width: 1100px) and (max-height: 820px){
+  .photoBox{ width: 190px; height: 190px; }
+  .heroName{ font-size: 28px; }
+  .textarea{ min-height: 66px; }
+  .textarea--small{ min-height: 66px; }
+}
 
-/* No sub-tabs (Ficha/Recompensas) -> tighten header spacing */
-.contentHeader__left{ gap: 10px; }
