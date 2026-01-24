@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <title>LevelUp — Hybrid Skeleton</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <!--
@@ -261,6 +261,45 @@
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="app.js"></script>
+  <script>window.__LEVELUP_APP_LOADED__=false;</script>
+  <script src="./app.js" defer></script>
+
+<script>
+(() => {
+  const show = (msg) => {
+    let el = document.getElementById('jsFailBanner');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'jsFailBanner';
+      el.style.cssText = [
+        'position:fixed','right:14px','bottom:14px','z-index:9999',
+        'max-width:360px','padding:10px 12px','border-radius:12px',
+        'background:rgba(0,0,0,.82)','backdrop-filter:blur(6px)',
+        'border:1px solid rgba(255,200,120,.35)','color:#fff',
+        'font:13px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Arial',
+        'box-shadow:0 10px 30px rgba(0,0,0,.45)'
+      ].join(';');
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+  };
+
+  // If the main app script doesn't run, give a self-service hint.
+  setTimeout(() => {
+    if(!window.__LEVELUP_APP_LOADED__){
+      show('⚠️ No cargó app.js. Revisa que exista "app.js" en el ROOT del repo (misma carpeta que index.html) y que en index.html diga: <script src="./app.js" defer>. En GitHub el nombre distingue MAYÚSCULAS/minúsculas.');
+    }
+  }, 1400);
+
+  // If it loads, show a tiny "OK" for 2s then hide.
+  setTimeout(() => {
+    if(window.__LEVELUP_APP_LOADED__){
+      show('✅ JS cargado');
+      setTimeout(()=>{ const el=document.getElementById('jsFailBanner'); if(el) el.remove(); }, 2000);
+    }
+  }, 1700);
+})();
+</script>
+
 </body>
 </html>
