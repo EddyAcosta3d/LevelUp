@@ -33,8 +33,10 @@
       meta: { app: 'LevelUp', version: 'hybrid-skeleton-v1', updatedAt: new Date().toISOString() },
       heroes: [
         { id:'h1', group:'2D', name:'Eddy', age:12, role:'Analista', level:3, xp:28, xpMax:100,
+          stats:{ INT:5, SAB:6, CAR:5, CON:7, CRE:8 }, weekXp:40, weekXpMax:40, desc:'', goal:'', goodAt:'', improve:'' },
           stats:{ INT:5, SAB:6, CAR:5, RES:7, CRE:8 }, weekXp:40, weekXpMax:40, desc:'', goal:'', goodAt:'', improve:'' },
         { id:'h2', group:'2D', name:'Test', age:12, role:'Mentor', level:2, xp:25, xpMax:100,
+          stats:{ INT:4, SAB:4, CAR:4, CON:4, CRE:4 }, weekXp:0, weekXpMax:40, desc:'', goal:'', goodAt:'', improve:'' }
           stats:{ INT:4, SAB:4, CAR:4, RES:4, CRE:4 }, weekXp:0, weekXpMax:40, desc:'', goal:'', goodAt:'', improve:'' }
       ],
       challenges: [
@@ -121,101 +123,7 @@
     $('#btnDatos').setAttribute('aria-expanded', String(next));
   }
   function closeDatos(){ toggleDatos(false); }
-
-  // Toast
-  let toastTimer = null;
-  function toast(msg){
-    let el = document.getElementById('toast');
-    if (!el){
-      el = document.createElement('div');
-      el.id = 'toast';
-      el.style.position = 'fixed';
-      el.style.left = '50%';
-      el.style.bottom = 'calc(18px + env(safe-area-inset-bottom, 0px))';
-      el.style.transform = 'translateX(-50%)';
-      el.style.padding = '10px 14px';
-      el.style.borderRadius = '999px';
-      el.style.background = 'rgba(10,10,10,0.92)';
-      el.style.border = '1px solid rgba(255,215,120,0.20)';
-      el.style.color = 'rgba(255,255,255,0.92)';
-      el.style.boxShadow = '0 14px 40px rgba(0,0,0,0.55)';
-      el.style.zIndex = '9999';
-      el.style.fontSize = '13px';
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.style.opacity = '1';
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>{ el.style.opacity = '0'; }, 2200);
-  }
-
-  // Storage
-  function saveLocal(data){
-    try{ localStorage.setItem(CONFIG.storageKey, JSON.stringify(data)); return true; }
-    catch(e){ return false; }
-  }
-  function loadLocal(){
-    try{
-      const raw = localStorage.getItem(CONFIG.storageKey);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    }catch(e){ return null; }
-  }
-  function clearLocal(){ try{ localStorage.removeItem(CONFIG.storageKey); }catch(e){} }
-
-  // Remote fetch timeout
-  async function fetchRemote(){
-    const ctrl = new AbortController();
-    const t = setTimeout(()=> ctrl.abort(), CONFIG.remoteTimeoutMs);
-    try{
-      const url = `${CONFIG.remoteUrl}?v=${Date.now()}`; // cache-buster
-      const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    } finally {
-      clearTimeout(t);
-    }
-  }
-
-  async function loadData({forceRemote=false} = {}){
-    if (forceRemote){
-      try{
-        const d = await fetchRemote();
-        state.data = d; state.dataSource = 'remote';
-        saveLocal(d);
-        toast('Cargado desde GitHub');
-        updateDataDebug(); renderAll();
-        return;
-      }catch(e){
-        toast('No se pudo cargar GitHub. Usando copia local.');
-      }
-    }else{
-      try{
-        const d = await fetchRemote();
-        state.data = d; state.dataSource = 'remote';
-        saveLocal(d);
-        updateDataDebug(); renderAll();
-        return;
-      }catch(e){}
-    }
-
-    const local = loadLocal();
-    if (local){
-      state.data = local; state.dataSource = 'local';
-      updateDataDebug(); renderAll();
-      return;
-    }
-
-    state.data = demoData(); state.dataSource = 'demo';
-    updateDataDebug(); renderAll();
-  }
-
-  // Render helpers
-  function escapeHtml(s){
-    return String(s ?? '')
-      .replaceAll('&','&amp;')
-      .replaceAll('<','&lt;')
-      .replaceAll('>','&gt;')
+@@ -191,97 +219,150 @@
       .replaceAll('"','&quot;')
       .replaceAll("'",'&#039;');
   }
@@ -245,6 +153,9 @@
       const xpMax = Number(hero.xpMax ?? 100);
       const pct = xpMax > 0 ? Math.max(0, Math.min(100, (xp / xpMax) * 100)) : 0;
       btn.innerHTML = `
+        <div class="heroCard__name">${escapeHtml(hero.name || 'Nuevo héroe')}</div>
+        <div class="heroCard__meta">${escapeHtml(heroLabel(hero))}</div>
+        <div class="heroCard__xp">XP ${(hero.xp ?? 0)}/${(hero.xpMax ?? 100)}</div>
         <div class="heroCard__row">
           <div>
             <div class="heroCard__name">${escapeHtml(hero.name || 'Nuevo héroe')}</div>
@@ -273,11 +184,20 @@
 
   function renderStats(hero){
     const box = $('#statsBox');
+    const stats = hero?.stats || { INT:0, SAB:0, CAR:0, CON:0, CRE:0 };
+    const order = [
+      ['INT','Inteligencia'],
+      ['SAB','Lectura'],
+      ['CAR','Carisma'],
+      ['CON','Responsabilidad'],
+      ['CRE','Creatividad']
+    ];
     const rawStats = hero?.stats || { INT:0, SAB:0, CAR:0, RES:0, CRE:0 };
     const stats = { ...rawStats };
     if (stats.RES == null && stats.CON != null) stats.RES = stats.CON;
     const order = ['INT','SAB','CAR','RES','CRE'];
     box.innerHTML = '';
+    order.forEach(([key,label])=>{
     order.forEach((key)=>{
       const val = Number(stats[key] ?? 0);
       const pct = Math.max(0, Math.min(100, (val/20)*100));
@@ -366,205 +286,7 @@
 
     const w = Number(hero.weekXp ?? 0);
     const wMax = Number(hero.weekXpMax ?? 40);
-    $('#weekXp').textContent = `${w}/${wMax} XP`;
-  }
-
-  function renderChallenges(){
-    const list = $('#challengeList');
-    list.innerHTML = '';
-    const challenges = state.data?.challenges || [];
-    if (!challenges.length){
-      list.innerHTML = '<div class="muted">Sin desafíos.</div>';
-      return;
-    }
-    if (!state.selectedChallengeId) state.selectedChallengeId = challenges[0].id;
-
-    challenges.forEach(ch=>{
-      const item = document.createElement('div');
-      item.className = 'challengeItem';
-      item.style.cursor = 'pointer';
-      item.innerHTML = `
-        <div class="challengeName">${escapeHtml(ch.title || 'Desafío')}</div>
-        <div class="challengeMeta">Estado: ${escapeHtml(ch.status || '—')}</div>
-      `;
-      item.addEventListener('click', ()=>{
-        state.selectedChallengeId = ch.id;
-        renderChallengeDetail();
-      });
-      list.appendChild(item);
-    });
-
-    renderChallengeDetail();
-  }
-
-  // 🔥 AQUÍ está la regla: alumno no ve contenido
-  function renderChallengeDetail(){
-    const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
-    if (!ch){
-      $('#challengeHint').textContent = 'Selecciona un desafío.';
-      $('#challengeBody').textContent = '';
-      return;
-    }
-    if (state.role === 'viewer'){
-      $('#challengeHint').textContent = 'Modo alumno: solo nombre.';
-      $('#challengeBody').textContent = 'Contenido oculto.';
-    }else{
-      $('#challengeHint').textContent = 'Modo edición: detalle visible.';
-      $('#challengeBody').textContent = ch.body || '(sin contenido)';
-    }
-  }
-
-  function renderEvents(){
-    const grid = $('#eventGrid');
-    grid.innerHTML = '';
-    const evs = state.data?.events || [];
-    if (!evs.length){
-      grid.innerHTML = '<div class="muted">Sin eventos.</div>';
-      return;
-    }
-    evs.forEach(ev=>{
-      const div = document.createElement('div');
-      div.className = 'tile' + (ev.locked ? ' locked' : '');
-      div.innerHTML = `
-        <div class="tile__img ${ev.locked ? '' : 'tile__img--unlocked'}"></div>
-        <div class="tile__name">${escapeHtml(ev.title || 'Evento')}</div>
-        <div class="tile__req">${escapeHtml(ev.req || '')}</div>
-      `;
-      grid.appendChild(div);
-    });
-  }
-
-  function renderPeopleTable(){
-    const box = $('#peopleTable');
-    const heroes = state.data?.heroes || [];
-    box.innerHTML = '';
-    const header = document.createElement('div');
-    header.className = 'tr th';
-    header.innerHTML = '<div>Nombre</div><div>Nivel</div><div>Rol</div><div>XP</div>';
-    box.appendChild(header);
-
-    heroes.forEach(h=>{
-      const tr = document.createElement('div');
-      tr.className = 'tr';
-      tr.innerHTML = `
-        <div>${escapeHtml(h.name || '—')}</div>
-        <div>${escapeHtml(String(h.level ?? '—'))}</div>
-        <div>${escapeHtml((h.role && h.role.trim()) ? h.role : '—')}</div>
-        <div>${escapeHtml(String((h.xp ?? 0) + '/' + (h.xpMax ?? 100)))}</div>
-      `;
-      box.appendChild(tr);
-    });
-  }
-
-  function renderAll(){
-    renderHeroList();
-    renderHeroDetail();
-    renderChallenges();
-    renderEvents();
-    renderPeopleTable();
-  }
-
-  // “Edición” sin PIN aún (solo demo)
-  function setRole(nextRole){
-    state.role = nextRole;
-    const btn = $('#btnEdicion');
-    if (state.role === 'teacher'){
-      btn.textContent = '🔓 Edición';
-      btn.classList.remove('pill--danger');
-      btn.classList.add('is-active');
-      toast('Modo edición (demo)');
-    }else{
-      btn.textContent = '🔒 Edición';
-      btn.classList.add('pill--danger');
-      btn.classList.remove('is-active');
-      toast('Modo vista (demo)');
-    }
-    updateDataDebug();
-    renderChallengeDetail();
-  }
-
-  function bumpHeroXp(delta){
-    const hero = currentHero();
-    if (!hero) return;
-    hero.xp = Math.max(0, Number(hero.xp ?? 0) + delta);
-    saveLocal(state.data);
-    if (state.dataSource === 'remote') state.dataSource = 'local'; // si tocaste algo local
-    updateDataDebug();
-    renderHeroList();
-    renderHeroDetail();
-  }
-
-  // Import / Export (para tu flujo offline con iPad)
-  async function handleImportJson(file){
-    try{
-      const text = await file.text();
-      const data = JSON.parse(text);
-      data.meta = data.meta || {};
-      data.meta.updatedAt = data.meta.updatedAt || new Date().toISOString();
-
-      state.data = data;
-      state.dataSource = 'local';
-      saveLocal(data);
-
-      updateDataDebug();
-      renderAll();
-      toast(`JSON importado: ${file.name}`);
-    }catch(err){
-      console.error(err);
-      toast('Error al importar JSON');
-    }
-  }
-
-  function handleExportJson(){
-    const data = state.data || demoData();
-    data.meta = data.meta || {};
-    data.meta.updatedAt = new Date().toISOString();
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'levelup_export.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-    toast('Exportado JSON');
-  }
-
-  // Bind
-  function bind(){
-    $$('.topnav .pill').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
-    $$('#bottomNav .bottomNav__btn').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
-
-    $$('.tab').forEach(t => t.addEventListener('click', ()=> setActiveSubtab(t.dataset.subtab)));
-
-    $('#btnMenu').addEventListener('click', ()=>{
-      if (!isDrawerLayout()) return;
-      const isOpen = $('#shell').classList.contains('is-drawer-open');
-      isOpen ? closeDrawer() : openDrawer();
-    });
-    $('#overlay').addEventListener('click', closeDrawer);
-
-    $$('.segmented__btn').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        $$('.segmented__btn').forEach(x=>x.classList.remove('is-active'));
-        b.classList.add('is-active');
-        state.group = b.dataset.group || '2D';
-        renderHeroList();
-        renderHeroDetail();
-      });
-    });
-
-    // Datos dropdown
-    $('#btnDatos').addEventListener('click', (e)=>{ e.stopPropagation(); toggleDatos(); });
-    document.addEventListener('click', ()=> closeDatos());
-    $('#menuDatos').addEventListener('click', (e)=> e.stopPropagation());
-
-    $('#btnReloadRemote').addEventListener('click', async ()=>{
-      closeDatos();
-      await loadData({forceRemote:true});
-    });
-
-    $('#btnImportJson').addEventListener('click', ()=>{
-      closeDatos();
+@@ -487,58 +568,68 @@
       $('#fileJson').value = '';
       $('#fileJson').click();
     });
@@ -593,12 +315,6 @@
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 
     $('#inRol').addEventListener('click', openRoleModal);
-    $('#inRol').addEventListener('keydown', (e)=>{
-      if (e.key === 'Enter' || e.key === ' '){
-        e.preventDefault();
-        openRoleModal();
-      }
-    });
     $('#btnCloseRoleModal').addEventListener('click', closeRoleModal);
     $$('[data-close-role-modal]').forEach(el=> el.addEventListener('click', closeRoleModal));
 
