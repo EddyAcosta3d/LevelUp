@@ -278,7 +278,7 @@
     order.forEach((key)=>{
       const val = Number(stats[key] ?? 0);
       const pct = Math.max(0, Math.min(100, (val/20)*100));
-      const wide = (key === 'CRE') ? ' stat--wide' : '';
+      const wide = ''; // sin barra 'larga' para que el grid quede parejo
       const stat = document.createElement('div');
       stat.className = 'stat' + wide;
       stat.innerHTML = `

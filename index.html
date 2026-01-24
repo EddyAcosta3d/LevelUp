@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- iOS: evita zoom raro al rotar y mantiene el layout estable -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <!-- LevelUp STABLE_RESET_v14 -->
 <title>LevelUp — Hybrid Skeleton</title>
@@ -104,13 +105,13 @@
                 <div class="heroName" id="heroName">NUEVO HÉROE</div>
 
                 <div class="formCard">
-                  <label class="label">Descripción rápida</label>
-                  <textarea class="textarea" id="txtDesc" placeholder="¿Cómo es? ¿Qué le gusta? ¿En qué es bueno?"></textarea>
+                  <label class="label">Meta principal del trimestre</label>
+                  <textarea class="textarea textarea--meta" id="txtMeta" placeholder="Ej. mejorar tareas, participar más, subir nivel en lectura..."></textarea>
 
                   <div class="spacer"></div>
 
-                  <label class="label">Meta principal del trimestre</label>
-                  <textarea class="textarea" id="txtMeta" placeholder="Ej. mejorar tareas, participar más, subir nivel en lectura..."></textarea>
+                  <label class="label">Descripción rápida</label>
+                  <textarea class="textarea textarea--desc" id="txtDesc" placeholder="¿Cómo es? ¿Qué le gusta? ¿En qué es bueno?"></textarea>
                 </div>
               </div>
 
