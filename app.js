@@ -16,7 +16,6 @@
   const state = {
     route: 'fichas',
     role: 'viewer',      // futuro: 'teacher' con PIN
-    subtab: 'ficha',
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
@@ -57,11 +56,6 @@
     const titleMap = { fichas:'FICHAS', desafios:'DESAFÍOS', eventos:'EVENTOS', personajes:'PERSONAJES' };
     $('#pageTitle').textContent = titleMap[route] || route.toUpperCase();
     $('#dbgRoute').textContent = route;
-  }
-
-  function setActiveSubtab(subtab){
-    state.subtab = subtab;
-    $$('.tab').forEach(t => t.classList.toggle('is-active', t.dataset.subtab === subtab));
   }
 
   // Drawer
@@ -367,6 +361,8 @@
     const w = Number(hero.weekXp ?? 0);
     const wMax = Number(hero.weekXpMax ?? 40);
     $('#weekXp').textContent = `${w}/${wMax} XP`;
+
+    renderRewards();
   }
   function renderChallenges(){
     const list = $('#challengeList');
@@ -532,8 +528,6 @@
     $$('.topnav .pill').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
     $$('#bottomNav .bottomNav__btn').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
 
-    $$('.tab').forEach(t => t.addEventListener('click', ()=> setActiveSubtab(t.dataset.subtab)));
-
     $('#btnMenu').addEventListener('click', ()=>{
       if (!isDrawerLayout()) return;
       const isOpen = $('#shell').classList.contains('is-drawer-open');
@@ -627,7 +621,6 @@
   async function init(){
     bind();
     setActiveRoute(state.route);
-    setActiveSubtab(state.subtab);
     updateDeviceDebug();
     syncDetailsUI();
     await loadData({forceRemote:false});
