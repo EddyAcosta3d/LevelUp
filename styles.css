@@ -170,14 +170,15 @@ body{
 .panelHeader__title{ letter-spacing: 2px; font-size: 13px; opacity: .85; }
 
 .segmented{
-  display:flex; gap: 8px; padding: 10px; border-radius: 999px;
+  display:flex; gap: 6px; padding: 8px; border-radius: 999px;
   background: rgba(0,0,0,0.20);
   border: 1px solid rgba(255,215,120,0.10);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .segmented__btn{
-  flex:1; border:none; padding: 10px 12px; border-radius: 999px;
+  flex:1; border:none; padding: 8px 10px; border-radius: 999px;
   background: transparent; color: rgba(255,255,255,0.55); cursor:pointer;
+  font-size: 13px;
 }
 .segmented__btn.is-active{
   background: rgba(255,215,120,0.10);
@@ -235,9 +236,9 @@ body{
 }
 
 /* Content header */
-.contentHeader{ display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; padding: 2px 0 10px 0; }
-.contentHeader__left{ display:flex; align-items:flex-start; gap: 14px; }
-.h1{ margin:0; font-size: 18px; letter-spacing: 3px; opacity:.9; }
+.contentHeader{ display:flex; align-items:center; justify-content:space-between; gap: 10px; padding: 0 0 6px 0; }
+.contentHeader__left{ display:flex; align-items:center; gap: 12px; }
+.h1{ margin:0; font-size: 14px; letter-spacing: 2px; font-weight: 800; opacity:.9; }
 
 .tabs{
   display:flex; gap: 8px; padding: 6px; border-radius: 999px;
