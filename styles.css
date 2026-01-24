@@ -636,3 +636,43 @@ body::-webkit-scrollbar,
   width: 0;
   height: 0;
 }
+
+
+/* ===== Patch v11 (hotfix): restore JS + responsive stats + hide scrollbars ===== */
+
+/* Hide scrollbars but keep scrolling */
+.pages, .list, .panel, .panelScroll, .main, .content {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.pages::-webkit-scrollbar,
+.list::-webkit-scrollbar,
+.panel::-webkit-scrollbar,
+.panelScroll::-webkit-scrollbar,
+.main::-webkit-scrollbar,
+.content::-webkit-scrollbar{
+  width: 0;
+  height: 0;
+}
+
+/* Stats: prevent numbers from spilling on iPad widths */
+@media (max-width: 1024px){
+  .stat{
+    grid-template-columns: 44px minmax(0,1fr) 34px;
+    gap: 8px;
+  }
+  .badge{
+    min-width: 34px;
+    height: 26px;
+    padding: 0 8px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+  .stat__val{
+    min-width: 28px;
+    font-size: 12px;
+  }
+}
+.statsPanel{
+  overflow: hidden;
+}

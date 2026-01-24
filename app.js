@@ -275,8 +275,9 @@
     ["SAB","lectura"],
     ["RES","responsabilidad"],
   ];
-  const wrap = $("#statsWrap");
-  wrap.innerHTML = list.map(([key, prop])=>{
+  const wrap = $("#statsBox") || $("#statsWrap");
+  if(!wrap) return;
+wrap.innerHTML = list.map(([key, prop])=>{
     const v = clampNum(hero[prop] ?? 0, 0, 10);
     return `
       <div class="stat">
