@@ -365,6 +365,15 @@
 
     renderRewards();
   }
+
+  // --- Recompensas (placeholder) ---
+  // En la versión estable aún no renderizamos recompensas aquí.
+  // Se deja función vacía para evitar errores cuando el layout no incluye esa sección.
+  function renderRewards(){
+    // TODO: implementar cuando la sección de recompensas esté definida en el HTML + data.json
+    return;
+  }
+
   function renderChallenges(){
     const list = $('#challengeList');
     list.innerHTML = '';
