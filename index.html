@@ -3481,6 +3481,46 @@ body{min-height:100dvh;}
   #mobileMenuBtn{display:none !important;}
 }
 </style>
+
+<style id="lu-mobile-layout-v72">
+/* ====== Gate version placement ====== */
+.gate-card{ position:relative; padding-bottom:56px; }
+.gate-version{ position:absolute; left:50%; transform:translateX(-50%); bottom:18px; opacity:.65; font-size:14px; letter-spacing:.08em; }
+
+/* ====== Mobile header: show real buttons, no overlays ====== */
+@media (max-width: 900px){
+  /* Disable the experimental overlay/dropdown system on mobile */
+  #mobileMenuOverlay, #mobileActionsMenu, #sidebarBackdrop{ display:none !important; }
+  body.lu-mobile-menu-open, body.lu-actions-open, body.sidebar-open{ overflow:auto !important; }
+
+  /* Stack header: logo on top, action buttons below */
+  .topbar{ display:flex !important; flex-direction:column !important; align-items:center !important; justify-content:flex-start !important; gap:10px !important;
+    padding:14px 12px 12px !important; height:auto !important; min-height:unset !important; overflow:visible !important; }
+
+  .topbar .left{ display:none !important; }
+  .topbar .center{ display:none !important; }
+
+  .topbar .brand{ width:100% !important; display:flex !important; justify-content:center !important; }
+  #appMark{ position:relative !important; left:auto !important; transform:none !important; margin:0 auto !important; }
+
+  /* Hide burger/experimental mobile buttons */
+  #sidebarToggleBtn, #mobileHeaderMenuBtn, #mobileActionsBtn{ display:none !important; }
+
+  /* Turn the existing desktop action buttons into a mobile grid */
+  .topbar .right{ width:100% !important; max-width:560px !important; margin:0 auto !important; display:grid !important;
+    grid-template-columns:1fr 1fr !important; gap:10px !important; padding:0 10px !important; position:relative !important;
+    background:transparent !important; backdrop-filter:none !important; }
+
+  .topbar .right .btn{ width:100% !important; justify-content:flex-start !important; padding:14px 12px !important; border-radius:16px !important; font-size:15px !important; }
+
+  /* Make any dropdown menu fit the screen */
+  #dataMenu{ left:0 !important; right:auto !important; width:min(92vw, 560px) !important; }
+
+  /* Prevent hidden layers from stealing taps (common on iOS) */
+  .topbar::before, .topbar::after, .app-shell::before, .app-shell::after{ pointer-events:none !important; }
+}
+</style>
+
 </head>
 
 
@@ -10781,7 +10821,7 @@ ${where}`, stack);
 (function(){
   // version
   try {
-    var ver = "V.00.05.66";
+    var ver = "V.00.05.73";
     var gv = document.getElementById("gateVersion");
     if (gv) gv.textContent = ver;
     window.LU_APP_VERSION = ver;
@@ -10956,6 +10996,40 @@ ${where}`, stack);
       el.addEventListener('click', function(){ close(); }, {passive:true});
     });
   });
+})();
+</script>
+
+
+<script id="lu-mobile-disable-legacy-v72">
+(() => {
+  function replaceWithClone(el){
+    const c = el.cloneNode(true);
+    el.parentNode.replaceChild(c, el);
+    return c;
+  }
+  function hardDisable(id){
+    const el = document.getElementById(id);
+    if(!el || !el.parentNode) return;
+    const c = replaceWithClone(el);
+    c.setAttribute('aria-hidden','true');
+    c.style.pointerEvents = 'none';
+    return c;
+  }
+  function cleanup(){
+    document.body.classList.remove('lu-mobile-menu-open','lu-actions-open','sidebar-open');
+    const overlayIds = ['mobileMenuOverlay','mobileActionsMenu','sidebarBackdrop'];
+    overlayIds.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el){ el.style.display='none'; el.style.pointerEvents='none'; }
+    });
+    // Remove click handlers from legacy triggers (they are hidden by CSS anyway)
+    ['mobileHeaderMenuBtn','sidebarToggleBtn','mobileActionsBtn'].forEach(hardDisable);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', cleanup, {once:true});
+  } else {
+    cleanup();
+  }
 })();
 </script>
 
@@ -11391,6 +11465,45 @@ unlocked = true;
   }, true);
 })();
 
+</script>
+
+
+<script id="lu-disable-legacy-mobile-menus">
+// Disable legacy mobile overlay menus that were causing iOS tap-blocking / stuck states.
+(function(){
+  function cloneReplace(id){
+    var el=document.getElementById(id);
+    if(!el || !el.parentNode) return null;
+    var c=el.cloneNode(true);
+    el.parentNode.replaceChild(c, el);
+    return c;
+  }
+  function run(){
+    try{
+      document.body.classList.remove('lu-mobile-menu-open','lu-actions-open','sidebar-open');
+      document.documentElement.classList.remove('lu-mobile-menu-open','lu-actions-open','sidebar-open');
+    }catch(e){}
+
+    ['mobileMenuOverlay','mobileActionsMenu','sidebarBackdrop'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el){
+        el.style.display='none';
+        el.style.pointerEvents='none';
+      }
+    });
+
+    ['mobileHeaderMenuBtn','sidebarToggleBtn','mobileActionsBtn'].forEach(function(id){
+      var c=cloneReplace(id);
+      if(c){
+        c.setAttribute('aria-hidden','true');
+        c.tabIndex=-1;
+        c.style.pointerEvents='none';
+      }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', run, {once:true});
+  else run();
+})();
 </script>
 
 </html>
