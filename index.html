@@ -46,7 +46,7 @@
 
       <div class="topbar__right">
         <button class="pill pill--ghost" id="btnPresentacion">❤ Presentación</button>
-        <button class="pill pill--ghost" id="btnTema">🎨 Tema</button>
+        <button class="pill pill--ghost" id="btnDebugPanel" aria-pressed="false">🧪 Estado</button>
 
         <div class="dropdown">
           <button class="pill pill--ghost" id="btnDatos" aria-haspopup="menu" aria-expanded="false">💾 Datos ▾</button>
@@ -86,7 +86,6 @@
             <h1 class="h1" id="pageTitle">FICHAS</h1>
             <div class="tabs" role="tablist" aria-label="Pestañas de fichas">
               <button class="tab is-active" data-subtab="ficha">Ficha</button>
-              <button class="tab" data-subtab="roles">Roles</button>
               <button class="tab" data-subtab="recompensas">Recompensas</button>
             </div>
           </div>
@@ -107,7 +106,9 @@
                     <button class="pill pill--small" id="btnPonerFoto">📷 Poner foto</button>
                     <button class="pill pill--small pill--ghost" id="btnEditarFoto">✎ Editar foto</button>
                   </div>
-                  <button class="pill pill--small pill--ghost" id="btnQuitarFoto">Quitar foto</button>
+                  <div class="avatar__actions avatar__actions--secondary">
+                    <button class="pill pill--small pill--ghost" id="btnQuitarFoto">Quitar foto</button>
+                  </div>
                 </div>
 
                 <div class="heroName" id="heroName">NUEVO HÉROE</div>
@@ -257,6 +258,19 @@
       <button class="bottomNav__btn" data-route="eventos">Eventos</button>
       <button class="bottomNav__btn" data-route="personajes">Personajes</button>
     </nav>
+
+    <div class="modal" id="roleModal" hidden>
+      <div class="modal__backdrop" data-close-role-modal></div>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle">
+        <div class="modal__header">
+          <div class="cardTitle" id="roleModalTitle">Selecciona un rol</div>
+          <button class="pill pill--small pill--ghost" id="btnCloseRoleModal" type="button">Cerrar</button>
+        </div>
+        <div class="modal__body">
+          <div class="roleList" id="roleList"></div>
+        </div>
+      </div>
+    </div>
 
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
