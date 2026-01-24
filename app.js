@@ -593,6 +593,12 @@
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 
     $('#inRol').addEventListener('click', openRoleModal);
+    $('#inRol').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        openRoleModal();
+      }
+    });
     $('#btnCloseRoleModal').addEventListener('click', closeRoleModal);
     $$('[data-close-role-modal]').forEach(el=> el.addEventListener('click', closeRoleModal));
 

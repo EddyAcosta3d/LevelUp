@@ -305,9 +305,6 @@ body{
   padding-right: 40px;
   cursor:pointer;
   position:relative;
-}
-.input--select:focus{ outline: none; border-color: rgba(255,215,120,0.32); }
-.input--select{
   background-image:
     linear-gradient(45deg, transparent 50%, rgba(255,215,120,0.75) 50%),
     linear-gradient(135deg, rgba(255,215,120,0.75) 50%, transparent 50%);
@@ -317,6 +314,7 @@ body{
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
 }
+.input--select:focus{ outline: none; border-color: rgba(255,215,120,0.32); }
 .textarea{
   width:100%;
   min-height: 94px;
@@ -537,6 +535,14 @@ body{
     max-height: 82vh;
     border-radius: 18px 18px 12px 12px;
     padding: 14px;
+  }
+  .modal__header{
+    position: sticky;
+    top: 0;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    background: rgba(12,12,12,0.96);
+    z-index: 1;
   }
 }
 
