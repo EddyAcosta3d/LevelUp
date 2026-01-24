@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <title>LevelUp — Hybrid Skeleton</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
   <!--
@@ -84,7 +84,11 @@
         <div class="contentHeader">
           <div class="contentHeader__left">
             <h1 class="h1" id="pageTitle">FICHAS</h1>
-</div>
+            <div class="tabs" role="tablist" aria-label="Pestañas de fichas">
+              <button class="tab is-active" data-subtab="ficha">Ficha</button>
+              <button class="tab" data-subtab="recompensas">Recompensas</button>
+            </div>
+          </div>
           <div class="contentHeader__right">
             <button class="pill pill--danger" id="btnEliminar">🗑 Eliminar</button>
           </div>
@@ -271,6 +275,6 @@
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
