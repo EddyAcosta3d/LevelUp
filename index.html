@@ -3244,7 +3244,7 @@ body.mobile-portrait #bottomNav{
 }
 
 
-/* ===== LU Mobile fixes V.00.05.62 ===== */
+/* ===== LU Mobile fixes V.00.05.63 ===== */
 .gate-version{
   margin-top: 10px;
   font-size: 12px;
@@ -3337,6 +3337,42 @@ body.lu-mobile-menu-open #mobileMenuOverlay{ display:block; }
   }catch(e){}
 })();
 </script>
+
+
+<style id="lu-hotfix-63">
+/* Hotfix V.00.05.63: mobile header overlay + gate version placement */
+#mobileMenuOverlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index:9998;
+  display:none;
+}
+body.lu-mobile-menu-open #mobileMenuOverlay{ display:block; }
+#mobileActionsMenu{ z-index:9999; }
+body.lu-mobile-menu-open #mobileActionsMenu{ display:block !important; }
+@media (min-width:981px){
+  .mobile-only{ display:none !important; }
+  #mobileActionsMenu{ display:none !important; }
+  #mobileMenuOverlay{ display:none !important; }
+}
+@media (max-width:980px){
+  .topbar{
+    padding-top:calc(10px + env(safe-area-inset-top));
+  }
+  .topbar .center{ display:none !important; }
+  .topbar .brand{ justify-self:center; }
+}
+#startupGate .gate-card{ display:flex; flex-direction:column; }
+#startupGate .gate-version{
+  margin-top:auto;
+  padding-top:12px;
+  text-align:center;
+  font-size:12px;
+  opacity:.65;
+}
+</style>
 
 </head>
 
@@ -10167,8 +10203,6 @@ hookStudentSave();
     </div>
 
     <div class="gate-sub">Entra con tu <b>PIN de edición</b> para modificar, o con el <b>PIN general</b> para solo ver.</div>
-    <div class="gate-version" id="gateVersion"></div>
-
     <div class="gate-row">
       <input id="gatePin" type="password" inputmode="numeric" autocomplete="one-time-code" placeholder="••••" maxlength="4" />
       <button id="gateEnterBtn" type="button">Entrar</button>
@@ -10176,6 +10210,7 @@ hookStudentSave();
 
     <div id="gateMsgPin" class="gate-msg"></div>
     <div class="gate-hint">Tip: puedes presionar <b>Enter</b> para entrar.</div>
+    <div class="gate-version" id="gateVersion"></div>
   </div>
 </div>
 
@@ -10629,57 +10664,14 @@ ${where}`, stack);
 })();
 
 </script>
-<script>
 
-/* Mobile Actions Menu (⋯) */
-(function(){
-  function q(sel, root){ return (root||document).querySelector(sel); }
-  function closeMenus(){
-    var m = q('#mobileActionsMenu');
-    if(m) m.style.display = 'none';
-  }
-  document.addEventListener('click', function(e){
-    var btn = e.target.closest && e.target.closest('#mobileActionsBtn');
-    var menu = q('#mobileActionsMenu');
-    if(btn && menu){
-      e.preventDefault();
-      e.stopPropagation();
-      menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
-      return;
-    }
-    var item = e.target.closest && e.target.closest('#mobileActionsMenu [data-act]');
-    if(item){
-      e.preventDefault();
-      var act = item.getAttribute('data-act');
-      // proxy to existing desktop buttons (hidden on mobile)
-      try{
-        if(act === 'presentation'){ var b=q('#presentationBtn'); if(b) b.click(); }
-        if(act === 'theme'){ var b=q('#themeBtn'); if(b) b.click(); }
-        if(act === 'data'){
-          var b=q('#dataMenuBtn'); if(b) b.click();
-          // if data menu opened, also close ⋯
-        }
-        if(act === 'edit'){ var b=q('#editLockBtn'); if(b) b.click(); }
-      }catch(_){}
-      closeMenus();
-      return;
-    }
-    // outside click closes
-    if(!e.target.closest('#mobileActionsMenu')) closeMenus();
-  }, true);
-
-  // close on resize/orientation
-  window.addEventListener('resize', closeMenus, {passive:true});
-})();
-
-</script>
 
 <script>
-/* ===== LU Mobile Header + Gate Version (V.00.05.62) ===== */
+/* ===== LU Mobile Header + Gate Version (V.00.05.63) ===== */
 (function(){
   // version
   try {
-    var ver = "V.00.05.62";
+    var ver = "V.00.05.63";
     var gv = document.getElementById("gateVersion");
     if (gv) gv.textContent = ver;
     window.LU_APP_VERSION = ver;
