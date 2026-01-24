@@ -3594,6 +3594,114 @@ body.lu-header-open #mobileMenuOverlay{
 header.topbar, header.topbar *{ -webkit-tap-highlight-color: transparent; }
 </style>
 
+
+<style id="lu-mobile-header-fix">
+  :root{
+    --lu-safe-top: env(safe-area-inset-top, 0px);
+    --lu-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --lu-topbar-h: 78px;
+  }
+
+  /* Desktop: keep current header, hide mobile chrome */
+  @media (min-width: 901px){
+    #sidebarToggleBtn,
+    #mobileActionsBtn,
+    #mobileHeaderMenuBtn,
+    #mobileActionsMenu,
+    #mobileMenuOverlay{
+      display:none !important;
+    }
+  }
+
+  /* Mobile / Tablet portrait: deterministic header + clickable menu */
+  @media (max-width: 900px){
+    header.topbar{
+      position: sticky;
+      top: 0;
+      z-index: 10000;
+      padding-top: var(--lu-safe-top);
+    }
+    header.topbar .topbar-inner{
+      min-height: var(--lu-topbar-h);
+    }
+
+    /* Center the logo */
+    header.topbar .brand{
+      flex: 1 1 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      gap: 0;
+    }
+    header.topbar .brand .appmark{
+      margin: 0 auto !important;
+    }
+
+    /* Hide duplicate/legacy mobile button that was inside the brand */
+    #mobileHeaderMenuBtn{ display:none !important; }
+
+    /* Hide desktop nav + right actions in mobile header */
+    header.topbar .center{ display:none !important; }
+    header.topbar .right .btn,
+    header.topbar .right .dropdown,
+    header.topbar .right .segmented{
+      display:none !important;
+    }
+
+    /* Show/position the two mobile buttons (left+right) */
+    #sidebarToggleBtn,
+    #mobileActionsBtn{
+      display:flex !important;
+      align-items:center;
+      justify-content:center;
+      position:absolute !important;
+      top: 50% !important;
+      transform: translateY(-50%) !important;
+      z-index: 10020 !important;
+      pointer-events:auto !important;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #sidebarToggleBtn{ left: 12px !important; right:auto !important; }
+    #mobileActionsBtn{ right: 12px !important; left:auto !important; }
+
+    /* Fullscreen overlay behind the menu */
+    #mobileMenuOverlay{
+      position: fixed !important;
+      inset: 0 !important;
+      z-index: 10025 !important;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display:none !important;
+      pointer-events:auto !important;
+    }
+    body.lu-mobile-menu-open #mobileMenuOverlay{ display:block !important; }
+
+    /* Menu sheet */
+    #mobileActionsMenu{
+      position: fixed !important;
+      left: 12px !important;
+      right: 12px !important;
+      top: calc(var(--lu-safe-top) + var(--lu-topbar-h) + 10px) !important;
+      z-index: 10030 !important;
+      border-radius: 18px !important;
+      overflow: hidden !important;
+      display:none !important;
+      pointer-events:auto !important;
+      box-shadow: 0 18px 55px rgba(0,0,0,.55);
+    }
+    body.lu-mobile-menu-open #mobileActionsMenu{ display:block !important; }
+
+    /* When menu is open, don't let the page behind capture touches */
+    body.lu-mobile-menu-open{
+      overflow:hidden;
+      touch-action:none;
+    }
+  }
+</style>
+
 </head>
 
 
@@ -6208,9 +6316,11 @@ function bindGroupRosterControlsOnce(){
     roster.addEventListener("click", function(ev){
       var mv = ev.target && ev.target.closest ? ev.target.closest("[data-move]") : null;
       if(mv){
-        if(mv.hasAttribute("disabled")){ ev.preventDefault(); ev.stopPropagation(); return; }
+        if(mv.hasAttribute("disabled")){ ev.preventDefault(); ev.stopPropagation();
+        if(ev.stopImmediatePropagation) ev.stopImmediatePropagation(); return; }
         ev.preventDefault();
         ev.stopPropagation();
+        if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
         var hid = mv.getAttribute("data-id");
         var dir = mv.getAttribute("data-move");
         if(hid && dir) moveGroupHero(String(hid), String(dir), mv);
@@ -11113,6 +11223,92 @@ ${where}`, stack);
   }
 
   window.addEventListener('resize', function(){ if(!isMobile()) close(); });
+})();
+</script>
+
+
+<script id="lu-mobile-header-fix-js">
+(function(){
+  try{
+    var body = document.body;
+    var mq = window.matchMedia("(max-width: 900px)");
+    var btnLeft = document.getElementById("sidebarToggleBtn");     // hamburger
+    var btnRight = document.getElementById("mobileActionsBtn");    // three dots / actions
+    var menu = document.getElementById("mobileActionsMenu");
+    var overlay = document.getElementById("mobileMenuOverlay");
+
+    if(!btnLeft || !btnRight || !menu || !overlay) return;
+
+    // Let CSS control visibility (avoid inline display conflicts).
+    try{ menu.style.removeProperty("display"); }catch(e){}
+    try{ overlay.style.removeProperty("display"); }catch(e){}
+
+    // Improve clickability on iOS.
+    btnLeft.type = "button";
+    btnRight.type = "button";
+    btnLeft.setAttribute("aria-label","Menú");
+    btnRight.setAttribute("aria-label","Acciones");
+    btnLeft.setAttribute("aria-expanded","false");
+    btnRight.setAttribute("aria-expanded","false");
+    overlay.setAttribute("aria-hidden","true");
+
+    function closeMenu(){
+      body.classList.remove("lu-mobile-menu-open");
+      btnLeft.setAttribute("aria-expanded","false");
+      btnRight.setAttribute("aria-expanded","false");
+      overlay.setAttribute("aria-hidden","true");
+    }
+    function openMenu(){
+      body.classList.add("lu-mobile-menu-open");
+      btnLeft.setAttribute("aria-expanded","true");
+      btnRight.setAttribute("aria-expanded","true");
+      overlay.setAttribute("aria-hidden","false");
+    }
+    function toggleMenu(ev){
+      if(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      }
+      if(body.classList.contains("lu-mobile-menu-open")) closeMenu();
+      else openMenu();
+    }
+
+    // Use both click and touchend; some iOS cases swallow click.
+    ["click","touchend"].forEach(function(evt){
+      btnLeft.addEventListener(evt, toggleMenu, {passive:false});
+      btnRight.addEventListener(evt, toggleMenu, {passive:false});
+      overlay.addEventListener(evt, function(e){ e.preventDefault(); closeMenu(); }, {passive:false});
+    });
+
+    // Prevent backdrop close when tapping inside menu; also close after action button tap.
+    menu.addEventListener("click", function(e){
+      e.stopPropagation();
+      var t = e.target;
+      if(!t) return;
+      // if a menu button was clicked, close after its handler runs
+      if(t.closest && t.closest("[data-action],[data-cmd],button,a")){
+        setTimeout(closeMenu, 50);
+      }
+    }, true);
+    menu.addEventListener("touchend", function(e){
+      e.stopPropagation();
+    }, {passive:true, capture:true});
+
+    window.addEventListener("keydown", function(e){
+      if(e && e.key === "Escape") closeMenu();
+    });
+
+    function sync(){
+      // Close when leaving mobile breakpoint (prevents stray overlay on desktop).
+      if(!mq.matches) closeMenu();
+    }
+    if(mq.addEventListener) mq.addEventListener("change", sync);
+    else if(mq.addListener) mq.addListener(sync);
+
+  }catch(err){
+    // no-op
+  }
 })();
 </script>
 
