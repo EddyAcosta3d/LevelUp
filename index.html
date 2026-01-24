@@ -3310,6 +3310,35 @@ body.lu-mobile-menu-open #mobileMenuOverlay{ display:block; }
   header.topbar .brand{margin:0 auto}
 }
 
+
+/* --- Mobile header: reliable hamburger & dropdown --- */
+@media (max-width: 820px){
+  header.topbar .topbar-center{ position: relative; }
+  #mobileActionsBtn{
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    z-index: 2101; /* above header bg */
+  }
+  /* keep logo visually centered even with hamburger */
+  header.topbar .logo-wrap{ margin: 0 auto; }
+  /* dropdown should not be clipped */
+  header.topbar{ overflow: visible; }
+  #mobileActionsMenu{
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: calc(100vw - 24px);
+  }
+  #mobileActionsMenu .grid{ grid-template-columns: 1fr 1fr; }
+}
 </style>
 
 <script>
@@ -10853,6 +10882,83 @@ ${where}`, stack);
   if (overlay) overlay.addEventListener("click", closeMenu);
 })();
 </script>
+
+<script id="LU_MOBILE_HEADER_WIRE">
+(function(){
+  function ready(fn){
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', fn, {once:true});
+    else fn();
+  }
+  ready(function(){
+    var btn = document.getElementById('mobileActionsBtn');
+    var menu = document.getElementById('mobileActionsMenu');
+    if(!btn || !menu) return;
+
+    function isOpen(){ return menu.classList.contains('open'); }
+    function open(){
+      menu.classList.add('open');
+      btn.setAttribute('aria-expanded','true');
+      // prevent accidental background clicks on iOS causing weird focus jumps
+      menu.style.pointerEvents = 'auto';
+    }
+    function close(){
+      menu.classList.remove('open');
+      btn.setAttribute('aria-expanded','false');
+      menu.style.pointerEvents = '';
+    }
+    function toggle(){ isOpen() ? close() : open(); }
+
+    // If another script already bound it, don't double-bind.
+    if(!btn.__luBound){
+      btn.__luBound = true;
+      btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); toggle(); }, {passive:false});
+      btn.addEventListener('touchstart', function(e){ e.stopPropagation(); }, {passive:true});
+    }
+
+    // Close on outside click/tap
+    document.addEventListener('click', function(e){
+      if(!isOpen()) return;
+      if(menu.contains(e.target) || btn.contains(e.target)) return;
+      close();
+    });
+
+    // Close on escape
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && isOpen()) close();
+    });
+
+    // Wire mobile menu buttons to existing actions
+    var map = [
+      ['btnPresentationM','btnPresentation'],
+      ['btnThemeM','btnTheme'],
+      ['btnDataM','btnData'],
+      ['btnEditM','btnEdit']
+    ];
+    map.forEach(function(pair){
+      var mbtn = document.getElementById(pair[0]);
+      if(!mbtn) return;
+      if(mbtn.__luBound) return;
+      mbtn.__luBound = true;
+      mbtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        var target = document.getElementById(pair[1]);
+        if(target) target.click();
+        close();
+      }, {passive:false});
+    });
+
+    // When a desktop dropdown opens, ensure mobile menu closes (avoid overlap)
+    ['btnData','btnEdit','btnTheme','btnPresentation'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      if(el.__luMobileCloseBound) return;
+      el.__luMobileCloseBound = true;
+      el.addEventListener('click', function(){ close(); }, {passive:true});
+    });
+  });
+})();
+</script>
+
 </body>
 
 <script>
