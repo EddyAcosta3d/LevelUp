@@ -206,7 +206,6 @@
       stat.className = 'stat' + wide;
       stat.innerHTML = `
         <div class="badge">${key}</div>
-        <div class="stat__label">${label}</div>
         <div class="stat__track"><div class="stat__dot" style="left:${pct}%"></div></div>
         <div class="stat__val">${val}</div>
       `;
