@@ -980,8 +980,11 @@ body::-webkit-scrollbar,
 
 /* Photo editor modal (uses existing .modal/.modal__card styles) */
 #photoPreviewBox{
-  width:100%;
-  aspect-ratio: 1 / 1;
+  /* Size is set dynamically to match the real avatar frame */
+  width: var(--photoPreviewW, 280px);
+  height: var(--photoPreviewH, 320px);
+  max-width: 100%;
+  margin: 0 auto;
   border-radius:14px;
   overflow:hidden;
   background:rgba(255,255,255,.04);
@@ -990,11 +993,14 @@ body::-webkit-scrollbar,
   align-items:center;
   justify-content:center;
   touch-action:none;
+  user-select:none;
 }
 #photoPreviewBox img{
   width:100%;
   height:100%;
   object-fit:cover;
+  pointer-events:none;
+  user-select:none;
 }
 .photoFitRow{
   display:flex;
@@ -1015,74 +1021,159 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
 *::-webkit-scrollbar{ width:0; height:0; }
 
 
-/* v32: Photo modal + touch drag fixes */
-#photoModal .modal__card{
-  max-width: 720px;
-  width: min(92vw, 720px);
-  max-height: 86vh;
+/* Level Up modal */
+.modal__card--levelup{
+  max-width: 560px;
 }
-#photoPreviewBox{
-  width: 100%;
-  height: min(48vh, 380px);
-  border-radius: 18px;
-  overflow: hidden;
-  position: relative;
-  background: rgba(255,255,255,0.03);
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
+.levelUpHeroLine{
   display:flex;
+  gap:10px;
+  align-items:baseline;
+  margin-bottom:10px;
+}
+.levelUpHeroName{
+  font-weight:700;
+  letter-spacing:.2px;
+}
+.levelUpBig{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
+  border-radius:18px;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
+  margin: 10px auto 14px auto;
+  width: min(360px, 100%);
 }
-#photoPreviewBox img{
+.levelUpBig__label{
+  opacity:.75;
+  font-size:.95rem;
+  margin-bottom:2px;
+}
+.levelUpBig__num{
+  font-size: 78px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -2px;
+  transform: translateZ(0);
+}
+.levelUpBig__num.is-anim{
+  animation: lvlPop .75s cubic-bezier(.2,1.2,.2,1) both;
+}
+@keyframes lvlPop{
+  0%{ transform: scale(.6); filter: blur(2px); opacity:.0; }
+  55%{ transform: scale(1.12); filter: blur(0); opacity:1; }
+  100%{ transform: scale(1.0); }
+}
+.levelUpPickTitle{
+  font-weight:700;
+  margin: 6px 0 10px 0;
+}
+.rewardPickGrid{
+  display:grid;
+  gap:10px;
+  grid-template-columns: repeat(1, 1fr);
+}
+@media (min-width: 520px){
+  .rewardPickGrid{ grid-template-columns: repeat(2, 1fr); }
+}
+.rewardPick{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  border-radius:14px;
+  padding:12px;
+  cursor:pointer;
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+.rewardPick:hover{
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.20);
+  background: rgba(255,255,255,.05);
+}
+.rewardPick__title{
+  font-weight:800;
+  margin-bottom:4px;
+}
+.rewardPick__desc{
+  opacity:.82;
+  font-size:.95rem;
+}
+.levelUpHint{ margin-top: 10px; }
+
+/* Reward history in ficha */
+.heroRewardsBox{
+  margin-top: 12px;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events: none; /* let the box handle drag; prevents native image drag */
-  user-drag: none;
-  -webkit-user-drag: none;
-  user-select: none;
-  -webkit-user-select: none;
-  transform-origin: center;
 }
-#photoModal .photoFitRow{
-  flex-wrap: wrap;
+.rewardHistory{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top: 8px;
 }
-/* v32: stat sliders */
-.stat__range{
-  width: 100%;
-  margin: 0;
-  background: transparent;
+.rewardItem{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  justify-content:space-between;
 }
-.stat__track{
-  position: relative;
-}
-.stat__range{
-  position:absolute;
-  inset: -6px 0 -6px 0;
-  opacity: 0;
-  cursor: pointer;
-}
-.stat__dot{
-  pointer-events:none;
+.rewardItem__left{ min-width: 0; }
+.rewardItem__title{ font-weight:800; }
+.rewardItem__meta{ opacity:.75; font-size:.9rem; margin-top:2px; }
+.rewardItem__badge{
+  font-size:.85rem;
+  opacity:.9;
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.05);
+  border-radius: 999px;
+  padding: 4px 10px;
+  white-space:nowrap;
 }
 
-/* v32: level-up modal */
-.rewardGrid{
-  display:grid;
-  grid-template-columns: repeat(3, minmax(0,1fr));
+
+
+/* Stats sliders (Fichas) */
+.statRow{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:10px 10px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  border-radius:14px;
+}
+.statRow__label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
   gap:10px;
 }
-@media (max-width: 640px){
-  .rewardGrid{ grid-template-columns: 1fr; }
+.statRow__val{
+  font-weight:800;
+  opacity:.9;
 }
-#levelUpModal .modal__card{
-  max-width: 720px;
-  width: min(92vw, 720px);
+.statRow__bar{
+  position:relative;
+  height:14px;
+  border-radius:999px;
+  background: rgba(255,255,255,.06);
+  overflow:hidden;
 }
-
-#statPickModal .modal__card{ max-width: 560px; width: min(92vw, 560px); }
-@media (max-width:640px){
-  #statPickModal .rewardGrid{ grid-template-columns: repeat(3, minmax(0,1fr)) !important; }
+.statRow__fill{
+  height:100%;
+  width:0%;
+  background: rgba(255,255,255,.26);
+}
+.statRow__range{
+  position:absolute;
+  inset: -6px 0 -6px 0;
+  width:100%;
+  opacity:0;
+  cursor:pointer;
 }

@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'FichasFunctional_v32';
+  window.LEVELUP_BUILD = 'STABLE_RESET_v14';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -131,6 +131,12 @@ function readFileAsDataURL(file){
       h.weekXp = Number(h.weekXp ?? 0);
       h.weekXpMax = Number(h.weekXpMax ?? DEFAULT_WEEK_XP_MAX);
       h.photoFit = h.photoFit || { x:50, y:50, scale:1 };
+      h.photoSrc = h.photoSrc || '';
+      h.desc = h.desc || '';
+      h.goal = h.goal || '';
+      h.rewardsHistory = Array.isArray(h.rewardsHistory) ? h.rewardsHistory : [];
+      h.pendingRewards = Array.isArray(h.pendingRewards) ? h.pendingRewards : []; // items: { level, createdAt }
+      h.tokens = Number(h.tokens ?? 0);
       // keep stats object
       h.stats = h.stats && typeof h.stats === 'object' ? h.stats : {};
       ['INT','SAB','CAR','RES','CRE'].forEach(k=>{ if (h.stats[k] === undefined) h.stats[k] = 0; });
@@ -418,49 +424,54 @@ function readFileAsDataURL(file){
     return heroes.find(h => h.id === state.selectedHeroId) || heroes[0] || null;
   }
 
-  
-function renderStats(hero){
+  function renderStats(hero){
     const box = $('#statsBox');
-    const rawStats = hero?.stats || { INT:0, SAB:0, CAR:0, RES:0, CRE:0 };
-    const stats = { ...rawStats };
-    if (stats.RES == null && stats.CON != null) stats.RES = stats.CON;
+    if (!box) return;
+    hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
     const order = ['INT','SAB','CAR','RES','CRE'];
+    const maxVal = 20;
+
     box.innerHTML = '';
     order.forEach((key)=>{
-      const val = Math.max(0, Math.min(20, Number(stats[key] ?? 0)));
-      const pct = Math.max(0, Math.min(100, (val/20)*100));
-      const stat = document.createElement('div');
-      stat.className = 'stat';
-      stat.innerHTML = `
-        <div class="badge">${key}</div>
-        <div class="stat__track">
-          <input class="stat__range" type="range" min="0" max="20" step="1" value="${val}" aria-label="${key}">
-          <div class="stat__dot" style="left:${pct}%"></div>
+      const val = Math.max(0, Math.min(maxVal, Number(hero.stats[key] ?? 0)));
+      const pct = (val / maxVal) * 100;
+
+      const row = document.createElement('div');
+      row.className = 'statRow';
+      row.innerHTML = `
+        <div class="statRow__label">
+          <div class="badge">${key}</div>
+          <div class="statRow__val" id="statVal_${key}">${val}</div>
         </div>
-        <div class="stat__val" data-stat-val="${key}">${val}</div>
+        <div class="statRow__bar">
+          <div class="statRow__fill" style="width:${pct}%"></div>
+          <input class="statRow__range" type="range" min="0" max="${maxVal}" step="1" value="${val}" aria-label="Ajustar ${key}">
+        </div>
       `;
-      const range = stat.querySelector('.stat__range');
+
+      const range = row.querySelector('input.statRow__range');
+      const valEl = row.querySelector(`#statVal_${key}`);
+
+      // viewer: read-only (still movable would be confusing)
+      if (state.role === 'viewer') range.disabled = true;
+
       range.addEventListener('input', ()=>{
-        const h = currentHero();
-        if (!h) return;
-        h.stats = h.stats && typeof h.stats === 'object' ? h.stats : {};
-        const v = Math.max(0, Math.min(20, Number(range.value || 0)));
-        h.stats[key] = v;
-        // update dot + label live (no full rerender)
-        const p = Math.max(0, Math.min(100, (v/20)*100));
-        stat.querySelector('.stat__dot').style.left = `${p}%`;
-        stat.querySelector(`[data-stat-val="${key}"]`).textContent = String(v);
+        const n = Number(range.value || 0);
+        hero.stats[key] = n;
+        if (valEl) valEl.textContent = String(n);
+        const fill = row.querySelector('.statRow__fill');
+        if (fill) fill.style.width = `${(n/maxVal)*100}%`;
+      });
+      range.addEventListener('change', ()=>{
         saveLocal(state.data);
         if (state.dataSource === 'remote') state.dataSource = 'local';
         updateDataDebug();
+        renderHeroList();
       });
-      range.addEventListener('change', ()=>{
-        renderHeroList(); // reflect maybe on list summary later
-      });
-      box.appendChild(stat);
+
+      box.appendChild(row);
     });
   }
-
 
   function stripDiacritics(str){
     try{ return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(_){ return String(str); }
@@ -654,15 +665,118 @@ function renderHeroAvatar(hero){
     $$('#actChips [data-xp]').forEach(b=>{ b.disabled = atMax; });
 
     renderRewards();
+
+    // Pending reward mini-notification
+    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
+    if (hero.pendingRewards.length){
+      // show a gentle toast once per selection
+      if (state.ui.pendingToastHeroId !== hero.id){
+        toast('🎁 Recompensa pendiente por reclamar');
+        state.ui.pendingToastHeroId = hero.id;
+      }
+    }
   }
 
-  // --- Recompensas (placeholder) ---
-  // En la versión estable aún no renderizamos recompensas aquí.
-  // Se deja función vacía para evitar errores cuando el layout no incluye esa sección.
-  function renderRewards(){
-    // TODO: implementar cuando la sección de recompensas esté definida en el HTML + data.json
-    return;
+  // --- Recompensas (general + por héroe) ---
+  const REWARD_OPTIONS = [
+    { id:'stat+1', title:'+1 punto a una estadística', desc:'Elige una stat para aumentar en +1.' },
+    { id:'weekMax+10', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal de actividades pequeñas.' },
+    { id:'token+1', title:'+1 comodín', desc:'Un comodín para canjear después (reintento, pase, etc.).' },
+    { id:'perk', title:'Privilegio en clase', desc:'Un privilegio acordado contigo (ej. elegir equipo, música 5 min).' }
+  ];
+
+  function formatDateMX(iso){
+    try{
+      const d = new Date(iso);
+      return d.toLocaleDateString('es-MX', { year:'numeric', month:'short', day:'2-digit' });
+    }catch(_){ return iso || ''; }
   }
+
+  function renderHeroRewards(hero){
+    const list = $('#heroRewardsList');
+    const empty = $('#heroRewardsEmpty');
+    if (!list || !empty) return;
+
+    const hist = Array.isArray(hero?.rewardsHistory) ? hero.rewardsHistory : [];
+    list.innerHTML = '';
+    if (!hist.length){
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+
+    hist.slice().reverse().forEach(item=>{
+      const opt = REWARD_OPTIONS.find(o=>o.id===item.rewardId);
+      const title = item.title || (opt ? opt.title : 'Recompensa');
+      const badge = item.badge || (opt ? opt.id : '');
+      const div = document.createElement('div');
+      div.className = 'rewardItem';
+      div.innerHTML = `
+        <div class="rewardItem__left">
+          <div class="rewardItem__title">${escapeHtml(title)}</div>
+          <div class="rewardItem__meta">Nivel ${escapeHtml(String(item.level ?? '—'))} · ${escapeHtml(formatDateMX(item.date))}</div>
+        </div>
+        <div class="rewardItem__badge">${escapeHtml(badge)}</div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  function renderRewards(){
+    const hero = currentHero();
+    if (!hero) return;
+
+    // Render inside Fichas
+    renderHeroRewards(hero);
+
+    // Recompensas page: show general options + current hero history
+    const page = document.querySelector('.page[data-page="recompensas"]');
+    if (page){
+      const cards = page.querySelector('.cardGrid') || page;
+      const placeholder = page.querySelector('.card');
+      if (placeholder){
+        placeholder.innerHTML = `
+          <div class="cardTitle">Recompensas disponibles</div>
+          <div class="muted">Estas son las recompensas generales al subir de nivel (las podemos ajustar después).</div>
+          <div style="height:10px"></div>
+          <div class="rewardPickGrid">
+            ${REWARD_OPTIONS.map(o=>`
+              <div class="rewardPick" style="cursor:default">
+                <div class="rewardPick__title">${escapeHtml(o.title)}</div>
+                <div class="rewardPick__desc">${escapeHtml(o.desc)}</div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="height:14px"></div>
+          <div class="cardTitle">Historial del héroe seleccionado</div>
+          <div class="muted" id="rewardsHeroHint"></div>
+          <div style="height:8px"></div>
+          <div class="rewardHistory" id="rewardsHeroHistory"></div>
+        `;
+      }
+
+      const hint = page.querySelector('#rewardsHeroHint');
+      const histBox = page.querySelector('#rewardsHeroHistory');
+      if (hint && histBox){
+        hint.textContent = hero.name ? `Héroe: ${hero.name}` : 'Héroe: (sin nombre)';
+        const hist = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
+        histBox.innerHTML = hist.length ? hist.slice().reverse().map(item=>{
+          const opt = REWARD_OPTIONS.find(o=>o.id===item.rewardId);
+          const title = item.title || (opt?opt.title:'Recompensa');
+          return `
+            <div class="rewardItem">
+              <div class="rewardItem__left">
+                <div class="rewardItem__title">${escapeHtml(title)}</div>
+                <div class="rewardItem__meta">Nivel ${escapeHtml(String(item.level ?? '—'))} · ${escapeHtml(formatDateMX(item.date))}</div>
+              </div>
+              <div class="rewardItem__badge">${escapeHtml(item.rewardId||'')}</div>
+            </div>
+          `;
+        }).join('') : '<div class="muted">Aún no ha reclamado recompensas.</div>';
+      }
+    }
+  }
+
 
   function renderChallenges(){
     const list = $('#challengeList');
@@ -778,33 +892,39 @@ function renderHeroAvatar(hero){
     renderChallengeDetail();
   }
 
-  
-function bumpHeroXp(delta){
+  function bumpHeroXp(delta){
     const hero = currentHero();
     if (!hero) return;
 
-    const xpMax = Number(hero.xpMax ?? 100);
-    hero.xp = Math.max(0, Number(hero.xp ?? 0) + Number(delta || 0));
+    hero.xp = Number(hero.xp ?? 0) + Number(delta || 0);
+    hero.xpMax = Number(hero.xpMax ?? 100);
+    hero.level = Number(hero.level ?? 1);
+    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
+    hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
 
-    // Level-up logic (supports multiple levels if a big XP is added)
-    let leveled = 0;
-    while (xpMax > 0 && hero.xp >= xpMax){
-      hero.xp = hero.xp - xpMax;
-      hero.level = Number(hero.level ?? 1) + 1;
-      leveled++;
+    // clamp low
+    if (hero.xp < 0) hero.xp = 0;
+
+    // Level-up loop (in case someone adds lots of XP)
+    let leveledUp = false;
+    while (hero.xpMax > 0 && hero.xp >= hero.xpMax){
+      hero.xp -= hero.xpMax;
+      hero.level += 1;
+      leveledUp = true;
+      hero.pendingRewards.push({ level: hero.level, createdAt: Date.now() });
     }
 
     saveLocal(state.data);
-    if (state.dataSource === 'remote') state.dataSource = 'local'; // si tocaste algo local
+    if (state.dataSource === 'remote') state.dataSource = 'local';
     updateDataDebug();
     renderHeroList();
     renderHeroDetail();
 
-    if (leveled > 0){
-      openLevelUpModal(hero, leveled);
+    if (leveledUp){
+      // Open celebration modal for the most recent pending reward
+      openLevelUpModal();
     }
   }
-
 
   // Import / Export (para tu flujo offline con iPad)
   async function handleImportJson(file){
@@ -869,15 +989,26 @@ function bumpHeroXp(delta){
     }
 
     const previewBox = $('#photoPreviewBox');
+
+    // Match the real avatar frame size so the encuadre is 1:1 with what se verá
+    const frame = $('#avatarFrame');
+    if (frame && previewBox){
+      const r = frame.getBoundingClientRect();
+      // fallback in case width is 0 (hidden)
+      const w = Math.max(220, Math.round(r.width || 280));
+      const h = Math.max(240, Math.round(r.height || 320));
+      previewBox.style.setProperty('--photoPreviewW', w + 'px');
+      previewBox.style.setProperty('--photoPreviewH', h + 'px');
+    }
     previewBox.replaceChildren();
     const img = document.createElement('img');
     img.id = 'photoPreviewImg';
+    img.setAttribute('draggable','false');
+    img.draggable = false;
+    img.addEventListener('dragstart', (e)=>{ e.preventDefault(); });
     img.src = src;
     img.alt = 'Previsualización';
     img.loading = 'eager';
-    img.draggable = false;
-    img.ondragstart = ()=>false;
-    previewBox.ondragstart = ()=>false;
     previewBox.appendChild(img);
     applyPhotoFit(img, hero);
 
@@ -890,8 +1021,6 @@ function bumpHeroXp(delta){
     let startFit = null;
 
     const onDown = (e)=>{
-      if (e.button != null && e.button !== 0) return;
-      e.preventDefault();
       dragging = true;
       previewBox.setPointerCapture(e.pointerId);
       startX = e.clientX;
@@ -982,6 +1111,179 @@ function bumpHeroXp(delta){
   }
 
 
+  // --- Level Up Modal + reward claiming ---
+  state.ui.levelUpOpen = false;
+  state.ui.pendingToastHeroId = null;
+
+  function getNextPendingReward(hero){
+    const list = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
+    if (!list.length) return null;
+    // Pick the oldest pending (FIFO)
+    return list[0];
+  }
+
+  function openLevelUpModal(){
+    const hero = currentHero();
+    if (!hero) return;
+    const pending = getNextPendingReward(hero);
+    if (!pending) return;
+
+    const modal = $('#levelUpModal');
+    if (!modal) return;
+
+    $('#levelUpHeroName').textContent = hero.name || '(sin nombre)';
+    const numEl = $('#levelUpNum');
+    if (numEl){
+      // Animate number
+      numEl.classList.remove('is-anim');
+      const target = Number(pending.level || hero.level || 1);
+      const start = Math.max(1, target - 1);
+      const t0 = performance.now();
+      const dur = 520;
+
+      const tick = (t)=>{
+        const k = Math.min(1, (t - t0)/dur);
+        const val = Math.round(start + (target-start)*k);
+        numEl.textContent = String(val);
+        if (k < 1) requestAnimationFrame(tick);
+        else {
+          numEl.textContent = String(target);
+          // pop animation
+          requestAnimationFrame(()=> numEl.classList.add('is-anim'));
+        }
+      };
+      requestAnimationFrame(tick);
+    }
+
+    renderRewardPickGrid('main');
+    modal.hidden = false;
+    state.ui.levelUpOpen = true;
+
+    // Mini notification while pending
+    toast('🎁 Tienes una recompensa por reclamar');
+  }
+
+  function closeLevelUpModal(){
+    const modal = $('#levelUpModal');
+    if (!modal) return;
+    modal.hidden = true;
+    state.ui.levelUpOpen = false;
+  }
+
+  function renderRewardPickGrid(mode){
+    const hero = currentHero();
+    if (!hero) return;
+    const pending = getNextPendingReward(hero);
+    const grid = $('#rewardPickGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    if (mode === 'stat'){
+      const title = document.createElement('div');
+      title.className = 'muted';
+      title.textContent = 'Elige la estadística a subir (+1):';
+      grid.appendChild(title);
+
+      const statKeys = ['INT','SAB','CAR','RES','CRE'];
+      statKeys.forEach(k=>{
+        const btn = document.createElement('div');
+        btn.className = 'rewardPick';
+        btn.innerHTML = `
+          <div class="rewardPick__title">${k}</div>
+          <div class="rewardPick__desc">Sube ${k} de ${Number(hero.stats?.[k] ?? 0)} a ${Number(hero.stats?.[k] ?? 0) + 1}</div>
+        `;
+        btn.addEventListener('click', ()=>{
+          hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
+          hero.stats[k] = Math.min(20, Number(hero.stats[k] ?? 0) + 1);
+
+          claimPendingReward({
+            rewardId: 'stat+1',
+            title: `+1 ${k}`,
+            badge: '+1 stat'
+          });
+        });
+        grid.appendChild(btn);
+      });
+
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'pill pill--small pill--ghost';
+      back.textContent = '← Volver';
+      back.style.marginTop = '8px';
+      back.addEventListener('click', ()=> renderRewardPickGrid('main'));
+      grid.appendChild(back);
+      return;
+    }
+
+    // main rewards
+    const opts = [
+      { id:'stat+1', title:'+1 punto a una estadística', desc:'Elige una stat para aumentar en +1.' },
+      { id:'weekMax+10', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal de actividades pequeñas.' },
+      { id:'token+1', title:'+1 comodín', desc:'Un comodín para canjear después (reintento, pase, etc.).' },
+      { id:'perk', title:'Privilegio en clase', desc:'Un privilegio acordado contigo (ej. elegir equipo, música 5 min).' }
+    ];
+
+    opts.forEach(o=>{
+      const div = document.createElement('div');
+      div.className = 'rewardPick';
+      div.innerHTML = `
+        <div class="rewardPick__title">${escapeHtml(o.title)}</div>
+        <div class="rewardPick__desc">${escapeHtml(o.desc)}</div>
+      `;
+      div.addEventListener('click', ()=>{
+        if (!pending) return;
+
+        if (o.id === 'stat+1'){
+          renderRewardPickGrid('stat');
+          return;
+        }
+
+        if (o.id === 'weekMax+10'){
+          hero.weekXpMax = Number(hero.weekXpMax ?? DEFAULT_WEEK_XP_MAX) + 10;
+        }else if (o.id === 'token+1'){
+          hero.tokens = Number(hero.tokens ?? 0) + 1;
+        }else if (o.id === 'perk'){
+          // just record it; we can later add a field for details
+        }
+
+        claimPendingReward({ rewardId: o.id, title: o.title, badge: o.id });
+      });
+
+      grid.appendChild(div);
+    });
+  }
+
+  function claimPendingReward({rewardId, title, badge}){
+    const hero = currentHero();
+    if (!hero) return;
+    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
+    const pending = hero.pendingRewards.shift(); // remove first
+    if (!pending) return;
+
+    hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
+    hero.rewardsHistory.push({
+      level: pending.level,
+      rewardId,
+      title,
+      badge,
+      date: new Date().toISOString()
+    });
+
+    saveLocal(state.data);
+    if (state.dataSource === 'remote') state.dataSource = 'local';
+    updateDataDebug();
+    renderAll();
+
+    closeLevelUpModal();
+    toast('✅ Recompensa reclamada');
+
+    // If more pending rewards remain, nudge again
+    if (hero.pendingRewards.length){
+      setTimeout(()=> toast('🎁 Te falta reclamar otra recompensa'), 650);
+    }
+  }
+
   // --- Confirm modal (replaces browser confirm) ---
   function openConfirmModal({title='Confirmar', message='¿Seguro?', okText='Aceptar', cancelText='Cancelar'}){
     return new Promise((resolve)=>{
@@ -1005,84 +1307,6 @@ function bumpHeroXp(delta){
       modal.hidden = false;
     });
   }
-
-
-  async function openLevelUpModal(hero, levelsGained=1){
-    const modal = $('#levelUpModal');
-    if (!modal){ toast(`¡Subiste de nivel! (x${levelsGained})`); return; }
-    $('#levelUpMsg').textContent = `¡Felicidades ${hero.name || ''}! Subiste ${levelsGained} nivel${levelsGained>1?'es':''}. Elige una recompensa:`;
-    modal.hidden = false;
-
-    const close = ()=>{
-      modal.hidden = true;
-      // clean handlers
-      $('#btnRewardStat').onclick = null;
-      $('#btnRewardWeekCap').onclick = null;
-      $('#btnRewardToken').onclick = null;
-      $('#levelUpBackdrop').onclick = null;
-    };
-
-    $('#levelUpBackdrop').onclick = close;
-
-    $('#btnRewardWeekCap').onclick = ()=>{
-      hero.weekXpMax = Number(hero.weekXpMax ?? DEFAULT_WEEK_XP_MAX) + 10;
-      saveLocal(state.data);
-      renderHeroDetail();
-      toast('Límite de XP semanal aumentado (+10).');
-      close();
-    };
-
-    $('#btnRewardToken').onclick = ()=>{
-      hero.tokens = Number(hero.tokens ?? 0) + 1;
-      saveLocal(state.data);
-      toast('Ganaste 1 comodín.');
-      close();
-    };
-
-    $('#btnRewardStat').onclick = ()=>{
-      openStatPickModal(hero, close);
-    };
-  }
-
-  function openStatPickModal(hero, onDone){
-    const modal = $('#statPickModal');
-    if (!modal){
-      // fallback: +1 INT
-      hero.stats = hero.stats || {};
-      hero.stats.INT = Number(hero.stats.INT ?? 0) + 1;
-      saveLocal(state.data);
-      renderHeroDetail();
-      toast('+1 punto a INT.');
-      onDone && onDone();
-      return;
-    }
-    modal.hidden = false;
-
-    const close = ()=>{
-      modal.hidden = true;
-      $$('#statPickModal [data-stat-pick]').forEach(b=> b.onclick = null);
-      $('#btnStatPickClose').onclick = null;
-      $('#statPickBackdrop').onclick = null;
-    };
-
-    $('#btnStatPickClose').onclick = close;
-    $('#statPickBackdrop').onclick = close;
-
-    $$('#statPickModal [data-stat-pick]').forEach(btn=>{
-      btn.onclick = ()=>{
-        const k = btn.getAttribute('data-stat-pick');
-        hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
-        const v = Math.max(0, Math.min(20, Number(hero.stats[k] ?? 0) + 1));
-        hero.stats[k] = v;
-        saveLocal(state.data);
-        renderHeroDetail();
-        toast(`+1 punto a ${k}.`);
-        close();
-        onDone && onDone();
-      };
-    });
-  }
-
 
 function bind(){
     // Cualquier botón "pill" con data-route (topnav + acciones derecha)
@@ -1213,6 +1437,10 @@ function bind(){
     $('#btnCloseRoleModal').addEventListener('click', closeRoleModal);
     $$('[data-close-role-modal]').forEach(el=> el.addEventListener('click', closeRoleModal));
 
+    // Level Up modal backdrop
+    $('#levelUpBackdrop')?.addEventListener('click', closeLevelUpModal);
+    $('#btnLevelUpClose')?.addEventListener('click', closeLevelUpModal);
+
     // Photo / Confirm modals backdrops
     $('#photoBackdrop')?.addEventListener('click', closePhotoModal);
     $('#confirmBackdrop')?.addEventListener('click', ()=>{ const b=$('#btnConfirmCancel'); if(b) b.click(); });
@@ -1293,18 +1521,25 @@ function bind(){
       e.stopPropagation();
       const h = currentHero();
       if (!h) return;
-      const ok = confirm(`¿Eliminar a "${h.name || 'este héroe'}"?\n\nEsto borra la ficha (se puede recuperar solo si tienes respaldo).`);
+
+      const ok = await openConfirmModal({
+        title: 'Eliminar ficha',
+        message: `¿Eliminar a "${h.name || 'este héroe'}"?\n\nEsto borra la ficha. Solo se puede recuperar con un respaldo (JSON).`,
+        okText: 'Eliminar',
+        cancelText: 'Cancelar'
+      });
       if (!ok) return;
-      // Remover del arreglo
+
       state.data.heroes = (state.data.heroes || []).filter(x => x.id !== h.id);
-      // Seleccionar otro héroe si existe
-      const next = (state.data.heroes || [])[0];
-      state.selectedHeroId = next ? next.id : null;
+      if (state.selectedHeroId === h.id){
+        const next = state.data.heroes[0];
+        state.selectedHeroId = next ? next.id : null;
+      }
       saveLocal(state.data);
       if (state.dataSource === 'remote') state.dataSource = 'local';
       updateDataDebug();
       renderAll();
-      toast('Héroe eliminado.');
+      toast('Ficha eliminada');
     });
 
     // Foto de héroe (subir/quitar)

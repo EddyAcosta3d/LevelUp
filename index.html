@@ -133,7 +133,13 @@
               <div class="noteTitle">Meta del trimestre</div>
               <textarea class="textarea textarea--short" id="txtMeta" ></textarea>
             </div>
-          </div>
+          
+                <div class="heroRewardsBox">
+                  <div class="noteTitle">Recompensas reclamadas</div>
+                  <div class="muted" id="heroRewardsEmpty">Aún no ha reclamado recompensas.</div>
+                  <div class="rewardHistory" id="heroRewardsList"></div>
+                </div>
+</div>
 
 
                 
@@ -321,49 +327,34 @@
     </div>
 
     
-    
-    <!-- Modal: Elegir stat -->
-    <div class="modal" id="statPickModal" hidden>
-      <div class="modal__backdrop" id="statPickBackdrop"></div>
-      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="statPickTitle">
-        <div class="modal__header">
-          <div class="cardTitle" id="statPickTitle">Elige un stat</div>
-          <button class="pill pill--small pill--ghost" id="btnStatPickClose" type="button">Cerrar</button>
-        </div>
-        <div class="modal__body">
-          <div class="rewardGrid" style="grid-template-columns: repeat(5, minmax(0,1fr));">
-            <button class="pill pill--small" data-stat-pick="INT" type="button">INT</button>
-            <button class="pill pill--small" data-stat-pick="SAB" type="button">SAB</button>
-            <button class="pill pill--small" data-stat-pick="CAR" type="button">CAR</button>
-            <button class="pill pill--small" data-stat-pick="RES" type="button">RES</button>
-            <button class="pill pill--small" data-stat-pick="CRE" type="button">CRE</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-<!-- Modal: Subir de nivel -->
+    <!-- Modal: Subir de nivel + elegir recompensa -->
     <div class="modal" id="levelUpModal" hidden>
       <div class="modal__backdrop" id="levelUpBackdrop"></div>
-      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="levelUpTitle">
+      <div class="modal__card modal__card--levelup" role="dialog" aria-modal="true" aria-labelledby="levelUpTitle">
         <div class="modal__header">
           <div class="cardTitle" id="levelUpTitle">¡Subiste de nivel!</div>
+          <button class="pill pill--small pill--ghost" id="btnLevelUpClose" type="button">Cerrar</button>
         </div>
         <div class="modal__body">
-          <div class="muted" id="levelUpMsg">Felicidades.</div>
-          <div style="height:12px"></div>
-          <div class="rewardGrid">
-            <button class="pill" id="btnRewardStat" type="button">+1 punto de Stat</button>
-            <button class="pill" id="btnRewardWeekCap" type="button">+10 límite XP semanal</button>
-            <button class="pill" id="btnRewardToken" type="button">+1 Comodín</button>
+          <div class="levelUpHeroLine">
+            <div class="muted">Héroe:</div>
+            <div class="levelUpHeroName" id="levelUpHeroName">—</div>
           </div>
-          <div style="height:14px"></div>
-          <div class="muted" style="font-size:.92rem; opacity:.85;">(Estas recompensas son editables; si quieres otras, las cambiamos.)</div>
+
+          <div class="levelUpBig">
+            <div class="levelUpBig__label">Nivel</div>
+            <div class="levelUpBig__num" id="levelUpNum">1</div>
+          </div>
+
+          <div class="levelUpPickTitle">Elige tu recompensa</div>
+          <div class="rewardPickGrid" id="rewardPickGrid"></div>
+
+          <div class="muted levelUpHint" id="levelUpHint">Tienes una recompensa pendiente. Elígela para reclamarla.</div>
         </div>
       </div>
     </div>
 
-<!-- Modal: Confirmación (sin alerts del navegador) -->
+    <!-- Modal: Confirmación (sin alerts del navegador) -->
     <div class="modal" id="confirmModal" hidden>
       <div class="modal__backdrop" id="confirmBackdrop"></div>
       <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
