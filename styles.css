@@ -370,6 +370,25 @@ body{
 }
 .avatar__frame img{ width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
 .avatar__placeholder{ opacity:.55; }
+
+/* --- Avatar: contenedor con tamaño real (para que la imagen no se vaya a 0px) --- */
+.avatar__frame{ position:relative; }
+.avatar__box{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.avatar__box img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+}
+.avatar__box .avatar__placeholder{ opacity:.55; }
 .avatar__actions{ display:flex; gap: 10px; flex-wrap:nowrap; justify-content:center; width:100%; margin-top: 16px; }
 .avatar__actions--secondary{ margin-top: -2px; }
 

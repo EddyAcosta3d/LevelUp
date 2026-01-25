@@ -6,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
   <!-- LevelUp STABLE_RESET_v14 -->
-<title>LevelUp — Hybrid Skeleton</title>
+<title>LevelUp</title>
+  <!-- Icono de la pestaña (pon tu archivo en assets/logo.png o cambia la ruta) -->
+  <link rel="icon" href="assets/logo.png" type="image/png" />
+  <link rel="apple-touch-icon" href="assets/logo.png" />
   <link rel="stylesheet" href="./styles.css?v=15" />
 </head>
 <body>
@@ -105,10 +108,12 @@
             <div class="cardGrid">
               <div class="card card--center card--avatar">
                 <div class="avatar">
-                  <div class="avatar__frame" id="avatarFrame">
-                    <button class="iconBtn iconBtn--danger iconBtn--inAvatar" id="btnEliminar" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
-                    <div class="avatar__placeholder" id="avatarPlaceholder">Sin foto</div>
-                  </div>
+				  <div class="avatar__frame" id="avatarFrame">
+					<button class="iconBtn iconBtn--danger iconBtn--inAvatar" id="btnEliminar" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
+					<div class="avatar__box" id="avatarBox">
+						<div class="avatar__placeholder">Sin foto</div>
+					</div>
+				  </div>
                   <div class="avatar__actions">
                     <button class="pill pill--small" id="btnPonerFoto">📷 Poner foto</button>
                     <button class="pill pill--small pill--ghost" id="btnEditarFoto">✎ Editar foto</button>
