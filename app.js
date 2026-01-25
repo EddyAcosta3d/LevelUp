@@ -373,7 +373,8 @@ function readFileAsDataURL(file){
     const slug = lower.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
     const stems = [raw, noAcc, lower, slug].filter(Boolean);
-    const exts = ['png','jpg','jpeg','webp'];
+    // GitHub Pages is case-sensitive; try common upper/lowercase extensions too.
+    const exts = ['png','PNG','jpg','JPG','jpeg','JPEG','webp','WEBP'];
     const folders = ['assets/personajes', 'assets'];
     const out = [];
     for (const stem of stems){

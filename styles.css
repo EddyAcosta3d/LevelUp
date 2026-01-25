@@ -1,9 +1,11 @@
 :root{
   --bg0:#070707;
-  --stroke: rgba(255,215,120,0.18);
-  --stroke2: rgba(255,215,120,0.34);
+  /* Slightly stronger outlines for better separation */
+  --stroke: rgba(255,215,120,0.22);
+  --stroke2: rgba(255,215,120,0.38);
   --text: rgba(255,255,255,0.92);
-  --muted: rgba(255,255,255,0.55);
+  /* iPad/phone screens tend to crush dark tones; bump muted contrast a touch */
+  --muted: rgba(255,255,255,0.64);
   --radius: 22px;
   --radius2: 16px;
   --shadow: 0 10px 35px rgba(0,0,0,0.55);
@@ -325,8 +327,8 @@ body{
 
 .card{
   border-radius: var(--radius);
-  background: rgba(0,0,0,0.22);
-  border: 1px solid rgba(255,215,120,0.14);
+  background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,215,120,0.18);
   box-shadow: var(--glow);
   padding: 14px;
 }
@@ -385,7 +387,8 @@ body{
   width:100%;
   height:100%;
   object-fit:cover;
-  object-position:center;
+  object-position:center center;
+  max-width:none;
   display:block;
 }
 .avatar__box .avatar__placeholder{ opacity:.55; }
@@ -773,18 +776,21 @@ body::-webkit-scrollbar,
   position: absolute;
   top: 12px;
   right: 12px;
+  /* Prevent it from being visually covered by the avatar box/image */
+  z-index: 6;
   width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
   border-radius: 12px;
-  border: 1px solid rgba(240, 104, 104, 0.55);
-  background: rgba(22, 22, 22, 0.55);
+  border: 1px solid rgba(240, 104, 104, 0.48);
+  background: rgba(0, 0, 0, 0.52);
   color: rgba(255,255,255,0.9);
   box-shadow: 0 8px 20px rgba(0,0,0,0.35);
   cursor: pointer;
+  opacity: .84;
 }
-.iconBtn:hover{ background: rgba(26, 26, 26, 0.72); }
+.iconBtn:hover{ background: rgba(26, 26, 26, 0.72); opacity: 1; }
 .iconBtn:active{ transform: translateY(1px); }
 
 /* Inline small icon buttons (e.g., reset weekly XP) */
