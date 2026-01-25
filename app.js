@@ -432,79 +432,42 @@ function readFileAsDataURL(file){
     const maxVal = 20;
 
     box.innerHTML = '';
-    let isPointerDown = false;
-
-    const setStat = (key, n)=>{
-      const v = Math.max(0, Math.min(maxVal, Number(n||0)));
-      hero.stats[key] = v;
-      saveLocal(state.data);
-      updateDataDebug();
-      renderHeroList();
-      // re-render just stats for visual sync
-      renderStats(hero);
-    };
-
-    // global pointer up to stop dragging across segments
-    window.addEventListener('pointerup', ()=>{ isPointerDown = false; }, {passive:true});
-
     order.forEach((key)=>{
       const val = Math.max(0, Math.min(maxVal, Number(hero.stats[key] ?? 0)));
+      const pct = (val / maxVal) * 100;
 
       const row = document.createElement('div');
       row.className = 'statRow';
+      row.innerHTML = `
+        <div class="statRow__label">
+          <div class="badge">${key}</div>
+          <div class="statRow__val" id="statVal_${key}">${val}</div>
+        </div>
+        <div class="statRow__bar">
+          <div class="statRow__fill" style="width:${pct}%"></div>
+          <input class="statRow__range" type="range" min="0" max="${maxVal}" step="1" value="${val}" aria-label="Ajustar ${key}">
+        </div>
+      `;
 
-      // Segments
-      const segWrap = document.createElement('div');
-      segWrap.className = 'statRow__segWrap';
+      const range = row.querySelector('input.statRow__range');
+      const valEl = row.querySelector(`#statVal_${key}`);
 
-      for (let i=1;i<=maxVal;i++){
-        const seg = document.createElement('div');
-        seg.className = 'statSeg' + (i<=val ? ' is-on' : '');
-        seg.dataset.value = String(i);
-
-        // click/drag to set value
-        seg.addEventListener('pointerdown', (e)=>{
-          if (state.role === 'viewer') return;
-          e.preventDefault();
-          isPointerDown = true;
-          setStat(key, i);
-        });
-        seg.addEventListener('pointerenter', ()=>{
-          if (!isPointerDown) return;
-          if (state.role === 'viewer') return;
-          setStat(key, i);
-        });
-
-        segWrap.appendChild(seg);
-      }
-
-      // Hidden range for accessibility (and keyboard)
-      const range = document.createElement('input');
-      range.className = 'statRow__range';
-      range.type = 'range';
-      range.min = '0';
-      range.max = String(maxVal);
-      range.step = '1';
-      range.value = String(val);
-      range.setAttribute('aria-label', `Ajustar ${key}`);
+      // viewer: read-only (still movable would be confusing)
       if (state.role === 'viewer') range.disabled = true;
+
       range.addEventListener('input', ()=>{
-        if (state.role === 'viewer') return;
-        setStat(key, Number(range.value||0));
+        const n = Number(range.value || 0);
+        hero.stats[key] = n;
+        if (valEl) valEl.textContent = String(n);
+        const fill = row.querySelector('.statRow__fill');
+        if (fill) fill.style.width = `${(n/maxVal)*100}%`;
       });
-      segWrap.appendChild(range);
-
-      const label = document.createElement('div');
-      label.className = 'statRow__label';
-      label.innerHTML = `<div class="statBadge">${key}</div>`;
-
-      const valPill = document.createElement('div');
-      valPill.className = 'statRow__valPill';
-      valPill.textContent = String(val);
-
-      row.appendChild(label);
-      row.appendChild(segWrap);
-      row.appendChild(valPill);
+      range.addEventListener('change', ()=>{
+        saveLocal(state.data);
+        if (state.dataSource === 'remote') state.dataSource = 'local';
+        updateDataDebug();
+        renderHeroList();
+      });
 
       box.appendChild(row);
     });
@@ -715,55 +678,6 @@ function renderHeroAvatar(hero){
   }
 
   // --- Recompensas (general + por héroe) ---
-  function renderRewardsPage(hero){
-    const page = document.querySelector('.page[data-page="recompensas"]');
-    if (!page) return;
-
-    // Middle: history
-    const nameEl = page.querySelector('#rewardsHeroName');
-    const listEl = page.querySelector('#rewardsHistoryList');
-    const emptyEl = page.querySelector('#rewardsHistoryEmpty');
-
-    const hname = hero?.name || hero?.nombre || '—';
-    if (nameEl) nameEl.textContent = hname ? hname : '—';
-
-    const hist = Array.isArray(hero?.rewardsHistory) ? hero.rewardsHistory : [];
-    if (listEl) listEl.innerHTML = '';
-    if (emptyEl) emptyEl.hidden = !!hist.length;
-
-    if (listEl && hist.length){
-      hist.slice().reverse().forEach(item=>{
-        const opt = REWARD_OPTIONS.find(o=>o.id===item.rewardId);
-        const title = item.title || (opt ? opt.title : 'Recompensa');
-        const when = item.when ? formatDateMX(item.when) : '';
-        const sub = item.detail ? ` • ${item.detail}` : '';
-        const div = document.createElement('div');
-        div.className = 'rewardItem';
-        div.innerHTML = `
-          <div class="rewardItem__title">${title}</div>
-          <div class="rewardItem__meta muted">Nivel ${item.level || '—'} • ${when}${sub}</div>
-        `;
-        listEl.appendChild(div);
-      });
-    }
-
-    // Right: general rewards
-    const genEl = page.querySelector('#rewardsGeneralList');
-    if (genEl){
-      genEl.innerHTML = '';
-      REWARD_OPTIONS.forEach(opt=>{
-        const card = document.createElement('div');
-        card.className = 'rewardOpt';
-        card.innerHTML = `
-          <div class="rewardOpt__title">${opt.title}</div>
-          <div class="muted">${opt.desc || ''}</div>
-        `;
-        genEl.appendChild(card);
-      });
-    }
-  }
-
-
   const REWARD_OPTIONS = [
     { id:'stat+1', title:'+1 punto a una estadística', desc:'Elige una stat para aumentar en +1.' },
     { id:'weekMax+10', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal de actividades pequeñas.' },
@@ -812,11 +726,10 @@ function renderHeroAvatar(hero){
     const hero = currentHero();
     if (!hero) return;
 
-    // Recompensas page
-    renderRewardsPage(hero);
+    // Render inside Fichas
+    renderHeroRewards(hero);
 
-    // (Fichas ya no muestra historial de recompensas)
-    // hero history
+    // Recompensas page: show general options + current hero history
     const page = document.querySelector('.page[data-page="recompensas"]');
     if (page){
       const cards = page.querySelector('.cardGrid') || page;
@@ -1042,13 +955,12 @@ function renderHeroAvatar(hero){
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    document.body.appendChild(a);
     const d = new Date();
     const pad = (n)=>String(n).padStart(2,'0');
     const fname = `LevelUp_backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.json`;
     a.download = fname;
     a.click();
-    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+    URL.revokeObjectURL(a.href);
     toast('Exportado JSON');
   }
   // Bind

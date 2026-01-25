@@ -133,7 +133,12 @@
               <div class="noteTitle">Meta del trimestre</div>
               <textarea class="textarea textarea--short" id="txtMeta" ></textarea>
             </div>
-</div>
+          
+                <div class="heroRewardsBox">
+                  <div class="noteTitle">Recompensas reclamadas</div>
+                  <div class="muted" id="heroRewardsEmpty">Aún no ha reclamado recompensas.</div>
+                  <div class="rewardHistory" id="heroRewardsList"></div>
+                </div>
 </div>
 
 
@@ -197,25 +202,11 @@
           <article class="page" data-page="recompensas">
             <div class="pageIntro">
               <h2 class="h2">Recompensas</h2>
-              <p class="muted">Historial por personaje (centro) y recompensas generales (derecha).</p>
+              <p class="muted">Esta sección la vamos a reubicar y diseñar después. Por ahora queda como acceso directo desde el header.</p>
             </div>
-
-            <div class="rewardsGrid">
-              <div class="card rewardsHistoryCard">
-                <div class="cardHeader">
-                  <div class="h3">Historial del personaje</div>
-                  <div class="muted" id="rewardsHeroName">—</div>
-                </div>
-                <div class="rewardHistory" id="rewardsHistoryList"></div>
-                <div class="muted" id="rewardsHistoryEmpty">Aún no ha reclamado recompensas.</div>
-              </div>
-
-              <div class="card rewardsGeneralCard">
-                <div class="cardHeader">
-                  <div class="h3">Recompensas generales</div>
-                  <div class="muted">Opciones que pueden elegir al subir de nivel.</div>
-                </div>
-                <div class="rewardsGeneral" id="rewardsGeneralList"></div>
+            <div class="cardGrid">
+              <div class="card">
+                <div class="muted">(Placeholder) Aquí irán las recompensas, tienda, títulos, etc.</div>
               </div>
             </div>
           </article>
