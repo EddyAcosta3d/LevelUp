@@ -114,9 +114,7 @@
                   <div class="avatar__actions">
                     <button class="pill pill--small" id="btnPonerFoto">📷 Poner foto</button>
                     <button class="pill pill--small pill--ghost" id="btnEditarFoto">✎ Editar foto</button>
-                  </div>
-                  <div class="avatar__actions avatar__actions--secondary">
-                    <button class="pill pill--small pill--ghost" id="btnQuitarFoto">Quitar foto</button>
+                    <button class="pill pill--small pill--ghost pill--icon" id="btnQuitarFoto" aria-label="Quitar foto" title="Quitar foto">✕</button>
                   </div>
                 </div>
 
@@ -128,7 +126,7 @@
               <textarea class="textarea textarea--short" id="txtDesc" placeholder="¿Cómo es? ¿Qué le gusta? ¿En qué es bueno?"></textarea>
             </div>
             <div class="noteCol">
-              <div class="noteTitle">Meta principal del trimestre</div>
+              <div class="noteTitle">Meta del trimestre</div>
               <textarea class="textarea textarea--short" id="txtMeta" placeholder="Ej. mejorar tareas, participar más, subir nivel en lectura..."></textarea>
             </div>
           </div>
@@ -140,7 +138,7 @@
               <div class="card">
                 <div class="fields3">
                   <div class="field">
-                    <div class="labelSmall">Nombre del héroe</div>
+                    <div class="labelSmall">Nombre</div>
                     <input class="input" id="inNombre" value="Nuevo héroe" />
                   </div>
                   <div class="field field--small">
@@ -148,7 +146,7 @@
                     <input class="input" id="inEdad" value="13" />
                   </div>
                   <div class="field">
-                    <div class="labelSmall">Clase / rol</div>
+                    <div class="labelSmall">Rol</div>
                     <input class="input input--select" id="inRol" value='Selecciona un rol' readonly aria-haspopup="dialog" aria-controls="roleModal" />
                   </div>
                 </div>

@@ -133,6 +133,16 @@ body{
 .pill--ghost{ border-color: rgba(255,255,255,0.14); }
 .pill--danger{ border-color: rgba(255,120,120,0.35); background: rgba(255,120,120,0.06); }
 .pill--small{ padding: 8px 12px; font-size: 12px; }
+.pill--icon{
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  border-radius: 12px;
+}
 
 .iconbtn{
   border: 1px solid rgba(255,255,255,0.12);
@@ -316,6 +326,26 @@ body{
 }
 .card--center{ display:flex; flex-direction:column; align-items:center; gap: 10px; }
 
+.avatarBox{
+  width: 260px;
+  height: 260px;
+  border-radius: 32px;
+  border: 1px solid rgba(255,215,120,0.16);
+  background: rgba(255,255,255,0.04);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: rgba(255,255,255,0.55);
+  font-size: 20px;
+}
+.avatarBox img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  border-radius: 32px;
+  display:block;
+}
+
 .h2{ margin: 0 0 8px 0; font-size: 18px; }
 .pageIntro{ padding: 4px 4px 14px 4px; }
 .muted{ color: var(--muted); font-size: 13px; line-height: 1.4; }
@@ -329,7 +359,7 @@ body{
   display:grid; place-items:center;
 }
 .avatar__placeholder{ opacity:.55; }
-.avatar__actions{ display:flex; gap: 10px; flex-wrap:wrap; justify-content:center; width:100%; }
+.avatar__actions{ display:flex; gap: 10px; flex-wrap:nowrap; justify-content:center; width:100%; }
 .avatar__actions--secondary{ margin-top: -2px; }
 
 .heroName{ font-size: 22px; letter-spacing: 4px; font-weight: 800; opacity: .9; }
@@ -389,7 +419,8 @@ body{
   border: 1px solid rgba(255,215,120,0.16);
   background: rgba(0,0,0,0.22);
   color: var(--text);
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
 }
 .textarea--small{ min-height: 88px; }
 .textarea--meta{ min-height: 72px; }
@@ -423,7 +454,7 @@ body{
   box-shadow: 0 0 0 4px rgba(255,215,120,0.14), 0 6px 14px rgba(0,0,0,0.35);
   z-index: 1;
 }
-.xpHeader{ display:flex; align-items:center; gap: 10px; flex-wrap:wrap; margin-top:18px; }
+.xpHeader{ display:flex; align-items:center; gap: 10px; flex-wrap:wrap; margin-top:24px; }
 .xpLevel{ font-size: 22px; font-weight: 900; }
 .xpText{ opacity:.75; }
 .xpBtns{ margin-left:auto; display:flex; gap: 8px; flex-wrap:wrap; }
@@ -624,16 +655,18 @@ body{
 @media (max-width: 640px){
   :root{ --gap: 12px; }
   .topbar{ flex-wrap: nowrap; padding: 10px 10px; gap: 10px; }
-  .topbar__left{ min-width: 0; }
+  .topbar{ position: relative; }
+  .topbar__left{ min-width: 0; padding-right: 56px; width:100%; }
   .topbar__right{ display: none; }
   .topbar__moreBtn{
-  display:none;
+  display: inline-flex;
   width:42px; height:42px; border-radius:12px;
   align-items:center; justify-content:center;
   background:rgba(255,255,255,.04);
   border:1px solid rgba(220,180,90,.18);
   color:#eae7df;
 }
+  .topbar__moreWrap{ display:flex; position:absolute; right:10px; top:50%; transform:translateY(-50%); }
   .topbar__right .pill, .topbar__right .dropdown{ padding: 10px 10px; font-size: 12px; border-radius: 16px; }
   .brand__subtitle{ display:none; }
   .bottomNav{ display:flex; padding-bottom: calc(10px + var(--safe-bottom)); }
@@ -649,6 +682,8 @@ body{
   .twoCols{ grid-template-columns: 1fr; }
   .cards2{ grid-template-columns: 1fr; }
   .gridCards{ grid-template-columns: repeat(2, minmax(150px, 1fr)); }
+
+  .avatar__actions{ flex-wrap: wrap; }
 
   .modal{ place-items:end center; padding: 10px; }
   .modal__card{
@@ -721,7 +756,7 @@ body::-webkit-scrollbar,
 
 
 /* Mobile kebab (⋯) centering */
-.kebab{display:block; font-size:22px; line-height:1; transform:translateY(-1px);}
+.kebab{display:block; font-size:22px; line-height:1; transform:translateY(0);}
 
 
 /* Notes under avatar (desktop) */
@@ -737,7 +772,7 @@ body::-webkit-scrollbar,
    v21 layout overrides
    ========================= */
 
-.kebab{display:block;font-size:20px;line-height:1;transform:translateY(-1px);}
+.kebab{display:block;font-size:20px;line-height:1;transform:translateY(0);}
 
 /* Notes under avatar: two small cards side-by-side on desktop */
 .noteGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
@@ -751,7 +786,7 @@ body::-webkit-scrollbar,
 /* Stats: force single column and add breathing room above XP */
 .stats{grid-template-columns:1fr !important;margin-bottom:12px;}
 .stat--wide{grid-column:auto !important;}
-.xpHeader{margin-top:18px;}
+.xpHeader{margin-top:24px;}
 
 /* Segmented 2D/3D label centering */
 .segmented__btn{line-height:1;}
@@ -766,15 +801,16 @@ body::-webkit-scrollbar,
 .sidebar{scrollbar-width:none;}
 .sidebar::-webkit-scrollbar{width:0;height:0;}
 
-/* Mobile: keep the 3-dots action button aligned to the far right */
-@media (max-width: 900px){
-  .topbar__left{width:100%;}
-  .topbar__moreWrap{margin-left:auto;}
-}
-
 /* iPad portrait/tablet: keep normal header actions, hide 3-dots */
 @media (min-width: 641px) and (max-width: 900px){
+  .topbar{flex-wrap:nowrap;}
+  .topbar__left{flex:1; min-width:0;}
   .topbar__right{display:flex !important;}
+  .topbar__right{flex-wrap:wrap; justify-content:flex-end; gap:8px;}
+  .topbar__right .pill{padding:8px 12px; font-size:12px;}
   .topbar__moreBtn{display:none !important;}
   .topbar__moreWrap{display:none !important;}
+
+  .fields3{ grid-template-columns: 1fr 86px 1fr; }
+  .select{ max-width: 100%; text-overflow: ellipsis; }
 }

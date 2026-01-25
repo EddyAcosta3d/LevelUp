@@ -119,6 +119,58 @@
   }
   function closeDatos(){ toggleDatos(false); }
 
+  // Top "..." menu (mobile)
+  function initTopMoreMenu(){
+    const btn = $('#btnTopMore');
+    const menu = $('#topMoreMenu');
+    if (!btn || !menu) return;
+
+    const close = () => {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded','false');
+    };
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const next = menu.hidden;
+      menu.hidden = !next ? true : false;
+      // If it was hidden, show; if shown, hide
+      if (next){
+        menu.hidden = false;
+        btn.setAttribute('aria-expanded','true');
+      } else {
+        close();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (menu.hidden) return;
+      if (menu.contains(e.target) || btn.contains(e.target)) return;
+      close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+    });
+
+    menu.addEventListener('click', () => setTimeout(close, 0));
+  }
+
+  // Textarea auto-grow (prevents inner scrollbars)
+  function autoGrowTextarea(el){
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.max(el.scrollHeight, 80) + 'px';
+  }
+  function wireAutoGrow(root=document){
+    $$('textarea', root).forEach(t => {
+      if (t.dataset.autogrow === '1') return;
+      t.dataset.autogrow = '1';
+      autoGrowTextarea(t);
+      t.addEventListener('input', () => autoGrowTextarea(t));
+    });
+  }
+
   // Toast
   let toastTimer = null;
   function toast(msg){
@@ -290,6 +342,22 @@
     });
   }
 
+  function renderHeroAvatar(hero){
+    const box = $('#avatarBox');
+    if (!box) return;
+    const url = hero ? (hero.img || hero.image || hero.photo || '') : '';
+    box.replaceChildren();
+    if (url){
+      const img = document.createElement('img');
+      img.src = String(url);
+      img.alt = hero?.nombre ? `Foto de ${hero.nombre}` : 'Foto del héroe';
+      img.loading = 'lazy';
+      box.appendChild(img);
+    } else {
+      box.textContent = 'Sin foto';
+    }
+  }
+
   const ROLE_OPTIONS = [
     { id:'analista', name:'Analista', desc:'Observa, detecta patrones y propone mejoras.' },
     { id:'mentor', name:'Mentor', desc:'Acompaña, explica y ayuda a otros a avanzar.' },
@@ -342,13 +410,21 @@
     const hero = currentHero();
     if (!hero) return;
 
+    // Avatar image (optional: add hero.img = "assets/.../file.png" in your JSON)
+    renderHeroAvatar(hero);
+
     $('#heroName').textContent = (hero.name || 'NUEVO HÉROE').toUpperCase();
     $('#inNombre').value = hero.name || '';
     $('#inEdad').value = (hero.age ?? '');
     $('#inRol').value = hero.role || '';
 
-    $('#txtDesc').value = hero.desc || '';
-    $('#txtMeta').value = hero.goal || '';
+    const tDesc = $('#txtDesc');
+    const tMeta = $('#txtMeta');
+    tDesc.value = hero.desc || '';
+    tMeta.value = hero.goal || '';
+    wireAutoGrow(document);
+    autoGrowTextarea(tDesc);
+    autoGrowTextarea(tMeta);
     const txtBien = $('#txtBien');
     if (txtBien) txtBien.value = hero.goodAt || '';
     const txtMejorar = $('#txtMejorar');
@@ -665,6 +741,10 @@
         closeRoleModal();
       }
     });
+
+    // UI helpers
+    initTopMoreMenu();
+    wireAutoGrow(document);
   }
 
   async function init(){
