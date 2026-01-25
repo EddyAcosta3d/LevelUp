@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'STABLE_RESET_v14';
+  window.LEVELUP_BUILD = 'FichasFunctional_v32';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -418,7 +418,8 @@ function readFileAsDataURL(file){
     return heroes.find(h => h.id === state.selectedHeroId) || heroes[0] || null;
   }
 
-  function renderStats(hero){
+  
+function renderStats(hero){
     const box = $('#statsBox');
     const rawStats = hero?.stats || { INT:0, SAB:0, CAR:0, RES:0, CRE:0 };
     const stats = { ...rawStats };
@@ -426,19 +427,40 @@ function readFileAsDataURL(file){
     const order = ['INT','SAB','CAR','RES','CRE'];
     box.innerHTML = '';
     order.forEach((key)=>{
-      const val = Number(stats[key] ?? 0);
+      const val = Math.max(0, Math.min(20, Number(stats[key] ?? 0)));
       const pct = Math.max(0, Math.min(100, (val/20)*100));
-      const wide = ''; // sin barra 'larga' para que el grid quede parejo
       const stat = document.createElement('div');
-      stat.className = 'stat' + wide;
+      stat.className = 'stat';
       stat.innerHTML = `
         <div class="badge">${key}</div>
-        <div class="stat__track"><div class="stat__dot" style="left:${pct}%"></div></div>
-        <div class="stat__val">${val}</div>
+        <div class="stat__track">
+          <input class="stat__range" type="range" min="0" max="20" step="1" value="${val}" aria-label="${key}">
+          <div class="stat__dot" style="left:${pct}%"></div>
+        </div>
+        <div class="stat__val" data-stat-val="${key}">${val}</div>
       `;
+      const range = stat.querySelector('.stat__range');
+      range.addEventListener('input', ()=>{
+        const h = currentHero();
+        if (!h) return;
+        h.stats = h.stats && typeof h.stats === 'object' ? h.stats : {};
+        const v = Math.max(0, Math.min(20, Number(range.value || 0)));
+        h.stats[key] = v;
+        // update dot + label live (no full rerender)
+        const p = Math.max(0, Math.min(100, (v/20)*100));
+        stat.querySelector('.stat__dot').style.left = `${p}%`;
+        stat.querySelector(`[data-stat-val="${key}"]`).textContent = String(v);
+        saveLocal(state.data);
+        if (state.dataSource === 'remote') state.dataSource = 'local';
+        updateDataDebug();
+      });
+      range.addEventListener('change', ()=>{
+        renderHeroList(); // reflect maybe on list summary later
+      });
       box.appendChild(stat);
     });
   }
+
 
   function stripDiacritics(str){
     try{ return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(_){ return String(str); }
@@ -756,16 +778,33 @@ function renderHeroAvatar(hero){
     renderChallengeDetail();
   }
 
-  function bumpHeroXp(delta){
+  
+function bumpHeroXp(delta){
     const hero = currentHero();
     if (!hero) return;
-    hero.xp = Math.max(0, Number(hero.xp ?? 0) + delta);
+
+    const xpMax = Number(hero.xpMax ?? 100);
+    hero.xp = Math.max(0, Number(hero.xp ?? 0) + Number(delta || 0));
+
+    // Level-up logic (supports multiple levels if a big XP is added)
+    let leveled = 0;
+    while (xpMax > 0 && hero.xp >= xpMax){
+      hero.xp = hero.xp - xpMax;
+      hero.level = Number(hero.level ?? 1) + 1;
+      leveled++;
+    }
+
     saveLocal(state.data);
     if (state.dataSource === 'remote') state.dataSource = 'local'; // si tocaste algo local
     updateDataDebug();
     renderHeroList();
     renderHeroDetail();
+
+    if (leveled > 0){
+      openLevelUpModal(hero, leveled);
+    }
   }
+
 
   // Import / Export (para tu flujo offline con iPad)
   async function handleImportJson(file){
@@ -836,6 +875,9 @@ function renderHeroAvatar(hero){
     img.src = src;
     img.alt = 'Previsualización';
     img.loading = 'eager';
+    img.draggable = false;
+    img.ondragstart = ()=>false;
+    previewBox.ondragstart = ()=>false;
     previewBox.appendChild(img);
     applyPhotoFit(img, hero);
 
@@ -848,6 +890,8 @@ function renderHeroAvatar(hero){
     let startFit = null;
 
     const onDown = (e)=>{
+      if (e.button != null && e.button !== 0) return;
+      e.preventDefault();
       dragging = true;
       previewBox.setPointerCapture(e.pointerId);
       startX = e.clientX;
@@ -961,6 +1005,84 @@ function renderHeroAvatar(hero){
       modal.hidden = false;
     });
   }
+
+
+  async function openLevelUpModal(hero, levelsGained=1){
+    const modal = $('#levelUpModal');
+    if (!modal){ toast(`¡Subiste de nivel! (x${levelsGained})`); return; }
+    $('#levelUpMsg').textContent = `¡Felicidades ${hero.name || ''}! Subiste ${levelsGained} nivel${levelsGained>1?'es':''}. Elige una recompensa:`;
+    modal.hidden = false;
+
+    const close = ()=>{
+      modal.hidden = true;
+      // clean handlers
+      $('#btnRewardStat').onclick = null;
+      $('#btnRewardWeekCap').onclick = null;
+      $('#btnRewardToken').onclick = null;
+      $('#levelUpBackdrop').onclick = null;
+    };
+
+    $('#levelUpBackdrop').onclick = close;
+
+    $('#btnRewardWeekCap').onclick = ()=>{
+      hero.weekXpMax = Number(hero.weekXpMax ?? DEFAULT_WEEK_XP_MAX) + 10;
+      saveLocal(state.data);
+      renderHeroDetail();
+      toast('Límite de XP semanal aumentado (+10).');
+      close();
+    };
+
+    $('#btnRewardToken').onclick = ()=>{
+      hero.tokens = Number(hero.tokens ?? 0) + 1;
+      saveLocal(state.data);
+      toast('Ganaste 1 comodín.');
+      close();
+    };
+
+    $('#btnRewardStat').onclick = ()=>{
+      openStatPickModal(hero, close);
+    };
+  }
+
+  function openStatPickModal(hero, onDone){
+    const modal = $('#statPickModal');
+    if (!modal){
+      // fallback: +1 INT
+      hero.stats = hero.stats || {};
+      hero.stats.INT = Number(hero.stats.INT ?? 0) + 1;
+      saveLocal(state.data);
+      renderHeroDetail();
+      toast('+1 punto a INT.');
+      onDone && onDone();
+      return;
+    }
+    modal.hidden = false;
+
+    const close = ()=>{
+      modal.hidden = true;
+      $$('#statPickModal [data-stat-pick]').forEach(b=> b.onclick = null);
+      $('#btnStatPickClose').onclick = null;
+      $('#statPickBackdrop').onclick = null;
+    };
+
+    $('#btnStatPickClose').onclick = close;
+    $('#statPickBackdrop').onclick = close;
+
+    $$('#statPickModal [data-stat-pick]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const k = btn.getAttribute('data-stat-pick');
+        hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
+        const v = Math.max(0, Math.min(20, Number(hero.stats[k] ?? 0) + 1));
+        hero.stats[k] = v;
+        saveLocal(state.data);
+        renderHeroDetail();
+        toast(`+1 punto a ${k}.`);
+        close();
+        onDone && onDone();
+      };
+    });
+  }
+
 
 function bind(){
     // Cualquier botón "pill" con data-route (topnav + acciones derecha)
