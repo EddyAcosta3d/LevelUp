@@ -550,6 +550,40 @@
     });
     $('#overlay').addEventListener('click', closeDrawer);
 
+    // Mobile: overflow menu for header actions (Recompensas/Estado/Datos/Edición)
+    const btnTopMore = $('#btnTopMore');
+    const topMoreMenu = $('#topMoreMenu');
+    const closeTopMore = ()=>{
+      if (!btnTopMore || !topMoreMenu) return;
+      topMoreMenu.hidden = true;
+      btnTopMore.setAttribute('aria-expanded','false');
+    };
+    const toggleTopMore = ()=>{
+      if (!btnTopMore || !topMoreMenu) return;
+      const willOpen = topMoreMenu.hidden;
+      topMoreMenu.hidden = !willOpen;
+      btnTopMore.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    };
+    if (btnTopMore && topMoreMenu){
+      btnTopMore.addEventListener('click', (e)=>{ e.stopPropagation(); toggleTopMore(); });
+      topMoreMenu.addEventListener('click', (e)=>{
+        const item = e.target.closest('[data-proxy-click]');
+        if (!item) return;
+        const id = item.getAttribute('data-proxy-click');
+        const target = id ? document.getElementById(id) : null;
+        if (target) target.click();
+        closeTopMore();
+      });
+      document.addEventListener('click', (e)=>{
+        if (topMoreMenu.hidden) return;
+        if (e.target === btnTopMore) return;
+        if (topMoreMenu.contains(e.target)) return;
+        closeTopMore();
+      });
+      window.addEventListener('resize', closeTopMore);
+      window.addEventListener('orientationchange', ()=>{ closeTopMore(); closeDrawer(); });
+    }
+
     $$('.segmented__btn').forEach(b=>{
       b.addEventListener('click', ()=>{
         $$('.segmented__btn').forEach(x=>x.classList.remove('is-active'));

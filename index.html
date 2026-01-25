@@ -25,6 +25,24 @@
       <div class="topbar__left">
         <button class="iconbtn topbar__menu" id="btnMenu" aria-label="Abrir menú lateral" title="Menú">☰</button>
 
+        <!-- Mobile overflow menu for header actions (Recompensas/Estado/Datos/Edición) -->
+        <div class="topbar__moreWrap">
+          <button
+            class="iconbtn topbar__moreBtn"
+            id="btnTopMore"
+            aria-label="Más opciones"
+            title="Más"
+            aria-expanded="false"
+            aria-controls="topMoreMenu"
+          >⋯</button>
+          <div class="topMoreMenu" id="topMoreMenu" hidden>
+            <button class="topMoreMenu__item" data-proxy-click="btnRecompensas">🏆 Recompensas</button>
+            <button class="topMoreMenu__item" data-proxy-click="btnDebugPanel">🧪 Estado</button>
+            <button class="topMoreMenu__item" data-proxy-click="btnDatos">💾 Datos</button>
+            <button class="topMoreMenu__item" data-proxy-click="btnEdicion">🔒 Edición</button>
+          </div>
+        </div>
+
         <div class="brand" aria-label="LevelUp">
           <div class="brand__logo" aria-hidden="true">
             <svg viewBox="0 0 64 64" width="34" height="34" role="img" aria-label="LU">
