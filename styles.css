@@ -60,18 +60,14 @@ body{
 
 
 /* Mobile: compact overflow menu for header actions */
-.topbar__moreWrap{ position:relative; display:flex; align-items:center; }
+.topbar__moreWrap{display:none;}
 .topbar__moreBtn{
   display:none;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  font-size: 18px;
-  line-height: 1;
-  padding: 0;
-
-  display:flex; align-items:center; justify-content:center;
-  line-height: 1; font-size: 22px;
+  width:42px; height:42px; border-radius:12px;
+  align-items:center; justify-content:center;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(220,180,90,.18);
+  color:#eae7df;
 }
 .topMoreMenu{
   position:absolute;
@@ -410,6 +406,7 @@ body{
   background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015));
   border: 1px solid rgba(255,215,120,0.14);
   box-shadow: var(--glow);
+  margin-bottom:10px;
 }
 .stat{ display:grid; grid-template-columns: 44px minmax(0, 1fr) 36px; align-items:center; gap: 10px; }
 .stat--wide{ grid-column: 1 / -1; }
@@ -426,7 +423,7 @@ body{
   box-shadow: 0 0 0 4px rgba(255,215,120,0.14), 0 6px 14px rgba(0,0,0,0.35);
   z-index: 1;
 }
-.xpHeader{ display:flex; align-items:center; gap: 10px; flex-wrap:wrap; margin-top: 16px; }
+.xpHeader{ display:flex; align-items:center; gap: 10px; flex-wrap:wrap; margin-top:18px; }
 .xpLevel{ font-size: 22px; font-weight: 900; }
 .xpText{ opacity:.75; }
 .xpBtns{ margin-left:auto; display:flex; gap: 8px; flex-wrap:wrap; }
@@ -543,7 +540,11 @@ body{
   background: rgba(15,18,22,0.72);
   backdrop-filter: blur(10px);
   pointer-events: auto;
+  z-index:10000;
+  pointer-events:auto;
+  touch-action:manipulation;
 }
+
 .shell.is-drawer-open .bottomNav{ pointer-events: none; }
 .bottomNav__btn{
   flex:1;
@@ -625,7 +626,14 @@ body{
   .topbar{ flex-wrap: nowrap; padding: 10px 10px; gap: 10px; }
   .topbar__left{ min-width: 0; }
   .topbar__right{ display: none; }
-  .topbar__moreBtn{ display: inline-flex; }
+  .topbar__moreBtn{
+  display:none;
+  width:42px; height:42px; border-radius:12px;
+  align-items:center; justify-content:center;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(220,180,90,.18);
+  color:#eae7df;
+}
   .topbar__right .pill, .topbar__right .dropdown{ padding: 10px 10px; font-size: 12px; border-radius: 16px; }
   .brand__subtitle{ display:none; }
   .bottomNav{ display:flex; padding-bottom: calc(10px + var(--safe-bottom)); }
@@ -710,3 +718,63 @@ body::-webkit-scrollbar,
 .stat{ min-width: 0; max-width: 100%; }
 .stat__track{ min-width: 0; }
 .segmented{ height: 40px; }
+
+
+/* Mobile kebab (⋯) centering */
+.kebab{display:block; font-size:22px; line-height:1; transform:translateY(-1px);}
+
+
+/* Notes under avatar (desktop) */
+.noteGrid{margin-top:14px; display:grid; grid-template-columns:1fr; gap:12px;}
+.noteCol{background:rgba(0,0,0,.22); border:1px solid rgba(220,180,90,.12); border-radius:18px; padding:12px;}
+.noteTitle{font-size:13px; opacity:.85; margin-bottom:8px;}
+.textarea--short{min-height:86px; max-height:140px;}
+@media (max-width:980px){
+  .noteGrid{grid-template-columns:1fr; }
+}
+
+/* =========================
+   v21 layout overrides
+   ========================= */
+
+.kebab{display:block;font-size:20px;line-height:1;transform:translateY(-1px);}
+
+/* Notes under avatar: two small cards side-by-side on desktop */
+.noteGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.noteCol{background:rgba(0,0,0,.25);border:1px solid rgba(220,180,90,.12);border-radius:16px;padding:12px;}
+.noteTitle{font-size:13px;color:rgba(234,231,223,.8);margin:0 0 8px 2px;letter-spacing:.02em;}
+.textarea--short{min-height:92px;}
+@media (max-width: 900px){
+  .noteGrid{grid-template-columns:1fr;}
+}
+
+/* Stats: force single column and add breathing room above XP */
+.stats{grid-template-columns:1fr !important;margin-bottom:12px;}
+.stat--wide{grid-column:auto !important;}
+.xpHeader{margin-top:18px;}
+
+/* Segmented 2D/3D label centering */
+.segmented__btn{line-height:1;}
+
+/* Bottom nav: ensure it's always on top and reliably clickable on iOS */
+.bottomNav{z-index:10000;}
+.bottomNav button{touch-action:manipulation;}
+
+/* Hide scrollbars where possible */
+.pages{scrollbar-width:none;}
+.pages::-webkit-scrollbar{width:0;height:0;}
+.sidebar{scrollbar-width:none;}
+.sidebar::-webkit-scrollbar{width:0;height:0;}
+
+/* Mobile: keep the 3-dots action button aligned to the far right */
+@media (max-width: 900px){
+  .topbar__left{width:100%;}
+  .topbar__moreWrap{margin-left:auto;}
+}
+
+/* iPad portrait/tablet: keep normal header actions, hide 3-dots */
+@media (min-width: 641px) and (max-width: 900px){
+  .topbar__right{display:flex !important;}
+  .topbar__moreBtn{display:none !important;}
+  .topbar__moreWrap{display:none !important;}
+}
