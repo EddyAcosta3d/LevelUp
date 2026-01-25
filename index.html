@@ -88,14 +88,12 @@
       <div class="overlay" id="overlay" hidden></div>
 
       <aside class="sidebar" id="sidebar" aria-label="Panel de personajes">
-        <div class="panelHeader">
-          <div class="panelHeader__title">PERSONAJES</div>
+        <div class="panelHeader panelHeader--compact">
+          <div class="segmented segmented--compact" role="tablist" aria-label="Grupos">
+            <button class="segmented__btn is-active" role="tab" aria-selected="true" data-group="2D">2D</button>
+            <button class="segmented__btn" role="tab" aria-selected="false" data-group="3D">3D</button>
+          </div>
           <button class="pill pill--small" id="btnNuevoHeroe">+ Nuevo</button>
-        </div>
-
-        <div class="segmented" role="tablist" aria-label="Grupos">
-          <button class="segmented__btn is-active" role="tab" aria-selected="true" data-group="2D">2D</button>
-          <button class="segmented__btn" role="tab" aria-selected="false" data-group="3D">3D</button>
         </div>
 
         <div class="list" id="heroList"></div>
@@ -177,7 +175,10 @@
                     </div>
                     <div class="subCard">
                       <div class="subCard__title">Esta semana:</div>
-                      <div class="subCard__val" id="weekXp">0/40 XP</div>
+                      <div class="subCard__valRow">
+                        <div class="subCard__val" id="weekXp">0/40 XP</div>
+                        <button class="iconBtn iconBtn--tiny" id="btnWeekReset" title="Reiniciar XP semanal" aria-label="Reiniciar XP semanal">↺</button>
+                      </div>
                     </div>
                   </div>
 

@@ -14,6 +14,9 @@
     storageKey: 'levelup:data:v1'
   };
 
+  // Weekly XP cap for "Actividades pequeñas" (per hero). If hero.weekXpMax is missing, we fall back to this.
+  const DEFAULT_WEEK_XP_MAX = 40;
+
   const state = {
     route: 'fichas',
     role: 'viewer',      // futuro: 'teacher' con PIN
@@ -342,6 +345,52 @@
     });
   }
 
+  function stripDiacritics(str){
+    try{ return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(_){ return String(str); }
+  }
+
+  function buildAssetCandidates(heroName){
+    const base = String(heroName || '').trim();
+    if (!base) return [];
+
+    const raw = base;
+    const noAcc = stripDiacritics(base);
+    const lower = noAcc.toLowerCase();
+    const slug = lower.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+    const stems = [raw, noAcc, lower, slug].filter(Boolean);
+    const exts = ['png','jpg','jpeg','webp'];
+    const out = [];
+    for (const stem of stems){
+      for (const ext of exts){
+        out.push(`assets/${stem}.${ext}`);
+      }
+    }
+    // de-duplicate while preserving order
+    return Array.from(new Set(out));
+  }
+
+  function tryLoadAutoAvatar(heroName, mountEl){
+    const candidates = buildAssetCandidates(heroName);
+    if (!candidates.length || !mountEl) return;
+
+    let idx = 0;
+    const probe = new Image();
+    const tryNext = () => {
+      if (idx >= candidates.length) return;
+      const src = candidates[idx++];
+      probe.onload = () => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = heroName;
+        mountEl.replaceChildren(img);
+      };
+      probe.onerror = () => tryNext();
+      probe.src = src;
+    };
+    tryNext();
+  }
+
   function renderHeroAvatar(hero){
     const box = $('#avatarBox');
     if (!box) return;
@@ -355,6 +404,11 @@
       box.appendChild(img);
     } else {
       box.textContent = 'Sin foto';
+      const name = (hero && hero.nombre) ? String(hero.nombre).trim() : '';
+      if (name) {
+        // Try to auto-load an image from /assets based on hero name (e.g., assets/Eddy.png)
+        tryLoadAutoAvatar(name, box);
+      }
     }
   }
 
@@ -440,8 +494,12 @@
     $('#xpFill').style.width = `${xpMax > 0 ? Math.max(0, Math.min(100, (xp/xpMax)*100)) : 0}%`;
 
     const w = Number(hero.weekXp ?? 0);
-    const wMax = Number(hero.weekXpMax ?? 40);
+    const wMax = Number(hero.weekXpMax ?? DEFAULT_WEEK_XP_MAX);
     $('#weekXp').textContent = `${w}/${wMax} XP`;
+
+    // Disable small-activity chips when weekly cap is reached
+    const atMax = w >= wMax;
+    $$('#actChips [data-xp]').forEach(b=>{ b.disabled = atMax; });
 
     renderRewards();
   }
@@ -725,7 +783,31 @@
     $('#btnXpP1').addEventListener('click', ()=> bumpHeroXp(+1));
     $('#btnXpP5').addEventListener('click', ()=> bumpHeroXp(+5));
     $$('.chipRow [data-xp]').forEach(b=>{
-      b.addEventListener('click', ()=> bumpHeroXp(Number(b.dataset.xp || 0)));
+      b.addEventListener('click', ()=>{
+        const xp = Number(b.dataset.xp || 0);
+        if (!xp) return;
+
+        // Weekly-capped XP ("Actividades pequeñas")
+        if (b.closest('#actChips')){
+          const h = currentHero();
+          if (!h) return;
+
+          const max = Number(h.weekXpMax || DEFAULT_WEEK_XP_MAX || 40);
+          h.weekXp = Number(h.weekXp || 0);
+          const remaining = max - h.weekXp;
+          if (remaining <= 0){
+            toast('Ya llegaste al máximo de XP semanal...');
+            renderHeroDetail(h);
+            return;
+          }
+          const gain = Math.min(xp, remaining);
+          h.weekXp += gain;
+          bumpHeroXp(gain);
+          return;
+        }
+
+        bumpHeroXp(xp);
+      });
     });
 
     window.addEventListener('resize', ()=>{
@@ -744,6 +826,18 @@
 
     // UI helpers
     initTopMoreMenu();
+    const resetBtn = $('#btnWeekReset');
+    resetBtn?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const h = currentHero();
+      if (!h) return;
+      h.weekXp = 0;
+      if (!h.weekXpMax) h.weekXpMax = DEFAULT_WEEK_XP_MAX;
+      saveLocal();
+      renderHeroDetail(h);
+      toast('XP semanal reiniciada.');
+    });
     wireAutoGrow(document);
   }
 
