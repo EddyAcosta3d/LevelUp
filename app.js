@@ -1,3 +1,7 @@
+'use strict';
+
+  // CLEAN PASS v29: stability + small UI tweaks
+
 /* LevelUp Hybrid Skeleton — app.js
    HÍBRIDO:
    1) intenta cargar ./data/data.json (GitHub Pages) cuando hay internet
@@ -7,6 +11,8 @@
 (function(){
   window.LEVELUP_BUILD = 'STABLE_RESET_v14';
   'use strict';
+
+  // CLEAN PASS v29: stability + small UI tweaks
 
   const CONFIG = {
     remoteUrl: './data/data.json',
@@ -862,7 +868,7 @@ function readFileAsDataURL(file){
     });
 
     // Eliminar héroe (icono de bote de basura en la tarjeta de foto)
-    const btnEliminar = $('#btnEliminar');
+    const btnEliminar = $('#btnEliminar') || $('#heroDeleteBtn');
     btnEliminar?.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
