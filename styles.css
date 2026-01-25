@@ -1,7 +1,7 @@
 :root{
-  --danger: rgba(255, 120, 120, 0.55);
-  --dangerBorder: rgba(255, 120, 120, 0.30);
-  --dangerBg: rgba(255, 120, 120, 0.10);
+  --danger: rgba(255, 120, 120, 0.35);
+  --dangerBorder: rgba(255, 120, 120, 0.18);
+  --dangerBg: rgba(255, 120, 120, 0.07);
 
   --bg0:#070707;
   /* Slightly stronger outlines for better separation */
@@ -967,3 +967,49 @@ body::-webkit-scrollbar,
 .avatar__actions #btnPonerFoto, .avatar__actions #btnQuitarFoto{ display:none; }
 #heroDeleteBtn{ opacity: 0.72; }
 #heroDeleteBtn:hover{ opacity: 0.95; }
+
+
+/* Flash highlight for new hero in list */
+.heroCard.flash{ outline:2px solid rgba(180,150,80,.55); box-shadow:0 0 0 6px rgba(180,150,80,.12); }
+
+/* Fichas: simplify photo controls (keep only Edit) */
+#btnPonerFoto, #btnQuitarFoto{ display:none !important; }
+
+
+
+
+/* Photo editor modal (uses existing .modal/.modal__card styles) */
+#photoPreviewBox{
+  width:100%;
+  aspect-ratio: 1 / 1;
+  border-radius:14px;
+  overflow:hidden;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.10);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:none;
+}
+#photoPreviewBox img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+.photoFitRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.photoFitRow .muted{ font-size:.9rem; }
+#photoZoom{ width:min(340px, 100%); }
+.confirmMsg{ white-space:pre-line; }
+
+/* Hide scrollbars (keep scrolling) */
+html, body{ scrollbar-width:none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
+*{ scrollbar-width:none; }
+*::-webkit-scrollbar{ width:0; height:0; }

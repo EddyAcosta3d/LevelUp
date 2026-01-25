@@ -58,7 +58,7 @@ function makeBlankHero(group){
     goal: '',
     photo: '',
     // Para edición de encuadre (si más adelante activamos el editor)
-    photoFit: { x: 0, y: 0, scale: 1 }
+    photoFit: { x: 50, y: 50, scale: 1 }
   };
 }
 
@@ -109,6 +109,36 @@ function readFileAsDataURL(file){
       ]
     };
   }
+
+  function normalizeData(data){
+    const d = data && typeof data === 'object' ? data : {};
+    d.meta = d.meta || {};
+    d.meta.updatedAt = d.meta.updatedAt || new Date().toISOString();
+
+    d.heroes = Array.isArray(d.heroes) ? d.heroes : [];
+    d.challenges = Array.isArray(d.challenges) ? d.challenges : [];
+    d.events = Array.isArray(d.events) ? d.events : [];
+
+    d.heroes.forEach(h=>{
+      h.id = h.id || uid('h');
+      h.group = h.group || '2D';
+      h.name = h.name ?? '';
+      h.age = h.age ?? '';
+      h.role = h.role ?? '';
+      h.level = Number(h.level ?? 1);
+      h.xp = Number(h.xp ?? 0);
+      h.xpMax = Number(h.xpMax ?? 100);
+      h.weekXp = Number(h.weekXp ?? 0);
+      h.weekXpMax = Number(h.weekXpMax ?? DEFAULT_WEEK_XP_MAX);
+      h.photoFit = h.photoFit || { x:50, y:50, scale:1 };
+      // keep stats object
+      h.stats = h.stats && typeof h.stats === 'object' ? h.stats : {};
+      ['INT','SAB','CAR','RES','CRE'].forEach(k=>{ if (h.stats[k] === undefined) h.stats[k] = 0; });
+    });
+    return d;
+  }
+
+
 
   // Router
   function setActiveRoute(route){
@@ -262,8 +292,13 @@ function readFileAsDataURL(file){
 
   // Storage
   function saveLocal(data){
-    try{ localStorage.setItem(CONFIG.storageKey, JSON.stringify(data)); return true; }
-    catch(e){ return false; }
+    try{
+      const payload = (data !== undefined) ? data : state.data;
+      localStorage.setItem(CONFIG.storageKey, JSON.stringify(payload));
+      return true;
+    }catch(e){
+      return false;
+    }
   }
   function loadLocal(){
     try{
@@ -292,8 +327,8 @@ function readFileAsDataURL(file){
     if (forceRemote){
       try{
         const d = await fetchRemote();
-        state.data = d; state.dataSource = 'remote';
-        saveLocal(d);
+        state.data = normalizeData(d); state.dataSource = 'remote';
+        saveLocal(state.data);
         toast('Cargado desde GitHub');
         updateDataDebug(); renderAll();
         return;
@@ -303,8 +338,8 @@ function readFileAsDataURL(file){
     }else{
       try{
         const d = await fetchRemote();
-        state.data = d; state.dataSource = 'remote';
-        saveLocal(d);
+        state.data = normalizeData(d); state.dataSource = 'remote';
+        saveLocal(state.data);
         updateDataDebug(); renderAll();
         return;
       }catch(e){}
@@ -312,12 +347,12 @@ function readFileAsDataURL(file){
 
     const local = loadLocal();
     if (local){
-      state.data = local; state.dataSource = 'local';
+      state.data = normalizeData(local); state.dataSource = 'local';
       updateDataDebug(); renderAll();
       return;
     }
 
-    state.data = demoData(); state.dataSource = 'demo';
+    state.data = normalizeData(demoData()); state.dataSource = 'demo';
     updateDataDebug(); renderAll();
   }
 
@@ -352,6 +387,7 @@ function readFileAsDataURL(file){
     heroes.forEach(hero => {
       const btn = document.createElement('button');
       btn.className = 'heroCard' + (hero.id === state.selectedHeroId ? ' is-active' : '');
+      btn.dataset.heroId = hero.id;
       const xp = Number(hero.xp ?? 0);
       const xpMax = Number(hero.xpMax ?? 100);
       const pct = xpMax > 0 ? Math.max(0, Math.min(100, (xp / xpMax) * 100)) : 0;
@@ -433,7 +469,7 @@ function readFileAsDataURL(file){
     return Array.from(new Set(out));
   }
 
-  function tryLoadAutoAvatar(heroName, mountEl){
+  function tryLoadAutoAvatar(heroName, heroObj, mountEl){
     const candidates = buildAssetCandidates(heroName);
     if (!candidates.length || !mountEl) return;
 
@@ -443,10 +479,22 @@ function readFileAsDataURL(file){
       if (idx >= candidates.length) return;
       const src = candidates[idx++];
       probe.onload = () => {
+        // cache the resolved asset path on the hero so it persists in exports/backups
+        if (heroObj && !heroObj.photoSrc && !heroObj.photo && !heroObj.img && !heroObj.image){
+          heroObj.photoSrc = src;
+          // ensure default fit exists
+          heroObj.photoFit = heroObj.photoFit || { x:50, y:50, scale:1 };
+          saveLocal(state.data);
+          if (state.dataSource === 'remote') state.dataSource = 'local';
+          updateDataDebug();
+        }
         const img = document.createElement('img');
         img.src = src;
         img.alt = heroName;
+        img.loading = 'lazy';
         mountEl.replaceChildren(img);
+        // Apply fit if available
+        applyPhotoFit(img, heroObj);
       };
       probe.onerror = () => tryNext();
       probe.src = src;
@@ -454,12 +502,26 @@ function readFileAsDataURL(file){
     tryNext();
   }
 
-  function renderHeroAvatar(hero){
+  
+  function applyPhotoFit(imgEl, heroObj){
+    if (!imgEl) return;
+    const fit = (heroObj && heroObj.photoFit) ? heroObj.photoFit : null;
+    const x = fit && Number.isFinite(Number(fit.x)) ? Number(fit.x) : 50;
+    const y = fit && Number.isFinite(Number(fit.y)) ? Number(fit.y) : 50;
+    const scale = fit && Number.isFinite(Number(fit.scale)) ? Number(fit.scale) : 1;
+
+    imgEl.style.objectFit = 'cover';
+    imgEl.style.objectPosition = `${x}% ${y}%`;
+    imgEl.style.transformOrigin = 'center';
+    imgEl.style.transform = `scale(${scale})`;
+  }
+
+function renderHeroAvatar(hero){
     const box = $('#avatarBox');
     if (!box) return;
 
     const heroName = hero ? String(hero.name || hero.nombre || '').trim() : '';
-    const url = hero ? (hero.photo || hero.img || hero.image || '') : '';
+    const url = hero ? (hero.photo || hero.img || hero.image || hero.photoSrc || '') : '';
 
     box.replaceChildren();
 
@@ -469,13 +531,14 @@ function readFileAsDataURL(file){
       img.alt = heroName ? `Foto de ${heroName}` : 'Foto del héroe';
       img.loading = 'lazy';
       box.appendChild(img);
+      applyPhotoFit(img, hero);
       return;
     }
 
     // No custom photo: show placeholder and try auto-load from assets/personajes/<Nombre>.(jpg|png|...)
     box.textContent = 'Sin foto';
     if (heroName) {
-      tryLoadAutoAvatar(heroName, box);
+      tryLoadAutoAvatar(heroName, hero, box);
     }
   }
 
@@ -712,9 +775,9 @@ function readFileAsDataURL(file){
       data.meta = data.meta || {};
       data.meta.updatedAt = data.meta.updatedAt || new Date().toISOString();
 
-      state.data = data;
+      state.data = normalizeData(data);
       state.dataSource = 'local';
-      saveLocal(data);
+      saveLocal(state.data);
 
       updateDataDebug();
       renderAll();
@@ -733,13 +796,173 @@ function readFileAsDataURL(file){
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'levelup_export.json';
+    const d = new Date();
+    const pad = (n)=>String(n).padStart(2,'0');
+    const fname = `LevelUp_backup_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+    a.download = fname;
     a.click();
     URL.revokeObjectURL(a.href);
     toast('Exportado JSON');
   }
   // Bind
-  function bind(){
+  
+  // --- Photo Fit Editor (encuadre + zoom) ---
+  state.ui = state.ui || {};
+  state.ui.photoEditOpen = false;
+
+  function openPhotoModal(){
+    const hero = currentHero();
+    if (!hero) return;
+    const modal = $('#photoModal');
+    if (!modal) return;
+
+    // Ensure fit defaults
+    hero.photoFit = hero.photoFit || { x:50, y:50, scale:1 };
+
+    // Ensure we have a source
+    const src = hero.photo || hero.img || hero.image || hero.photoSrc || '';
+    if (!src){
+      // no image yet -> open picker
+      const file = $('#fileHeroPhoto');
+      file && (file.value='');
+      file && file.click();
+      return;
+    }
+
+    const previewBox = $('#photoPreviewBox');
+    previewBox.replaceChildren();
+    const img = document.createElement('img');
+    img.id = 'photoPreviewImg';
+    img.src = src;
+    img.alt = 'Previsualización';
+    img.loading = 'eager';
+    previewBox.appendChild(img);
+    applyPhotoFit(img, hero);
+
+    const zoom = $('#photoZoom');
+    zoom.value = String(hero.photoFit.scale ?? 1);
+
+    // drag to pan
+    let dragging = false;
+    let startX = 0, startY = 0;
+    let startFit = null;
+
+    const onDown = (e)=>{
+      dragging = true;
+      previewBox.setPointerCapture(e.pointerId);
+      startX = e.clientX;
+      startY = e.clientY;
+      startFit = { x: hero.photoFit.x, y: hero.photoFit.y, scale: hero.photoFit.scale };
+    };
+    const onMove = (e)=>{
+      if (!dragging) return;
+      const rect = previewBox.getBoundingClientRect();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const nx = startFit.x - (dx / rect.width) * 100;
+      const ny = startFit.y - (dy / rect.height) * 100;
+      hero.photoFit.x = Math.max(0, Math.min(100, nx));
+      hero.photoFit.y = Math.max(0, Math.min(100, ny));
+      applyPhotoFit(img, hero);
+      // update labels
+      const lbl = $('#photoPosLabel');
+      if (lbl) lbl.textContent = `${Math.round(hero.photoFit.x)}% · ${Math.round(hero.photoFit.y)}%`;
+    };
+    const onUp = ()=>{ dragging = false; };
+
+    // bind listeners (overwrite previous)
+    previewBox.onpointerdown = onDown;
+    previewBox.onpointermove = onMove;
+    previewBox.onpointerup = onUp;
+    previewBox.onpointercancel = onUp;
+
+    // zoom slider
+    zoom.oninput = ()=>{
+      hero.photoFit.scale = Number(zoom.value || 1);
+      applyPhotoFit(img, hero);
+      const zlbl = $('#photoZoomLabel');
+      if (zlbl) zlbl.textContent = `${Math.round(hero.photoFit.scale*100)}%`;
+    };
+
+    // reset
+    $('#btnPhotoReset')?.addEventListener('click', ()=>{
+      hero.photoFit = { x:50, y:50, scale:1 };
+      zoom.value = '1';
+      applyPhotoFit(img, hero);
+      const lbl = $('#photoPosLabel');
+      if (lbl) lbl.textContent = `50% · 50%`;
+      const zlbl = $('#photoZoomLabel');
+      if (zlbl) zlbl.textContent = `100%`;
+    }, { once:true });
+
+    // change image (optional)
+    $('#btnPhotoChange')?.addEventListener('click', ()=>{
+      const file = $('#fileHeroPhoto');
+      if (!file) return;
+      file.value = '';
+      file.click();
+    }, { once:true });
+
+    // save
+    $('#btnPhotoSave')?.addEventListener('click', ()=>{
+      saveLocal(state.data);
+      if (state.dataSource === 'remote') state.dataSource = 'local';
+      updateDataDebug();
+      closePhotoModal();
+      renderHeroDetail();
+      renderHeroList();
+      toast('Foto guardada.');
+    }, { once:true });
+
+    $('#btnPhotoCancel')?.addEventListener('click', ()=>{
+      // Do not revert fit (simple). If you want revert, we'd need snapshot. Keep simple.
+      closePhotoModal();
+      renderHeroDetail();
+    }, { once:true });
+
+    modal.hidden = false;
+    state.ui.photoEditOpen = true;
+
+    // Update labels
+    const lbl = $('#photoPosLabel');
+    if (lbl) lbl.textContent = `${Math.round(hero.photoFit.x)}% · ${Math.round(hero.photoFit.y)}%`;
+    const zlbl = $('#photoZoomLabel');
+    if (zlbl) zlbl.textContent = `${Math.round((hero.photoFit.scale||1)*100)}%`;
+  }
+
+  function closePhotoModal(){
+    const modal = $('#photoModal');
+    if (!modal) return;
+    modal.hidden = true;
+    state.ui.photoEditOpen = false;
+  }
+
+
+  // --- Confirm modal (replaces browser confirm) ---
+  function openConfirmModal({title='Confirmar', message='¿Seguro?', okText='Aceptar', cancelText='Cancelar'}){
+    return new Promise((resolve)=>{
+      const modal = $('#confirmModal');
+      if (!modal){ resolve(window.confirm(message)); return; }
+      $('#confirmTitle').textContent = title;
+      $('#confirmMessage').textContent = message;
+      const okBtn = $('#btnConfirmOk');
+      const cancelBtn = $('#btnConfirmCancel');
+      okBtn.textContent = okText;
+      cancelBtn.textContent = cancelText;
+
+      const cleanup = (val)=>{
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
+        modal.hidden = true;
+        resolve(val);
+      };
+      okBtn.onclick = ()=> cleanup(true);
+      cancelBtn.onclick = ()=> cleanup(false);
+      modal.hidden = false;
+    });
+  }
+
+function bind(){
     // Cualquier botón "pill" con data-route (topnav + acciones derecha)
     $$('.pill[data-route]').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
     $$('#bottomNav .bottomNav__btn').forEach(btn => btn.addEventListener('click', () => setActiveRoute(btn.dataset.route)));
@@ -803,11 +1026,19 @@ function readFileAsDataURL(file){
         state.data.heroes = Array.isArray(state.data.heroes) ? state.data.heroes : [];
         const h = makeBlankHero(state.group || '2D');
         state.data.heroes.push(h);
-        state.selectedId = h.id;
+        state.selectedHeroId = h.id;
         saveLocal();
         renderAll();
-        // enfoque en el nombre para que puedas renombrarlo rápido
-        requestAnimationFrame(()=>{ const el = document.getElementById('inNombre'); if (el) el.focus(); });
+        requestAnimationFrame(()=>{
+          const nameEl = document.getElementById('inNombre');
+          if (nameEl) nameEl.focus();
+          const card = document.querySelector(`[data-hero-id="${h.id}"]`);
+          if (card){
+            try{ card.scrollIntoView({block:'center', behavior:'smooth'}); }catch(_e){}
+            card.classList.add('flash');
+            setTimeout(()=>card.classList.remove('flash'), 650);
+          }
+        });
       });
     }
 
@@ -860,6 +1091,10 @@ function readFileAsDataURL(file){
     $('#btnCloseRoleModal').addEventListener('click', closeRoleModal);
     $$('[data-close-role-modal]').forEach(el=> el.addEventListener('click', closeRoleModal));
 
+    // Photo / Confirm modals backdrops
+    $('#photoBackdrop')?.addEventListener('click', closePhotoModal);
+    $('#confirmBackdrop')?.addEventListener('click', ()=>{ const b=$('#btnConfirmCancel'); if(b) b.click(); });
+
     // XP demo
     $('#btnXpM5').addEventListener('click', ()=> bumpHeroXp(-5));
     $('#btnXpM1').addEventListener('click', ()=> bumpHeroXp(-1));
@@ -904,27 +1139,34 @@ function readFileAsDataURL(file){
         closeDrawer();
         closeDatos();
         closeRoleModal();
+        closePhotoModal();
+        const cancel = $('#btnConfirmCancel');
+        if (cancel) cancel.click();
       }
     });
 
     // UI helpers
     initTopMoreMenu();
     const resetBtn = $('#btnWeekReset');
-    resetBtn?.addEventListener('click', (e)=>{
+    resetBtn?.addEventListener('click', async (e)=>{
       e.preventDefault();
       e.stopPropagation();
       const h = currentHero();
       if (!h) return;
+      const ok = await openConfirmModal({title:'Reiniciar XP semanal', message:'¿Reiniciar la XP semanal de este héroe?', okText:'Reiniciar', cancelText:'Cancelar'});
+      if (!ok) return;
       h.weekXp = 0;
       if (!h.weekXpMax) h.weekXpMax = DEFAULT_WEEK_XP_MAX;
       saveLocal();
+      if (state.dataSource === 'remote') state.dataSource = 'local';
+      updateDataDebug();
       renderHeroDetail(h);
       toast('XP semanal reiniciada.');
     });
 
     // Eliminar héroe (icono de bote de basura en la tarjeta de foto)
     const btnEliminar = $('#btnEliminar') || $('#heroDeleteBtn');
-    btnEliminar?.addEventListener('click', (e)=>{
+    btnEliminar?.addEventListener('click', async (e)=>{
       e.preventDefault();
       e.stopPropagation();
       const h = currentHero();
@@ -936,7 +1178,9 @@ function readFileAsDataURL(file){
       // Seleccionar otro héroe si existe
       const next = (state.data.heroes || [])[0];
       state.selectedHeroId = next ? next.id : null;
-      saveLocal();
+      saveLocal(state.data);
+      if (state.dataSource === 'remote') state.dataSource = 'local';
+      updateDataDebug();
       renderAll();
       toast('Héroe eliminado.');
     });
@@ -955,7 +1199,7 @@ function readFileAsDataURL(file){
     });
     $('#btnEditarFoto')?.addEventListener('click', (e)=>{
       e.preventDefault();
-      openPhotoPicker();
+      openPhotoModal();
     });
     $('#btnQuitarFoto')?.addEventListener('click', (e)=>{
       e.preventDefault();
@@ -978,10 +1222,15 @@ function readFileAsDataURL(file){
       try{
         const dataUrl = await readFileAsDataURL(file);
         h.photo = dataUrl;
-        saveLocal();
+        h.photoSrc = '';
+        h.photoFit = h.photoFit || { x:50, y:50, scale:1 };
+        saveLocal(state.data);
+        if (state.dataSource === 'remote') state.dataSource = 'local';
+        updateDataDebug();
         renderHeroDetail(h);
         renderHeroList();
-        toast('Foto guardada.');
+        // abre editor para encuadrar de inmediato
+        openPhotoModal();
       }catch(err){
         console.error(err);
         toast('No se pudo cargar la foto.');
