@@ -392,7 +392,11 @@ body{
   display:block;
 }
 .avatar__box .avatar__placeholder{ opacity:.55; }
-.avatar__actions{ display:flex; gap: 10px; flex-wrap:nowrap; justify-content:center; width:100%; margin-top: 16px; }
+.avatar__actions{ display:flex; gap: 10px; flex-wrap:nowrap; justify-content:center; width:100%; margin-top: 20px; }
+
+/* Eddy pidió simplificar: ocultar "Poner" y "Quitar"; dejar solo "Editar" (que también abre el selector) */
+.avatar__actions #btnPonerFoto,
+.avatar__actions #btnQuitarFoto{ display:none; }
 .avatar__actions--secondary{ margin-top: -2px; }
 
 .heroName{ font-size: 22px; letter-spacing: 4px; font-weight: 800; opacity: .9; }
@@ -770,33 +774,38 @@ body::-webkit-scrollbar,
   height: 0;
 }
 
-/* Botón de eliminar como icono en la tarjeta de foto */
+/* Botón icono genérico (por defecto NO es absoluto; así no flota sobre otros UI) */
 .card--avatar{ position: relative; }
 .iconBtn{
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  /* Prevent it from being visually covered by the avatar box/image */
-  z-index: 6;
+  position: static;
   width: 34px;
   height: 34px;
   display: grid;
   place-items: center;
   border-radius: 12px;
-  border: 1px solid rgba(240, 104, 104, 0.48);
-  background: rgba(0, 0, 0, 0.52);
+  border: 1px solid rgba(255, 215, 120, 0.18);
+  background: rgba(0, 0, 0, 0.46);
   color: rgba(255,255,255,0.9);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.28);
   cursor: pointer;
-  opacity: .84;
+  opacity: .9;
+}
+.iconBtn--danger{
+  /* Rojo más discreto */
+  border-color: rgba(240, 104, 104, 0.32);
+  background: rgba(60, 10, 10, 0.22);
+}
+.heroDeleteBtn{
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
 }
 .iconBtn:hover{ background: rgba(26, 26, 26, 0.72); opacity: 1; }
 .iconBtn:active{ transform: translateY(1px); }
 
 /* Inline small icon buttons (e.g., reset weekly XP) */
 .iconBtn--inline{
-  position: static;
-  top: auto; right: auto;
   width: 28px;
   height: 28px;
   border-radius: 10px;

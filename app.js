@@ -861,6 +861,25 @@ function readFileAsDataURL(file){
       toast('XP semanal reiniciada.');
     });
 
+    // Eliminar héroe (icono de bote de basura en la tarjeta de foto)
+    const btnEliminar = $('#btnEliminar');
+    btnEliminar?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const h = currentHero();
+      if (!h) return;
+      const ok = confirm(`¿Eliminar a "${h.name || 'este héroe'}"?\n\nEsto borra la ficha (se puede recuperar solo si tienes respaldo).`);
+      if (!ok) return;
+      // Remover del arreglo
+      state.data.heroes = (state.data.heroes || []).filter(x => x.id !== h.id);
+      // Seleccionar otro héroe si existe
+      const next = (state.data.heroes || [])[0];
+      state.selectedHeroId = next ? next.id : null;
+      saveLocal();
+      renderAll();
+      toast('Héroe eliminado.');
+    });
+
     // Foto de héroe (subir/quitar)
     const photoInput = $('#fileHeroPhoto');
     const openPhotoPicker = () => {
