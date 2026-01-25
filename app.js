@@ -23,6 +23,45 @@
   // Weekly XP cap for "Actividades pequeñas" (per hero). If hero.weekXpMax is missing, we fall back to this.
   const DEFAULT_WEEK_XP_MAX = 40;
 
+// Convierte texto a un nombre seguro de archivo (sin perder mayúsculas/minúsculas)
+function sanitizeFileName(str){
+  const raw = String(str || '').trim();
+  if(!raw) return '';
+  // quita acentos cuando sea posible
+  let s = raw;
+  try{ s = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,''); }catch(_e){}
+  // quita caracteres inválidos para nombres de archivo / rutas
+  s = s.replace(/[\\/\u0000-\u001f:*?"<>|]/g,'');
+  // colapsa espacios
+  s = s.replace(/\s+/g,' ').trim();
+  return s;
+}
+
+function makeId(prefix='h'){
+  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
+}
+
+function makeBlankHero(group){
+  return {
+    id: makeId('h'),
+    group: group || '2D',
+    name: 'Nuevo héroe',
+    age: '',
+    role: '',
+    level: 1,
+    xp: 0,
+    xpMax: 100,
+    weekXp: 0,
+    weekXpMax: DEFAULT_WEEK_XP_MAX,
+    stats: { int: 0, sab: 0, car: 0, res: 0, cre: 0 },
+    desc: '',
+    goal: '',
+    photo: '',
+    // Para edición de encuadre (si más adelante activamos el editor)
+    photoFit: { x: 0, y: 0, scale: 1 }
+  };
+}
+
   const state = {
     route: 'fichas',
     role: 'viewer',      // futuro: 'teacher' con PIN
@@ -755,6 +794,22 @@ function readFileAsDataURL(file){
         renderHeroDetail();
       });
     });
+
+    // Crear héroe nuevo (sin modal): se agrega a la lista del grupo actual y se abre la ficha
+    const btnNuevoHeroe = $('#btnNuevoHeroe');
+    if (btnNuevoHeroe){
+      btnNuevoHeroe.addEventListener('click', ()=>{
+        state.data = state.data || { heroes: [] };
+        state.data.heroes = Array.isArray(state.data.heroes) ? state.data.heroes : [];
+        const h = makeBlankHero(state.group || '2D');
+        state.data.heroes.push(h);
+        state.selectedId = h.id;
+        saveLocal();
+        renderAll();
+        // enfoque en el nombre para que puedas renombrarlo rápido
+        requestAnimationFrame(()=>{ const el = document.getElementById('inNombre'); if (el) el.focus(); });
+      });
+    }
 
     // Datos dropdown
     $('#btnDatos').addEventListener('click', (e)=>{ e.stopPropagation(); toggleDatos(); });
