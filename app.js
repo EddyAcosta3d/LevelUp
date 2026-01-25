@@ -360,10 +360,13 @@
 
     const stems = [raw, noAcc, lower, slug].filter(Boolean);
     const exts = ['png','jpg','jpeg','webp'];
+    const folders = ['assets/personajes', 'assets'];
     const out = [];
     for (const stem of stems){
       for (const ext of exts){
-        out.push(`assets/${stem}.${ext}`);
+        for (const folder of folders){
+          out.push(`${folder}/${stem}.${ext}`);
+        }
       }
     }
     // de-duplicate while preserving order
