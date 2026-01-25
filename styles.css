@@ -873,3 +873,19 @@ body::-webkit-scrollbar,
   .fields3{ grid-template-columns: 1fr 86px 1fr; }
   .select{ max-width: 100%; text-overflow: ellipsis; }
 }
+
+
+/* PATCH v25: avatar + weekly reset + spacing */
+.avatar__frame{ position:relative; }
+
+/* Place the delete icon relative to the avatar frame (not the whole card) */
+.iconBtn--inAvatar{ top:12px; right:12px; }
+
+/* Photo buttons spacing */
+.pillRow--photo{ margin-top:16px; }
+
+/* Weekly reset button must be inline (iconBtn is absolute by default) */
+#btnWeekReset{ position:static !important; inset:auto !important; transform:none !important; margin-left:8px; }
+
+/* Give a bit more air between stats and XP section */
+#heroXPWrap{ margin-top:14px; }

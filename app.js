@@ -31,6 +31,20 @@
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
+
+function readFileAsDataURL(file){
+  return new Promise((resolve, reject)=>{
+    try{
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error || new Error('No se pudo leer la imagen'));
+      reader.readAsDataURL(file);
+    } catch (err){
+      reject(err);
+    }
+  });
+}
+
   function demoData(){
     return {
       meta: { app: 'LevelUp', version: 'hybrid-skeleton-v1', updatedAt: new Date().toISOString() },
@@ -397,21 +411,25 @@
   function renderHeroAvatar(hero){
     const box = $('#avatarBox');
     if (!box) return;
-    const url = hero ? (hero.img || hero.image || hero.photo || '') : '';
+
+    const heroName = hero ? String(hero.name || hero.nombre || '').trim() : '';
+    const url = hero ? (hero.photo || hero.img || hero.image || '') : '';
+
     box.replaceChildren();
+
     if (url){
       const img = document.createElement('img');
       img.src = String(url);
-      img.alt = hero?.nombre ? `Foto de ${hero.nombre}` : 'Foto del héroe';
+      img.alt = heroName ? `Foto de ${heroName}` : 'Foto del héroe';
       img.loading = 'lazy';
       box.appendChild(img);
-    } else {
-      box.textContent = 'Sin foto';
-      const name = (hero && hero.nombre) ? String(hero.nombre).trim() : '';
-      if (name) {
-        // Try to auto-load an image from /assets based on hero name (e.g., assets/Eddy.png)
-        tryLoadAutoAvatar(name, box);
-      }
+      return;
+    }
+
+    // No custom photo: show placeholder and try auto-load from assets/personajes/<Nombre>.(jpg|png|...)
+    box.textContent = 'Sin foto';
+    if (heroName) {
+      tryLoadAutoAvatar(heroName, box);
     }
   }
 
@@ -841,6 +859,54 @@
       renderHeroDetail(h);
       toast('XP semanal reiniciada.');
     });
+
+    // Foto de héroe (subir/quitar)
+    const photoInput = $('#fileHeroPhoto');
+    const openPhotoPicker = () => {
+      if (!photoInput) return;
+      photoInput.value = '';
+      photoInput.click();
+    };
+
+    $('#btnPonerFoto')?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      openPhotoPicker();
+    });
+    $('#btnEditarFoto')?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      openPhotoPicker();
+    });
+    $('#btnQuitarFoto')?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const h = currentHero();
+      if (!h) return;
+      h.photo = '';
+      h.img = '';
+      h.image = '';
+      saveLocal();
+      renderHeroDetail(h);
+      renderHeroList();
+      toast('Foto eliminada.');
+    });
+
+    photoInput?.addEventListener('change', async ()=>{
+      const h = currentHero();
+      if (!h) return;
+      const file = photoInput.files && photoInput.files[0];
+      if (!file) return;
+      try{
+        const dataUrl = await readFileAsDataURL(file);
+        h.photo = dataUrl;
+        saveLocal();
+        renderHeroDetail(h);
+        renderHeroList();
+        toast('Foto guardada.');
+      }catch(err){
+        console.error(err);
+        toast('No se pudo cargar la foto.');
+      }
+    });
+
     wireAutoGrow(document);
   }
 

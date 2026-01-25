@@ -104,9 +104,9 @@
           <article class="page is-active" data-page="fichas">
             <div class="cardGrid">
               <div class="card card--center card--avatar">
-                <button class="iconBtn iconBtn--danger" id="btnEliminar" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
                 <div class="avatar">
-                  <div class="avatar__frame">
+                  <div class="avatar__frame" id="avatarFrame">
+                    <button class="iconBtn iconBtn--danger iconBtn--inAvatar" id="btnEliminar" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
                     <div class="avatar__placeholder" id="avatarPlaceholder">Sin foto</div>
                   </div>
                   <div class="avatar__actions">
@@ -121,11 +121,11 @@
           <div class="noteGrid">
             <div class="noteCol">
               <div class="noteTitle">Descripción rápida</div>
-              <textarea class="textarea textarea--short" id="txtDesc" placeholder="¿Cómo es? ¿Qué le gusta? ¿En qué es bueno?"></textarea>
+              <textarea class="textarea textarea--short" id="txtDesc" ></textarea>
             </div>
             <div class="noteCol">
               <div class="noteTitle">Meta del trimestre</div>
-              <textarea class="textarea textarea--short" id="txtMeta" placeholder="Ej. mejorar tareas, participar más, subir nivel en lectura..."></textarea>
+              <textarea class="textarea textarea--short" id="txtMeta" ></textarea>
             </div>
           </div>
 
@@ -264,6 +264,7 @@
           <div class="ghostBox">PIN se agrega en fase siguiente</div>
         </div>
       </aside>
+      <input type="file" id="fileHeroPhoto" accept="image/*" hidden />
     </main>
 
     <nav class="bottomNav" id="bottomNav" aria-label="Navegación inferior">
