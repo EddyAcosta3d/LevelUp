@@ -816,7 +816,7 @@ function renderHeroAvatar(hero){
     renderRewardsPage(hero);
 
     // (Fichas ya no muestra historial de recompensas)
-    nt hero history
+    // hero history
     const page = document.querySelector('.page[data-page="recompensas"]');
     if (page){
       const cards = page.querySelector('.cardGrid') || page;
