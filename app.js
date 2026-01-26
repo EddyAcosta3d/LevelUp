@@ -169,7 +169,7 @@ function readFileAsDataURL(file){
     if (dbgRoute) dbgRoute.textContent = route;
     updateEditButton();
     applyFichaLock();
-    updateRewardNotifUI(currentHero());
+    updateChestUI(currentHero());
   }
 
   
@@ -192,20 +192,15 @@ function readFileAsDataURL(file){
     }
   }
 
-  function updateRewardNotifUI(hero){
-    // Legacy header notification (kept for compatibility but always hidden)
-    const legacyBtn = $('#btnRewardNotif');
-    if (legacyBtn) legacyBtn.hidden = true;
-
-    // Per-hero chest indicator (inside the ficha avatar)
+  // Cofre (por ficha): siempre visible; muestra badge si hay pendientes
+  function updateChestUI(hero){
     const btn = $('#btnChest');
     const badge = $('#chestBadge');
     if (!btn || !badge) return;
     const count = hero && Array.isArray(hero.pendingRewards) ? hero.pendingRewards.length : 0;
-    const show = (state.route === 'fichas') && count > 0;
-    btn.hidden = !show;
+    badge.hidden = !(count > 0);
     badge.textContent = String(count || 1);
-    btn.classList.toggle('is-pulse', show);
+    btn.classList.toggle('is-pending', count > 0);
   }
 
   // Locking framework for Fichas (easy to extend: add selectors here)
@@ -346,7 +341,8 @@ function readFileAsDataURL(file){
   function autoGrowTextarea(el){
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = Math.max(el.scrollHeight, 80) + 'px';
+    // Más compacto: las notas de descripción/meta no deben crecer demasiado.
+    el.style.height = Math.max(el.scrollHeight, 56) + 'px';
   }
   function wireAutoGrow(root=document){
     $$('textarea', root).forEach(t => {
@@ -524,16 +520,8 @@ function readFileAsDataURL(file){
     { key:'cre', label:'CRE' },
   ];
   const maxVal = 20;
-  const cap = Math.max(0, Math.min(maxVal, Number(hero.statsCap ?? 8)));
 
   box.innerHTML = '';
-  const STAT_TIPS = {
-    INT: 'INT (Inteligencia): resolver problemas, comprender conceptos, aprender rápido.',
-    SAB: 'SAB (Sabiduría): tomar buenas decisiones, reflexionar, aprender de errores.',
-    CAR: 'CAR (Carisma): comunicarte, participar, trabajar en equipo, liderar con respeto.',
-    RES: 'RES (Responsabilidad): cumplir, constancia, cuidar materiales, terminar lo que empiezas.',
-    CRE: 'CRE (Creatividad): ideas originales, diseño, soluciones distintas, iniciativa.'
-  };
   order.forEach((s)=>{
     const key = s.key;
     const label = s.label;
@@ -541,11 +529,10 @@ function readFileAsDataURL(file){
 
     const row = document.createElement('div');
     row.className = 'statLine';
-    const segs = Array.from({length:maxVal}, (_,i)=> {
-      const isOn = i < val;
-      const isLocked = i >= cap;
-      return `<span class="statSeg ${isOn ? 'on' : ''} ${isLocked ? 'locked' : ''}"></span>`;
-    }).join('');
+      const segs = Array.from({length:maxVal}, (_,i)=> {
+        const isOn = i < val;
+        return `<span class="statSeg ${isOn ? 'on' : ''}"></span>`;
+      }).join('');
 
     row.innerHTML = `
       <div class="statBadge badge">${label}</div>
@@ -556,28 +543,9 @@ function readFileAsDataURL(file){
       <div class="statNum" data-key="${key}">${val}</div>
     `;
 
-    // Tooltip: hover on desktop; tap on touch shows a toast
-    const badge = row.querySelector('.statBadge');
-    if (badge){
-      badge.title = STAT_TIPS[label] || label;
-      badge.style.cursor = 'help';
-      badge.addEventListener('click', (ev)=>{
-        try{
-          if (window.matchMedia && window.matchMedia('(hover: none)').matches){
-            toast(STAT_TIPS[label] || label);
-          }
-        }catch(_){ /* ignore */ }
-      });
-    }
-
     const range = row.querySelector('.statRange');
-    range.addEventListener('input', ()=>{
-      let v = Math.max(0, Math.min(maxVal, Number(range.value || 0)));
-      if (cap < maxVal && v > cap){
-        v = cap;
-        range.value = String(cap);
-        toast(`Tope inicial: ${cap}`);
-      }
+      range.addEventListener('input', ()=>{
+        let v = Math.max(0, Math.min(maxVal, Number(range.value || 0)));
       hero.stats[key] = v;
       // mantener también la versión en mayúsculas para compatibilidad
       const upKey = key.toUpperCase();
@@ -806,8 +774,8 @@ function renderHeroAvatar(hero){
       }
     }
 
-    // Header notification button
-    updateRewardNotifUI(hero);
+    // Cofre de recompensas (por ficha)
+    updateChestUI(hero);
 
     // Apply lock state after rendering dynamic controls (stats/chips)
     updateEditButton();
@@ -872,14 +840,16 @@ function renderHeroAvatar(hero){
   }
 
   function renderRewards(){
-  const listEl = document.querySelector('#rewardsHeroList');
-  const emptyEl = document.querySelector('#rewardsHeroEmpty');
+  const listEl = document.querySelector('#rewardsHistoryList');
+  const emptyEl = document.querySelector('#rewardsHistoryEmpty');
+  const subtitle = document.querySelector('#rewardsHistorySubtitle');
   const genList = document.querySelector('#rewardsGeneralList');
 
-  // Columna centro: historial del héroe seleccionado
+  // Historial del héroe seleccionado (por fecha)
   if(listEl && emptyEl){
-    const hero = getActiveHero();
-    renderHeroRewardsList(hero, listEl, emptyEl);
+    const hero = currentHero();
+    if (subtitle) subtitle.textContent = hero ? `Historial de ${hero.name || '—'}` : 'Selecciona un personaje para ver su historial.';
+    renderHeroRewardsList(hero || {}, listEl, emptyEl);
   }
 
   // Columna derecha: catálogo de recompensas (más detallado)
@@ -1336,20 +1306,15 @@ function renderHeroAvatar(hero){
 
       const statKeys = ['INT','SAB','CAR','RES','CRE'];
       statKeys.forEach(k=>{
-        const curPreview = Number(hero.stats?.[k] ?? hero.stats?.[k.toLowerCase()] ?? 0);
         const btn = document.createElement('div');
         btn.className = 'rewardPick';
         btn.innerHTML = `
           <div class="rewardPick__title">${k}</div>
-          <div class="rewardPick__desc">Sube ${k} de ${curPreview} a ${curPreview + 1}</div>
+          <div class="rewardPick__desc">Sube ${k} de ${Number(hero.stats?.[k] ?? 0)} a ${Number(hero.stats?.[k] ?? 0) + 1}</div>
         `;
         btn.addEventListener('click', ()=>{
           hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
-          // Keep both UPPER and lower-case keys in sync (UI uses lower-case; exports keep UPPER too)
-          const cur = Number(hero.stats[k] ?? hero.stats[k.toLowerCase()] ?? 0);
-          const next = Math.min(20, cur + 1);
-          hero.stats[k] = next;
-          hero.stats[k.toLowerCase()] = next;
+          hero.stats[k] = Math.min(20, Number(hero.stats[k] ?? 0) + 1);
 
           claimPendingReward({
             rewardId: 'stat+1',
@@ -1579,19 +1544,20 @@ function bind(){
       setRole(state.role === 'viewer' ? 'teacher' : 'viewer');
     });
 
-    // Recompensa pendiente (por ficha): cofre en la esquina del retrato
+    // Cofre de recompensas (por ficha):
+    // - Si hay recompensas pendientes, abre el modal de level-up para reclamar.
+    // - Si no hay pendientes, manda a la pestaña de Recompensas (historial con fecha).
     $('#btnChest')?.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
       const h = currentHero();
       if (!h) return;
       h.pendingRewards = Array.isArray(h.pendingRewards) ? h.pendingRewards : [];
-      if (!h.pendingRewards.length){
-        toast('No hay recompensas pendientes');
-        updateRewardNotifUI(h);
-        return;
+      if (h.pendingRewards.length){
+        openLevelUpModal();
+      } else {
+        setActiveRoute('recompensas');
       }
-      openLevelUpModal();
     });
 
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
@@ -1786,9 +1752,7 @@ function bind(){
     const avatarFrame = $('#avatarFrame');
     avatarFrame?.addEventListener('click', (e)=>{
       // evita doble trigger cuando se toca el botón
-      const chestBtn = $('#btnChest');
       if (e.target && (e.target === btnFotoOverlay)) return;
-      if (chestBtn && (e.target === chestBtn || chestBtn.contains(e.target))) return;
       if (!window.matchMedia('(hover: none)').matches) return; // solo touch
       if (!isEditEnabled()) return;
       openPhotoModal();

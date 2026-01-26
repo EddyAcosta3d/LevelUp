@@ -10,7 +10,7 @@
   <!-- Icono de la pestaña (pon tu archivo en assets/logo.png o cambia la ruta) -->
   <link rel="icon" href="assets/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
-  <link rel="stylesheet" href="./styles.css?v=20260126E" />
+  <link rel="stylesheet" href="./styles.css?v=20260126D" />
 </head>
 <body>
   <!--
@@ -70,11 +70,6 @@
       <div class="topbar__right">
         <!-- Reemplaza "Presentación" por acceso directo a Recompensas (pantalla separada por ahora) -->
         <button class="pill pill--ghost" id="btnRecompensas" data-route="recompensas">🏆 Recompensas</button>
-        <!-- Notificación de recompensa pendiente (estilo notificación móvil) -->
-        <button class="notifBtn" id="btnRewardNotif" title="Recompensa pendiente" aria-label="Recompensa pendiente" hidden>
-          🎁
-          <span class="notifBadge" id="rewardBadge" aria-hidden="true">1</span>
-        </button>
         <button class="pill pill--ghost" id="btnDebugPanel" aria-pressed="false">🧪 Estado</button>
 
         <div class="dropdown">
@@ -113,22 +108,16 @@
             <div class="cardGrid">
               <div class="card card--center card--avatar">
                 <!-- Eliminar héroe (fuera del marco para no descentrar la foto) -->
+                <button class="iconBtn heroChestBtn" id="btnChest" title="Recompensas" aria-label="Recompensas">
+                  🧰
+                  <span class="notifBadge" id="chestBadge" aria-hidden="true" hidden>1</span>
+                </button>
                 <button class="iconBtn iconBtn--danger heroDeleteBtn" id="btnEliminar" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
                 <div class="avatar">
 				  <div class="avatar__frame" id="avatarFrame">
 					<div class="avatar__box" id="avatarBox">
 						<div class="avatar__placeholder">Sin foto</div>
 					</div>
-					<!-- Recompensa pendiente (por ficha): aparece solo si este héroe tiene pendientes -->
-					<button class="avatarChestBtn" id="btnChest" title="Recompensa pendiente" aria-label="Recompensa pendiente" hidden>
-					  <svg class="chestIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-					    <path d="M7 9.2h10c1.1 0 2 .9 2 2V19c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2v-7.8c0-1.1.9-2 2-2z"/>
-					    <path d="M6.2 9.2l1.2-3.1c.3-.7 1-1.1 1.7-1.1h5.8c.8 0 1.5.5 1.7 1.2l1.2 3"/>
-					    <path d="M12 9.2V21"/>
-					    <path d="M10.6 13.2h2.8"/>
-					  </svg>
-					  <span class="chestBadge" id="chestBadge" aria-hidden="true">1</span>
-					</button>
                     <!-- Overlay edit icon: appears on hover (desktop) or always on touch -->
                     <button class="avatarEditBtn" id="btnFotoOverlay" title="Editar foto" aria-label="Editar foto">✎</button>
 				  </div>
@@ -396,6 +385,6 @@
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="./app.js?v=20260126E" defer></script>
+  <script src="./app.js?v=20260126D" defer></script>
 </body>
 </html>

@@ -472,71 +472,9 @@ body{
 .avatar__frame:hover .avatarEditBtn{ opacity: 1; transform: translateY(0); }
 .avatarEditBtn:hover{ border-color: rgba(0,210,255,0.55); background: rgba(25,42,86,0.86); }
 
-/* Treasure chest: pending reward indicator (per hero) */
-.avatarChestBtn{
-  position:absolute;
-  top:10px;
-  left:10px;
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,210,255,0.34);
-  background: rgba(25,42,86,0.74);
-  color: rgba(220,220,230,0.96);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.50);
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity .14s ease, transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
-  z-index: 6;
-}
-.avatar__frame:hover .avatarChestBtn{ opacity: 1; transform: translateY(0); }
-.avatarChestBtn:hover{ border-color: rgba(0,210,255,0.62); background: rgba(25,42,86,0.88); box-shadow: 0 14px 36px rgba(0,0,0,0.56); }
-.avatarChestBtn .chestIcon{
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: rgba(220,220,230,0.95);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.avatarChestBtn.is-pulse{
-  opacity: 1;
-  transform: translateY(0);
-  animation: chestPulse 1.8s ease-in-out infinite;
-}
-@keyframes chestPulse{
-  0%{ box-shadow: 0 10px 26px rgba(0,0,0,0.50), 0 0 0 rgba(0,210,255,0.00); }
-  55%{ box-shadow: 0 14px 34px rgba(0,0,0,0.60), 0 0 18px rgba(0,210,255,0.22); }
-  100%{ box-shadow: 0 10px 26px rgba(0,0,0,0.50), 0 0 0 rgba(0,210,255,0.00); }
-}
-.chestBadge{
-  position:absolute;
-  right: -6px;
-  top: -6px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color: rgba(15,15,20,0.95);
-  background: rgba(0,210,255,0.92);
-  border: 1px solid rgba(255,255,255,0.20);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.40);
-}
-
 /* Touch devices (iPad/iPhone): no hover -> keep the icon visible */
 @media (hover: none){
   .avatarEditBtn{ opacity: 1; transform: none; }
-  .avatarChestBtn{ opacity: 1; transform: none; }
 }
 .avatar__actions{ display:flex; gap: 10px; flex-wrap:nowrap; justify-content:center; width:100%; margin-top: 14px; }
 
@@ -872,11 +810,6 @@ body{
   #btnMenu{ grid-column:1; justify-self:start; }
   .brand{ grid-column:2; justify-self:center; }
   .topbar__right{ display: none; }
-
-  /* Ocultar el toggle de Edición en celular para evitar toques accidentales */
-  #btnToggleEdit{ display:none !important; }
-  .topMoreMenu__item[data-proxy-click="btnToggleEdit"]{ display:none !important; }
-
   .topbar__moreBtn{
   display: inline-flex;
   width:42px; height:42px; border-radius:12px;
@@ -976,6 +909,19 @@ body::-webkit-scrollbar,
   right: 12px;
   z-index: 6;
 }
+
+/* Cofre de recompensas (por ficha) */
+.heroChestBtn{
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 6;
+  border-color: rgba(0,210,255,0.24);
+  background: rgba(0,0,0,0.18);
+  color: rgba(220,220,230,0.92);
+}
+.heroChestBtn:hover{ border-color: rgba(0,210,255,0.52); }
+.heroChestBtn.is-pending{ box-shadow: 0 0 0 2px rgba(0,210,255,0.10), 0 0 18px rgba(114,26,255,0.22); }
 .iconBtn:hover{ background: rgba(26, 26, 26, 0.72); opacity: 1; }
 .iconBtn:active{ transform: translateY(1px); }
 
@@ -1029,7 +975,7 @@ body::-webkit-scrollbar,
 .noteGrid{margin-top:14px; display:grid; grid-template-columns:1fr; gap:12px;}
 .noteCol{background:rgba(0,0,0,.22); border:1px solid rgba(0,210,255,.12); border-radius:18px; padding:12px;}
 .noteTitle{font-size:13px; opacity:.85; margin-bottom:8px;}
-.textarea--short{min-height:68px; max-height:140px;}
+.textarea--short{min-height:50px; max-height:100px;}
 @media (max-width:980px){
   .noteGrid{grid-template-columns:1fr; }
 }
@@ -1044,7 +990,7 @@ body::-webkit-scrollbar,
 .noteGrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px;}
 .noteCol{background:rgba(0,0,0,.25);border:1px solid rgba(0,210,255,.12);border-radius:16px;padding:12px;}
 .noteTitle{font-size:13px;color:rgba(234,231,223,.8);margin:0 0 8px 2px;letter-spacing:.02em;}
-.textarea--short{min-height:48px; max-height:120px;}
+.textarea--short{min-height:44px; max-height:92px;}
 .noteCol textarea{ scrollbar-width: none; }
 .noteCol textarea::-webkit-scrollbar{ width:0; height:0; }
 @media (max-width: 900px){
@@ -1199,28 +1145,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   max-width: 560px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(0,210,255,0.18);
-  box-shadow:
-    0 28px 70px rgba(0,0,0,0.65),
-    0 0 0 1px rgba(114,26,255,0.10);
 }
-
-/* Animated border (subtle) */
-.modal__card--levelup::after{
-  content:'';
-  position:absolute;
-  inset: -2px;
-  border-radius: 22px;
-  padding: 2px;
-  background: linear-gradient(90deg, rgba(0,210,255,0.0), rgba(0,210,255,0.35), rgba(114,26,255,0.35), rgba(0,210,255,0.0));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: .85;
-  pointer-events:none;
-  animation: lvlBorder 3.4s linear infinite;
-}
-@keyframes lvlBorder{ 0%{ transform: translateX(-20%);} 100%{ transform: translateX(20%);} }
 
 /* Game-ish entry + subtle sparkle layer */
 #levelUpModal.is-open .modal__card--levelup{
@@ -1303,37 +1228,27 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   .rewardPickGrid{ grid-template-columns: repeat(2, 1fr); }
 }
 .rewardPick{
-  border:1px solid rgba(0,210,255,.14);
-  background: rgba(25,42,86,.28);
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
   border-radius:14px;
-  padding:14px;
+  padding:12px;
   cursor:pointer;
   transition: transform .12s ease, border-color .12s ease, background .12s ease;
 }
 .rewardPick:hover{
   transform: translateY(-1px);
-  border-color: rgba(0,210,255,.44);
-  background: rgba(25,42,86,.38);
-  box-shadow: 0 18px 46px rgba(0,0,0,0.58), 0 0 18px rgba(114,26,255,0.10);
+  border-color: rgba(255,255,255,.20);
+  background: rgba(255,255,255,.05);
 }
 .rewardPick__title{
   font-weight:800;
   margin-bottom:4px;
-  letter-spacing: .1px;
-  font-size: 1.02rem;
 }
 .rewardPick__desc{
-  opacity:.90;
+  opacity:.82;
   font-size:.95rem;
-  line-height: 1.35;
 }
 .levelUpHint{ margin-top: 10px; }
-
-/* Hide Edit button on small screens (students won't need it) */
-@media (max-width: 640px){
-  #btnToggleEdit{ display:none !important; }
-  .topMoreMenu__item[data-proxy-click="btnToggleEdit"]{ display:none !important; }
-}
 
 /* Reward history in ficha */
 .heroRewardsBox{
