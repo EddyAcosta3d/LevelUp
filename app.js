@@ -53,7 +53,8 @@ function makeBlankHero(group){
     xpMax: 100,
     weekXp: 0,
     weekXpMax: DEFAULT_WEEK_XP_MAX,
-    stats: { int: 0, sab: 0, car: 0, res: 0, cre: 0 },
+    stats: { INT: 0, SAB: 0, CAR: 0, RES: 0, CRE: 0 },
+    statsCap: 8,
     desc: '',
     goal: '',
     photo: '',
@@ -130,8 +131,6 @@ function readFileAsDataURL(file){
       h.xpMax = Number(h.xpMax ?? 100);
       h.weekXp = Number(h.weekXp ?? 0);
       h.weekXpMax = Number(h.weekXpMax ?? DEFAULT_WEEK_XP_MAX);
-      // Tope inicial de autoevaluación: 0–8. Después puedes subirlo en el JSON a 20.
-      h.statsCap = Number(h.statsCap ?? 8);
       h.photoFit = h.photoFit || { x:50, y:50, scale:1 };
       h.photoSrc = h.photoSrc || '';
       h.desc = h.desc || '';
@@ -141,15 +140,16 @@ function readFileAsDataURL(file){
       h.tokens = Number(h.tokens ?? 0);
       // keep stats object
       h.stats = h.stats && typeof h.stats === 'object' ? h.stats : {};
-      // Compat: algunos JSON viejos usan INT/SAB... (mayúsculas) y otros usan int/sab... (minúsculas)
-      const statMap = { int:'INT', sab:'SAB', car:'CAR', res:'RES', cre:'CRE' };
-      Object.keys(statMap).forEach(low=>{
-        const up = statMap[low];
-        if (h.stats[low] === undefined && h.stats[up] !== undefined) h.stats[low] = Number(h.stats[up] ?? 0);
-        if (h.stats[up] === undefined && h.stats[low] !== undefined) h.stats[up] = Number(h.stats[low] ?? 0);
-        if (h.stats[low] === undefined) h.stats[low] = 0;
-        if (h.stats[up] === undefined) h.stats[up] = 0;
+      // map possible lowercase keys to uppercase (compat)
+      const map = { int:'INT', sab:'SAB', car:'CAR', res:'RES', cre:'CRE' };
+      Object.keys(map).forEach(lk=>{
+        if (h.stats[lk] !== undefined && h.stats[map[lk]] === undefined){
+          h.stats[map[lk]] = h.stats[lk];
+        }
       });
+      ['INT','SAB','CAR','RES','CRE'].forEach(k=>{ if (h.stats[k] === undefined) h.stats[k] = 0; });
+      h.statsCap = Number.isFinite(Number(h.statsCap)) ? Number(h.statsCap) : 8;
+      h.statsCap = Math.max(0, Math.min(20, h.statsCap));
     });
     return d;
   }
@@ -167,81 +167,9 @@ function readFileAsDataURL(file){
     if (titleEl) titleEl.textContent = titleMap[route] || route.toUpperCase();
     const dbgRoute = $('#dbgRoute');
     if (dbgRoute) dbgRoute.textContent = route;
-    updateEditButton();
-    applyFichaLock();
-    updateRewardNotifUI(currentHero());
   }
 
-  
-  function isEditEnabled(){ return state.role === 'teacher'; }
-  function updateEditButton(){
-    const btn = $('#btnEdicion');
-    if(!btn) return;
-    // Only show edit toggle on Fichas
-    const show = (state.route === 'fichas');
-    btn.hidden = !show;
-    if(!show) return;
-    if(isEditEnabled()){
-      btn.textContent = '✎ Editar';
-      btn.classList.remove('pill--danger');
-      btn.classList.add('is-active');
-    }else{
-      btn.textContent = '🔒 Solo ver';
-      btn.classList.add('pill--danger');
-      btn.classList.remove('is-active');
-    }
-  }
-
-  function updateRewardNotifUI(hero){
-    const btn = $('#btnRewardNotif');
-    const badge = $('#rewardBadge');
-    if (!btn || !badge) return;
-    const count = hero && Array.isArray(hero.pendingRewards) ? hero.pendingRewards.length : 0;
-    const show = (state.route === 'fichas') && count > 0;
-    btn.hidden = !show;
-    badge.textContent = String(count || 1);
-  }
-
-  // Locking framework for Fichas (easy to extend: add selectors here)
-  const FICHA_LOCK = {
-    disableSelectors: [
-      '#btnNuevoHeroe',
-      '#btnEliminar',
-      '#btnFotoOverlay',
-      '#inNombre',
-      '#inEdad',
-      '#selRol',
-      '#txtDesc',
-      '#txtMeta',
-      '#btnXpM5', '#btnXpM1', '#btnXpP1', '#btnXpP5',
-      '#actChips button',
-      '#btnWeekReset'
-    ],
-    statsRangeSelector: '#statsBox .statRange',
-    statsSegsSelector: '#statsBox .statSegs'
-  };
-
-  function applyFichaLock(){
-    const locked = !isEditEnabled();
-    document.body.classList.toggle('is-view-locked', locked);
-
-    // Disable only when we are on fichas; other pages don't need this lock yet
-    if(state.route !== 'fichas') return;
-
-    FICHA_LOCK.disableSelectors.forEach(sel=>{
-      $$(sel).forEach(el=>{
-        if('disabled' in el) el.disabled = locked;
-        el.setAttribute('aria-disabled', locked ? 'true' : 'false');
-      });
-    });
-
-    // Stats
-    $$(FICHA_LOCK.statsRangeSelector).forEach(r=>{ r.disabled = locked; });
-    $$(FICHA_LOCK.statsSegsSelector).forEach(seg=>{
-      seg.style.pointerEvents = locked ? 'none' : 'auto';
-    });
-  }
-// Drawer
+  // Drawer
   function isDrawerLayout(){ return window.matchMedia('(max-width: 980px)').matches; }
   function closeDrawer(){ $('#shell').classList.remove('is-drawer-open'); $('#overlay').hidden = true; }
   function openDrawer(){ $('#shell').classList.add('is-drawer-open'); $('#overlay').hidden = false; }
@@ -365,7 +293,7 @@ function readFileAsDataURL(file){
       el.style.padding = '10px 14px';
       el.style.borderRadius = '999px';
       el.style.background = 'rgba(10,10,10,0.92)';
-      el.style.border = '1px solid rgba(0,210,255,0.22)';
+      el.style.border = '1px solid rgba(255,215,120,0.20)';
       el.style.color = 'rgba(255,255,255,0.92)';
       el.style.boxShadow = '0 14px 40px rgba(0,0,0,0.55)';
       el.style.zIndex = '9999';
@@ -509,33 +437,44 @@ function readFileAsDataURL(file){
   function renderStats(hero){
   const box = $('#statsBox');
   if (!box) return;
+
   hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
+  // Ensure uppercase keys exist
+  const map = { int:'INT', sab:'SAB', car:'CAR', res:'RES', cre:'CRE' };
+  Object.keys(map).forEach(lk=>{
+    if (hero.stats[lk] !== undefined && hero.stats[map[lk]] === undefined){
+      hero.stats[map[lk]] = hero.stats[lk];
+    }
+  });
+  ['INT','SAB','CAR','RES','CRE'].forEach(k=>{ if (hero.stats[k] === undefined) hero.stats[k] = 0; });
+
   const order = [
-    { key:'int', label:'INT' },
-    { key:'sab', label:'SAB' },
-    { key:'car', label:'CAR' },
-    { key:'res', label:'RES' },
-    { key:'cre', label:'CRE' },
+    { key:'INT', label:'INT', tip:'Inteligencia: aprender, resolver problemas y comprender conceptos.' },
+    { key:'SAB', label:'SAB', tip:'Sabiduría: tomar buenas decisiones, reflexionar y actuar con calma.' },
+    { key:'CAR', label:'CAR', tip:'Carisma: comunicar ideas, colaborar y expresarse con seguridad.' },
+    { key:'RES', label:'RES', tip:'Responsabilidad: cumplir, organizarse y ser constante.' },
+    { key:'CRE', label:'CRE', tip:'Creatividad: imaginar, proponer y crear soluciones nuevas.' },
   ];
+
   const maxVal = 20;
-  const cap = Math.max(0, Math.min(maxVal, Number(hero.statsCap ?? 8)));
+  const cap = Math.max(0, Math.min(20, Number(hero.statsCap ?? 8)));
 
   box.innerHTML = '';
+
   order.forEach((s)=>{
     const key = s.key;
     const label = s.label;
-    const val = Math.max(0, Math.min(maxVal, Number(hero.stats[key] ?? 0)));
+    const tip = s.tip;
+    const raw = Number(hero.stats[key] ?? 0);
+    const val = Math.max(0, Math.min(maxVal, raw));
 
     const row = document.createElement('div');
     row.className = 'statLine';
-    const segs = Array.from({length:maxVal}, (_,i)=> {
-      const isOn = i < val;
-      const isLocked = i >= cap;
-      return `<span class="statSeg ${isOn ? 'on' : ''} ${isLocked ? 'locked' : ''}"></span>`;
-    }).join('');
+
+    const segs = Array.from({length:maxVal}, (_,i)=> `<span class="statSeg ${i < val ? 'on' : ''}"></span>`).join('');
 
     row.innerHTML = `
-      <div class="statBadge badge">${label}</div>
+      <div class="statBadge badge" title="${escapeHtml(tip)}" data-tip="${escapeHtml(tip)}" data-label="${label}">${label}</div>
       <div class="statMeter" aria-label="Ajustar ${label}">
         <div class="statSegs" data-key="${key}">${segs}</div>
         <input class="statRange" type="range" min="0" max="${maxVal}" step="1" value="${val}" />
@@ -543,18 +482,28 @@ function readFileAsDataURL(file){
       <div class="statNum" data-key="${key}">${val}</div>
     `;
 
+    const badge = row.querySelector('.statBadge');
+    // Touch fallback: show tip as toast
+    badge?.addEventListener('pointerdown', (e)=>{
+      if (!window.matchMedia('(hover: none)').matches) return;
+      e.preventDefault();
+      e.stopPropagation();
+      toast(`${label}: ${tip}`);
+    });
+
     const range = row.querySelector('.statRange');
     range.addEventListener('input', ()=>{
       let v = Math.max(0, Math.min(maxVal, Number(range.value || 0)));
-      if (cap < maxVal && v > cap){
+
+      // En edición, limitar autoevaluación al cap (por defecto 8).
+      // Si el héroe ya tiene stats > cap por recompensas, NO lo bajamos automáticamente.
+      if (cap < maxVal && v > cap && (Number(hero.stats[key] ?? 0) <= cap)){
         v = cap;
         range.value = String(cap);
         toast(`Tope inicial: ${cap}`);
       }
+
       hero.stats[key] = v;
-      // mantener también la versión en mayúsculas para compatibilidad
-      const upKey = key.toUpperCase();
-      hero.stats[upKey] = v;
 
       const numEl = row.querySelector('.statNum');
       if(numEl) numEl.textContent = String(v);
@@ -562,9 +511,7 @@ function readFileAsDataURL(file){
       const segWrap = row.querySelector('.statSegs');
       if(segWrap){
         const children = segWrap.children;
-        for(let i=0;i<children.length;i++){
-          children[i].classList.toggle('on', i < v);
-        }
+        for(let i=0;i<children.length;i++) children[i].classList.toggle('on', i < v);
       }
 
       saveData();
@@ -768,6 +715,7 @@ function renderHeroAvatar(hero){
     $$('#actChips [data-xp]').forEach(b=>{ b.disabled = atMax; });
 
     renderRewards();
+    updateHeroChestUI(hero);
 
     // Pending reward mini-notification
     hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
@@ -778,13 +726,17 @@ function renderHeroAvatar(hero){
         state.ui.pendingToastHeroId = hero.id;
       }
     }
+  }
 
-    // Header notification button
-    updateRewardNotifUI(hero);
 
-    // Apply lock state after rendering dynamic controls (stats/chips)
-    updateEditButton();
-    applyFichaLock();
+  function updateHeroChestUI(hero){
+    const btn = $('#btnHeroChest');
+    const countEl = $('#heroChestCount');
+    if (!btn) return;
+    const list = Array.isArray(hero?.pendingRewards) ? hero.pendingRewards : [];
+    const n = list.length;
+    btn.hidden = n <= 0;
+    if (countEl) countEl.textContent = String(n);
   }
 
   // --- Recompensas (general + por héroe) ---
@@ -1005,11 +957,21 @@ function renderHeroAvatar(hero){
   // “Edición” sin PIN aún (solo demo)
   function setRole(nextRole){
     state.role = nextRole;
-    updateEditButton();
-    applyFichaLock();
+    const btn = $('#btnEdicion');
+    if (state.role === 'teacher'){
+      btn.textContent = '🔓 Edición';
+      btn.classList.remove('pill--danger');
+      btn.classList.add('is-active');
+      toast('Modo edición (demo)');
+    }else{
+      btn.textContent = '🔒 Edición';
+      btn.classList.add('pill--danger');
+      btn.classList.remove('is-active');
+      toast('Modo vista (demo)');
+    }
+    document.body.classList.toggle('is-teacher', state.role === 'teacher');
     updateDataDebug();
     renderChallengeDetail();
-    toast(state.role === 'teacher' ? 'Edición activada' : 'Modo solo ver');
   }
 
   function bumpHeroXp(delta){
@@ -1277,7 +1239,6 @@ function renderHeroAvatar(hero){
 
     renderRewardPickGrid('main');
     modal.hidden = false;
-    modal.classList.add('is-open');
     state.ui.levelUpOpen = true;
 
     // Mini notification while pending
@@ -1288,7 +1249,6 @@ function renderHeroAvatar(hero){
     const modal = $('#levelUpModal');
     if (!modal) return;
     modal.hidden = true;
-    modal.classList.remove('is-open');
     state.ui.levelUpOpen = false;
   }
 
@@ -1547,21 +1507,6 @@ function bind(){
       setRole(state.role === 'viewer' ? 'teacher' : 'viewer');
     });
 
-    // Notificación de recompensa pendiente (solo visible si hay pendientes)
-    $('#btnRewardNotif')?.addEventListener('click', (e)=>{
-      e.preventDefault();
-      e.stopPropagation();
-      const h = currentHero();
-      if (!h) return;
-      h.pendingRewards = Array.isArray(h.pendingRewards) ? h.pendingRewards : [];
-      if (!h.pendingRewards.length){
-        toast('No hay recompensas pendientes');
-        updateRewardNotifUI(h);
-        return;
-      }
-      openLevelUpModal();
-    });
-
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 
     $('#inRol').addEventListener('click', openRoleModal);
@@ -1573,60 +1518,6 @@ function bind(){
     });
     $('#btnCloseRoleModal').addEventListener('click', closeRoleModal);
     $$('[data-close-role-modal]').forEach(el=> el.addEventListener('click', closeRoleModal));
-
-    // --- Bind de campos de ficha (Nombre/Edad/Descripción/Meta/etc.) ---
-    // Antes faltaba el wiring y por eso "Nombre" no actualizaba la ficha.
-    let heroSaveTimer = null;
-    const scheduleHeroSave = (immediate=false)=>{
-      const commit = ()=>{
-        saveLocal(state.data);
-        if (state.dataSource === 'remote') state.dataSource = 'local';
-        updateDataDebug();
-      };
-      if (immediate){ commit(); return; }
-      clearTimeout(heroSaveTimer);
-      heroSaveTimer = setTimeout(commit, 220);
-    };
-
-    const bindHeroField = (sel, applyFn, {rerenderList=false, updateHeader=false}={})=>{
-      const el = document.querySelector(sel);
-      if (!el) return;
-      const handler = ()=>{
-        const h = currentHero();
-        if (!h) return;
-        try{ applyFn(el, h); }catch(_e){}
-        if (updateHeader){
-          const t = document.getElementById('heroName');
-          if (t) t.textContent = (h.name || 'NUEVO HÉROE').toUpperCase();
-        }
-        scheduleHeroSave(false);
-        if (rerenderList) renderHeroList();
-      };
-      el.addEventListener('input', handler);
-      el.addEventListener('change', handler);
-      // Para que al salir se "limpie" espacios
-      el.addEventListener('blur', ()=>{
-        const h = currentHero();
-        if (!h) return;
-        if (sel === '#inNombre'){
-          const v = String(el.value || '').trim();
-          el.value = v;
-          h.name = v;
-          const t = document.getElementById('heroName');
-          if (t) t.textContent = (h.name || 'NUEVO HÉROE').toUpperCase();
-          renderHeroList();
-          scheduleHeroSave(true);
-        }
-      });
-    };
-
-    bindHeroField('#inNombre', (el,h)=>{ h.name = String(el.value || ''); }, {rerenderList:true, updateHeader:true});
-    bindHeroField('#inEdad', (el,h)=>{ h.age = el.value === '' ? '' : Number(el.value); });
-    bindHeroField('#txtDesc', (el,h)=>{ h.desc = String(el.value || ''); });
-    bindHeroField('#txtMeta', (el,h)=>{ h.goal = String(el.value || ''); });
-    bindHeroField('#txtBien', (el,h)=>{ h.goodAt = String(el.value || ''); });
-    bindHeroField('#txtMejorar', (el,h)=>{ h.improve = String(el.value || ''); });
-
 
     // Level Up modal backdrop
     $('#levelUpBackdrop')?.addEventListener('click', closeLevelUpModal);
@@ -1733,7 +1624,23 @@ function bind(){
       toast('Ficha eliminada');
     });
 
-    // Foto de héroe (subir/quitar)
+
+
+    // Cofre (recompensas pendientes) por ficha
+    $('#btnHeroChest')?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const h = currentHero();
+      if (!h) return;
+      if (state.role !== 'teacher'){
+        toast('Activa Edición para reclamar recompensas');
+        return;
+      }
+      const list = Array.isArray(h.pendingRewards) ? h.pendingRewards : [];
+      if (list.length) openLevelUpModal();
+      else setActiveRoute('recompensas');
+    });
+    // Foto de héroe (selector + encuadre)
     const photoInput = $('#fileHeroPhoto');
     const openPhotoPicker = () => {
       if (!photoInput) return;
@@ -1741,26 +1648,39 @@ function bind(){
       photoInput.click();
     };
 
-    // Icono overlay (hover en desktop / siempre visible en touch)
-    const btnFotoOverlay = $('#btnFotoOverlay');
-    btnFotoOverlay?.addEventListener('click', (e)=>{
+    const btnFotoIcon = $('#btnFotoIcon');
+    const avatarFrame = $('#avatarFrame');
+
+    const canEdit = () => state.role === 'teacher';
+
+    const showTouchIcon = ()=>{
+      if (!avatarFrame) return;
+      avatarFrame.classList.add('is-touch-actions');
+      clearTimeout(state.ui._touchActionsT);
+      state.ui._touchActionsT = setTimeout(()=> avatarFrame.classList.remove('is-touch-actions'), 2400);
+    };
+
+    // Touch: tocar la imagen muestra el icono; tocar el icono abre selector/editor
+    avatarFrame?.addEventListener('pointerdown', (e)=>{
+      if (!window.matchMedia('(hover: none)').matches) return;
+      if (!canEdit()) return;
+      const t = e.target;
+      if (t && t.closest && t.closest('#btnFotoIcon')) return;
+      showTouchIcon();
+    });
+
+    btnFotoIcon?.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
-      // openPhotoModal ya abre selector si no hay imagen
-      openPhotoModal();
+      if (!canEdit()) return;
+      const h = currentHero();
+      if (!h) return;
+      const src = h.photo || h.img || h.image || h.photoSrc || '';
+      if (src) openPhotoModal();
+      else openPhotoPicker();
     });
 
-    // En iPad/iPhone también es cómodo que tocar la imagen abra el editor
-    const avatarFrame = $('#avatarFrame');
-    avatarFrame?.addEventListener('click', (e)=>{
-      // evita doble trigger cuando se toca el botón
-      if (e.target && (e.target === btnFotoOverlay)) return;
-      if (!window.matchMedia('(hover: none)').matches) return; // solo touch
-      if (!isEditEnabled()) return;
-      openPhotoModal();
-    });
-
-    photoInput?.addEventListener('change', async ()=>{
+photoInput?.addEventListener('change', async ()=>{
       const h = currentHero();
       if (!h) return;
       const file = photoInput.files && photoInput.files[0];
