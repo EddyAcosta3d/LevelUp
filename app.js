@@ -425,87 +425,61 @@ function readFileAsDataURL(file){
   }
 
   function renderStats(hero){
-    const box = document.createElement('div');
-    box.className = 'statsBox';
+  const box = $('#statsBox');
+  if (!box) return;
+  hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
+  const order = [
+    { key:'int', label:'INT' },
+    { key:'sab', label:'SAB' },
+    { key:'car', label:'CAR' },
+    { key:'res', label:'RES' },
+    { key:'cre', label:'CRE' },
+  ];
+  const maxVal = 20;
 
-    const stats = [
-      ['int','INT'],
-      ['sab','SAB'],
-      ['car','CAR'],
-      ['res','RES'],
-      ['cre','CRE'],
-    ];
+  box.innerHTML = '';
+  order.forEach((s)=>{
+    const key = s.key;
+    const label = s.label;
+    const val = Math.max(0, Math.min(maxVal, Number(hero.stats[key] ?? 0)));
 
-    const selected = getSelectedHero();
+    const row = document.createElement('div');
+    row.className = 'statLine';
+    const segs = Array.from({length:maxVal}, (_,i)=> `<span class="statSeg ${i < val ? 'on' : ''}"></span>`).join('');
 
-    stats.forEach(([k,label])=>{
-      const row = document.createElement('div');
-      row.className = 'statRow';
-      row.dataset.stat = k;
+    row.innerHTML = `
+      <div class="statBadge badge">${label}</div>
+      <div class="statMeter" aria-label="Ajustar ${label}">
+        <div class="statSegs" data-key="${key}">${segs}</div>
+        <input class="statRange" type="range" min="0" max="${maxVal}" step="1" value="${val}" />
+      </div>
+      <div class="statNum" data-key="${key}">${val}</div>
+    `;
 
-      const val = clampNum(hero.stats?.[k] ?? 0, 0, 20);
+    const range = row.querySelector('.statRange');
+    range.addEventListener('input', ()=>{
+      const v = Math.max(0, Math.min(maxVal, Number(range.value || 0)));
+      hero.stats[key] = v;
 
-      row.innerHTML = `
-        <button class="badge statBadge" type="button" title="Reset a 0">${label}</button>
-        <div class="statDots" aria-label="${label}"></div>
-        <div class="statNum" aria-label="Valor ${label}">${val}</div>
-        <input class="statRange" type="range" min="0" max="20" step="1" value="${val}" ${state.editUnlocked ? '' : 'disabled'} />
-      `;
+      const numEl = row.querySelector('.statNum');
+      if(numEl) numEl.textContent = String(v);
 
-      const badge = row.querySelector('.statBadge');
-      const dots = row.querySelector('.statDots');
-      const num = row.querySelector('.statNum');
-      const input = row.querySelector('.statRange');
-
-      // build 20 dots (1..20). 0 is achieved by clicking the label.
-      for(let i=1;i<=20;i++){
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'statDot';
-        b.dataset.v = String(i);
-        b.setAttribute('aria-label', `${label} ${i}`);
-        dots.appendChild(b);
+      const segWrap = row.querySelector('.statSegs');
+      if(segWrap){
+        const children = segWrap.children;
+        for(let i=0;i<children.length;i++){
+          children[i].classList.toggle('on', i < v);
+        }
       }
 
-      const paint = (v)=>{
-        num.textContent = String(v);
-        input.value = String(v);
-        dots.querySelectorAll('.statDot').forEach(dot=>{
-          const dv = Number(dot.dataset.v)||0;
-          dot.classList.toggle('active', dv <= v);
-        });
-      };
-
-      const commit = (v)=>{
-        v = clampNum(v, 0, 20);
-        paint(v);
-        if(!state.editUnlocked) return;
-        const h = getSelectedHero();
-        if(!h) return;
-        h.stats = h.stats || {};
-        h.stats[k] = v;
-        saveState();
-        updateHeroCard(h.id);
-      };
-
-      paint(val);
-
-      // Interactions
-      badge.addEventListener('click', ()=>{ if(state.editUnlocked) commit(0); });
-      dots.addEventListener('click', (e)=>{
-        const b = e.target.closest('button.statDot');
-        if(!b || !state.editUnlocked) return;
-        commit(Number(b.dataset.v)||0);
-      });
-      input.addEventListener('input', ()=> commit(Number(input.value)||0));
-      input.addEventListener('change', ()=> commit(Number(input.value)||0));
-
-      box.appendChild(row);
+      saveData();
+      updateHeroListUI();
+      updateHeroHeaderUI();
     });
 
-    return box;
+    box.appendChild(row);
+  });
 }
-
 
   function stripDiacritics(str){
     try{ return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(_){ return String(str); }
@@ -713,44 +687,24 @@ function renderHeroAvatar(hero){
 
   // --- Recompensas (general + por héroe) ---
   const REWARD_OPTIONS = [
-  {
-    id: 'stat_point',
-    title: '+1 punto de Stat',
-    desc: 'Ganas 1 punto para asignar a una stat (INT, SAB, CAR, RES o CRE).',
-    details: ['Elige 1 stat para subir +1', 'Máximo 20 por stat', 'Ideal para personalizar tu progreso']
-  },
-  {
-    id: 'boss_retry',
-    title: 'Reintento de jefe',
-    desc: 'Puedes retar de nuevo a un jefe aunque hayas fallado o no te toque turno.',
-    details: ['1 reintento extra', 'Se usa cuando tú decidas', 'No se acumula infinito']
-  },
-  {
-    id: 'challenge_hint',
-    title: 'Pista en un desafío',
-    desc: 'Recibes una pista/ayuda del maestro en un desafío específico.',
-    details: ['Aplica a 1 desafío', 'Pista breve (no la respuesta)', 'Útil para destrabarte']
-  },
-  {
-    id: 'extra_time',
-    title: 'Tiempo extra',
-    desc: 'Ganas tiempo adicional para entregar una actividad o terminar un reto en clase.',
-    details: ['Extensión corta', 'No aplica a exámenes formales', 'Sujeto a aprobación del maestro']
-  },
-  {
-    id: 'skip_small_task',
-    title: 'Salto de mini-actividad',
-    desc: 'Puedes saltarte 1 mini-actividad (sin perder XP), si el maestro lo permite.',
-    details: ['Solo mini-actividades', 'No aplica a tareas grandes', 'Se registra como recompensa usada']
-  },
-  {
-    id: 'cosmetic_title',
-    title: 'Título/Insignia',
-    desc: 'Obtienes un título cosmético para tu ficha (solo visual).',
-    details: ['No da ventaja', 'Se muestra en tu perfil', 'Puede ser raro/épico']
-  }
-];
+    // Recompensas al subir de nivel (elige 1)
+    { id:'stat+1', kind:'progreso', title:'+1 punto a una estadística', desc:'Elige una stat para aumentar en +1.', details:'INT/SAB/CAR/RES/CRE. Máximo recomendado: 20.' },
+    { id:'weekMax+10', kind:'progreso', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal de actividades pequeñas.', details:'Si el límite era 40, pasa a 50 (solo para XP semanal).' },
+    { id:'token+1', kind:'comodín', title:'+1 comodín', desc:'Ganas 1 comodín para canjear después.', details:'Úsalo para: reintento de actividad, entregar tarde 1 vez, cambiar respuesta, etc. (tú defines reglas).' },
+    { id:'perk', kind:'privilegio', title:'Privilegio en clase', desc:'Elige un privilegio (1 vez).', details:'Ejemplos: elegir equipo, elegir lugar, 5 min extra, pasar al pizarrón con ayuda, escoger temática, etc.' },
+    { id:'badge', kind:'coleccionable', title:'Insignia/Título', desc:'Ganas una insignia o título visible en tu historial.', details:'Ej.: “Estratega”, “Apoyo del equipo”, “Constante”, “Creativo”, “Líder”.' },
 
+    // Recompensas generales (catálogo)
+    { id:'seat', kind:'privilegio', title:'Elegir asiento', desc:'Puedes elegir tu lugar (1 clase).', details:'Sujeto a reglas del salón y disponibilidad.' },
+    { id:'music', kind:'privilegio', title:'Elegir música (1 canción)', desc:'Eliges 1 canción para un momento permitido.', details:'Sin letras explícitas; volumen moderado.' },
+    { id:'helper', kind:'privilegio', title:'Asistente del profe', desc:'Ayudas a repartir/recoger material (1 clase).', details:'Ideal para sumar responsabilidad sin afectar la dinámica.' },
+    { id:'reroll', kind:'comodín', title:'Reintento', desc:'Reintentar una actividad corta.', details:'Solo una vez; no aplica a exámenes si así lo decides.' },
+    { id:'latepass', kind:'comodín', title:'Pase de entrega tardía', desc:'Entregar una tarea tarde sin penalización (1 vez).', details:'Debe avisarse antes del límite.' },
+    { id:'hint', kind:'comodín', title:'Pista', desc:'Pedir 1 pista extra en un desafío.', details:'No aplica a actividades de memorización si no quieres.' },
+    { id:'xpBoost', kind:'progreso', title:'Bono de XP', desc:'+10 XP extra (una sola vez).', details:'Se agrega a tu XP total; no cuenta para XP semanal.' },
+    { id:'teamPick', kind:'privilegio', title:'Elegir equipo/pareja', desc:'Puedes elegir con quién trabajar (1 actividad).', details:'Con respeto; si alguien queda solo, se reacomoda.' },
+    { id:'skin', kind:'coleccionable', title:'Skin/estética', desc:'Desbloqueas un estilo visual (marco, color, título).', details:'No da ventaja; solo se ve cool.' },
+];
 
   function formatDateMX(iso){
     try{
@@ -789,46 +743,67 @@ function renderHeroAvatar(hero){
   }
 
   function renderRewards(){
-    const hero = getCurrentHero();
-    if (!hero) return;
+  const listEl = document.querySelector('#rewardsHeroList');
+  const emptyEl = document.querySelector('#rewardsHeroEmpty');
+  const genList = document.querySelector('#rewardsGeneralList');
 
-    // Página Recompensas (columna central: historial, columna derecha: generales)
-    const histSub = $('#rewardsHistorySubtitle');
-    const histList = $('#rewardsHistoryList');
-    const histEmpty = $('#rewardsHistoryEmpty');
-    const genList = $('#rewardsGeneralList');
+  // Columna centro: historial del héroe seleccionado
+  if(listEl && emptyEl){
+    const hero = getActiveHero();
+    renderHeroRewardsList(hero, listEl, emptyEl);
+  }
 
-    if (histSub) histSub.textContent = hero.name ? ('De ' + hero.name) : 'De este personaje';
+  // Columna derecha: catálogo de recompensas (más detallado)
+  if(genList){
+    genList.innerHTML = '';
 
-    if (histList && histEmpty){
-      renderHeroRewardsList(hero, histList, histEmpty);
-    }
+    const groups = [
+      { key:'progreso', label:'Progreso' },
+      { key:'comodín', label:'Comodines' },
+      { key:'privilegio', label:'Privilegios' },
+      { key:'coleccionable', label:'Coleccionables' },
+    ];
 
-    if (genList){
-      genList.innerHTML = '';
-      REWARD_OPTIONS.forEach(opt=>{
+    groups.forEach(g=>{
+      const items = REWARD_OPTIONS.filter(r => (r.kind||'') === g.key && !['stat+1','weekMax+10','token+1','perk','badge'].includes(r.id));
+      if(!items.length) return;
+
+      const h = document.createElement('div');
+      h.className = 'rewardsSectionTitle';
+      h.textContent = g.label;
+      genList.appendChild(h);
+
+      items.forEach(r=>{
         const div = document.createElement('div');
-        div.className = 'rewardItem rewardGeneralItem';
+        div.className = 'rewardItem';
 
-        const title = opt.title || 'Recompensa';
-        const desc = opt.desc || '';
-        const badge =
-          opt.id === 'stat+1' ? '✨' :
-          opt.id === 'weekMax+10' ? '📈' :
-          opt.id === 'token+1' ? '🎟️' :
-          opt.id === 'perk' ? '⭐' : '🏆';
+        const title = r.title || r.name || r.id;
+        const desc  = r.desc  || '';
+        const details = r.details || '';
 
         div.innerHTML =
-          '<div class="rewardItem__left">' +
-            '<div class="rewardItem__title">' + escapeHtml(title) + '</div>' +
-            '<div class="rewardItem__meta">' + escapeHtml(desc) + '</div>' +
-          '</div>' +
-          '<div class="rewardItem__badge">' + escapeHtml(badge) + '</div>';
+          '<div class="rewardItem__main">' +
+            '<div class="rewardItem__titleRow">' +
+              '<div class="rewardItem__title">' + escapeHtml(title) + '</div>' +
+              '<div class="rewardItem__kind">' + escapeHtml(g.label) + '</div>' +
+            '</div>' +
+            (desc ? '<div class="rewardItem__desc">' + escapeHtml(desc) + '</div>' : '') +
+            (details ? '<div class="rewardItem__details">' + escapeHtml(details) + '</div>' : '') +
+          '</div>';
 
         genList.appendChild(div);
       });
+    });
+
+    // Si por alguna razón no hay nada, muestra fallback
+    if(!genList.children.length){
+      const p = document.createElement('div');
+      p.className = 'muted';
+      p.textContent = 'No hay recompensas configuradas todavía.';
+      genList.appendChild(p);
     }
   }
+}
 
   function renderChallenges(){
     const list = $('#challengeList');
@@ -945,36 +920,36 @@ function renderHeroAvatar(hero){
   }
 
   function bumpHeroXp(delta){
-    const hero = getSelectedHero();
-    if(!hero) return;
-    const xpMax = Number(hero.xpMax || 100);
+    const hero = currentHero();
+    if (!hero) return;
 
-    // Apply delta (allow passing 100 to trigger level up)
-    let xp = Number(hero.xp || 0) + Number(delta || 0);
-    if(!Number.isFinite(xp)) xp = 0;
-    if(xp < 0) xp = 0;
+    hero.xp = Number(hero.xp ?? 0) + Number(delta || 0);
+    hero.xpMax = Number(hero.xpMax ?? 100);
+    hero.level = Number(hero.level ?? 1);
+    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
+    hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
 
-    // Level up as many times as needed
-    let leveled = false;
-    while(xp >= xpMax){
-      xp -= xpMax;
-      hero.level = (Number(hero.level)||1) + 1;
-      leveled = true;
-      // enqueue one pending reward per level gained
-      hero.pendingRewards = hero.pendingRewards || [];
-      hero.pendingRewards.push({
-        level: hero.level,
-        createdAt: new Date().toISOString(),
-        chosen: null
-      });
+    // clamp low
+    if (hero.xp < 0) hero.xp = 0;
+
+    // Level-up loop (in case someone adds lots of XP)
+    let leveledUp = false;
+    while (hero.xpMax > 0 && hero.xp >= hero.xpMax){
+      hero.xp -= hero.xpMax;
+      hero.level += 1;
+      leveledUp = true;
+      hero.pendingRewards.push({ level: hero.level, createdAt: Date.now() });
     }
 
-    hero.xp = xp;
-    saveState();
-    renderAll();
+    saveLocal(state.data);
+    if (state.dataSource === 'remote') state.dataSource = 'local';
+    updateDataDebug();
+    renderHeroList();
+    renderHeroDetail();
 
-    if(leveled){
-      openLevelUpModal(hero);
+    if (leveledUp){
+      // Open celebration modal for the most recent pending reward
+      openLevelUpModal();
     }
   }
 
