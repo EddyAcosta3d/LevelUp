@@ -915,15 +915,25 @@ body::-webkit-scrollbar,
 
 .kebab{display:block;font-size:20px;line-height:1;transform:translateY(0);}
 
-/* Notes under avatar: two small cards side-by-side on desktop */
-.noteGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+/* Notes under avatar: stack on desktop (we have space now) */
+.noteGrid{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px;}
 .noteCol{background:rgba(0,0,0,.25);border:1px solid rgba(0,210,255,.12);border-radius:16px;padding:12px;}
 .noteTitle{font-size:13px;color:rgba(234,231,223,.8);margin:0 0 8px 2px;letter-spacing:.02em;}
-.textarea--short{min-height:92px;}
+.textarea--short{min-height:56px; max-height:120px;}
 .noteCol textarea{ scrollbar-width: none; }
 .noteCol textarea::-webkit-scrollbar{ width:0; height:0; }
 @media (max-width: 900px){
   .noteGrid{grid-template-columns:1fr;}
+}
+
+/* Weekly XP: make it more compact (desktop + mobile) */
+.subCard--week .subCard__val{ font-size: 15px; }
+.subCard--week .subCard__title{ font-size: 12px; opacity: .8; }
+
+@media (min-width: 901px){
+  .xpFooter{ grid-template-columns: 1fr 200px; }
+  .subCard--week{ padding: 10px; }
+  .subCard--week .iconBtn--tiny{ transform: scale(.95); }
 }
 
 /* Stats: force single column and add breathing room above XP */
