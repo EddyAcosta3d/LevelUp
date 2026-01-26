@@ -807,7 +807,17 @@ body{
 @media (max-width: 640px){
   :root{ --gap: 12px; }
   /* Mobile header: center brand, left hamburger, right trophy */
-  .topbar{ display:grid; grid-template-columns: 52px 1fr 52px; align-items:center; padding: 10px 10px; gap: 10px; }
+  /* Reduce header height on phones (override desktop min-height: 74px) */
+  .topbar{
+    display: grid;
+    grid-template-columns: 46px 1fr 46px;
+    align-items: center;
+    gap: 10px;
+
+    min-height: 56px;
+    padding: 6px 10px;
+    border-radius: 22px;
+  }
   .topbar{ position: relative; }
   .topbar__left{ display: contents; padding-right: 0; width:auto; }
   #btnMenu{ grid-column:1; justify-self:start; }
@@ -815,7 +825,7 @@ body{
   .topbar__right{ display: none; }
   .topbar__trophyBtn{
     display: inline-flex;
-    width:42px; height:42px; border-radius:12px;
+    width:38px; height:38px; border-radius:12px;
     align-items:center; justify-content:center;
     background:rgba(255,255,255,.04);
     border:1px solid rgba(0,210,255,.18);
@@ -824,6 +834,9 @@ body{
     justify-self:end;
   }
   .trophyIcon{ width:22px; height:22px; }
+  /* Slightly smaller logo to keep header compact */
+  .brand__logo{ width:40px; height:40px; border-radius: 12px; }
+  .brand__logo svg{ width:28px !important; height:28px !important; }
   .topbar__right .pill, .topbar__right .dropdown{ padding: 10px 10px; font-size: 12px; border-radius: 16px; }
   .brand__subtitle{ display:none; }
   .brand__text{ display:none; }
