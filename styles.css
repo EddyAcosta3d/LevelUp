@@ -1645,3 +1645,46 @@ body.is-view-locked #btnQuitarFoto{
 #confirmModal .modal__body > div[style*="justify-content:flex-end"]{
   justify-content: center !important;
 }
+
+/* PATCH v16: iPhone header smaller + better hamburger icon alignment */
+@media (max-width: 640px){
+  /* Reduce overall top padding so the header doesn't feel like a banner */
+  .app{
+    padding: calc(6px + var(--safe-top)) calc(8px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(8px + var(--safe-left));
+  }
+
+  /* Force compact header (override any later layout overrides) */
+  .topbar{
+    min-height: 52px !important;
+    padding: 4px 8px !important;
+    gap: 8px !important;
+    border-radius: 18px !important;
+    background: rgba(10,12,18,0.88) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Make icon buttons slightly smaller and perfectly centered */
+  .iconbtn{
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 12px !important;
+    display: grid !important;
+    place-items: center !important;
+  }
+  #btnMenu{
+    font-size: 22px !important;
+    line-height: 1 !important;
+    transform: translateY(-1px);
+  }
+
+  .topbar__trophyBtn{
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 12px !important;
+  }
+  .trophyIcon{ width: 20px !important; height: 20px !important; }
+
+  /* Smaller logo so it doesn't inflate perceived header height */
+  .brand__logo{ width: 36px !important; height: 36px !important; border-radius: 12px !important; }
+  .brand__logo svg{ width: 26px !important; height: 26px !important; }
+}
