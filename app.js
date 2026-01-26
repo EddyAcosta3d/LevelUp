@@ -283,7 +283,7 @@ function readFileAsDataURL(file){
       el.style.padding = '10px 14px';
       el.style.borderRadius = '999px';
       el.style.background = 'rgba(10,10,10,0.92)';
-      el.style.border = '1px solid rgba(255,215,120,0.20)';
+      el.style.border = '1px solid rgba(0,210,255,0.22)';
       el.style.color = 'rgba(255,255,255,0.92)';
       el.style.boxShadow = '0 14px 40px rgba(0,0,0,0.55)';
       el.style.zIndex = '9999';
@@ -1463,6 +1463,60 @@ function bind(){
     });
     $('#btnCloseRoleModal').addEventListener('click', closeRoleModal);
     $$('[data-close-role-modal]').forEach(el=> el.addEventListener('click', closeRoleModal));
+
+    // --- Bind de campos de ficha (Nombre/Edad/Descripción/Meta/etc.) ---
+    // Antes faltaba el wiring y por eso "Nombre" no actualizaba la ficha.
+    let heroSaveTimer = null;
+    const scheduleHeroSave = (immediate=false)=>{
+      const commit = ()=>{
+        saveLocal(state.data);
+        if (state.dataSource === 'remote') state.dataSource = 'local';
+        updateDataDebug();
+      };
+      if (immediate){ commit(); return; }
+      clearTimeout(heroSaveTimer);
+      heroSaveTimer = setTimeout(commit, 220);
+    };
+
+    const bindHeroField = (sel, applyFn, {rerenderList=false, updateHeader=false}={})=>{
+      const el = document.querySelector(sel);
+      if (!el) return;
+      const handler = ()=>{
+        const h = currentHero();
+        if (!h) return;
+        try{ applyFn(el, h); }catch(_e){}
+        if (updateHeader){
+          const t = document.getElementById('heroName');
+          if (t) t.textContent = (h.name || 'NUEVO HÉROE').toUpperCase();
+        }
+        scheduleHeroSave(false);
+        if (rerenderList) renderHeroList();
+      };
+      el.addEventListener('input', handler);
+      el.addEventListener('change', handler);
+      // Para que al salir se "limpie" espacios
+      el.addEventListener('blur', ()=>{
+        const h = currentHero();
+        if (!h) return;
+        if (sel === '#inNombre'){
+          const v = String(el.value || '').trim();
+          el.value = v;
+          h.name = v;
+          const t = document.getElementById('heroName');
+          if (t) t.textContent = (h.name || 'NUEVO HÉROE').toUpperCase();
+          renderHeroList();
+          scheduleHeroSave(true);
+        }
+      });
+    };
+
+    bindHeroField('#inNombre', (el,h)=>{ h.name = String(el.value || ''); }, {rerenderList:true, updateHeader:true});
+    bindHeroField('#inEdad', (el,h)=>{ h.age = el.value === '' ? '' : Number(el.value); });
+    bindHeroField('#txtDesc', (el,h)=>{ h.desc = String(el.value || ''); });
+    bindHeroField('#txtMeta', (el,h)=>{ h.goal = String(el.value || ''); });
+    bindHeroField('#txtBien', (el,h)=>{ h.goodAt = String(el.value || ''); });
+    bindHeroField('#txtMejorar', (el,h)=>{ h.improve = String(el.value || ''); });
+
 
     // Level Up modal backdrop
     $('#levelUpBackdrop')?.addEventListener('click', closeLevelUpModal);
