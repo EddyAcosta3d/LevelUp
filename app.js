@@ -157,9 +157,72 @@ function readFileAsDataURL(file){
     if (titleEl) titleEl.textContent = titleMap[route] || route.toUpperCase();
     const dbgRoute = $('#dbgRoute');
     if (dbgRoute) dbgRoute.textContent = route;
+    updateEditButton();
+    applyFichaLock();
   }
 
-  // Drawer
+  
+  function isEditEnabled(){ return state.role === 'teacher'; }
+  function updateEditButton(){
+    const btn = $('#btnEdicion');
+    if(!btn) return;
+    // Only show edit toggle on Fichas
+    const show = (state.route === 'fichas');
+    btn.hidden = !show;
+    if(!show) return;
+    if(isEditEnabled()){
+      btn.textContent = '✎ Editar';
+      btn.classList.remove('pill--danger');
+      btn.classList.add('is-active');
+    }else{
+      btn.textContent = '🔒 Solo ver';
+      btn.classList.add('pill--danger');
+      btn.classList.remove('is-active');
+    }
+  }
+
+  // Locking framework for Fichas (easy to extend: add selectors here)
+  const FICHA_LOCK = {
+    disableSelectors: [
+      '#btnNuevoHeroe',
+      '#btnEliminar',
+      '#btnPonerFoto',
+      '#btnEditarFoto',
+      '#btnQuitarFoto',
+      '#inNombre',
+      '#inEdad',
+      '#selRol',
+      '#txtDesc',
+      '#txtMeta',
+      '#btnXpM5', '#btnXpM1', '#btnXpP1', '#btnXpP5',
+      '#actChips button',
+      '#btnWeekReset'
+    ],
+    statsRangeSelector: '#statsBox .statRange',
+    statsSegsSelector: '#statsBox .statSegs'
+  };
+
+  function applyFichaLock(){
+    const locked = !isEditEnabled();
+    document.body.classList.toggle('is-view-locked', locked);
+
+    // Disable only when we are on fichas; other pages don't need this lock yet
+    if(state.route !== 'fichas') return;
+
+    FICHA_LOCK.disableSelectors.forEach(sel=>{
+      $$(sel).forEach(el=>{
+        if('disabled' in el) el.disabled = locked;
+        el.setAttribute('aria-disabled', locked ? 'true' : 'false');
+      });
+    });
+
+    // Stats
+    $$(FICHA_LOCK.statsRangeSelector).forEach(r=>{ r.disabled = locked; });
+    $$(FICHA_LOCK.statsSegsSelector).forEach(seg=>{
+      seg.style.pointerEvents = locked ? 'none' : 'auto';
+    });
+  }
+// Drawer
   function isDrawerLayout(){ return window.matchMedia('(max-width: 980px)').matches; }
   function closeDrawer(){ $('#shell').classList.remove('is-drawer-open'); $('#overlay').hidden = true; }
   function openDrawer(){ $('#shell').classList.add('is-drawer-open'); $('#overlay').hidden = false; }
@@ -683,6 +746,10 @@ function renderHeroAvatar(hero){
         state.ui.pendingToastHeroId = hero.id;
       }
     }
+
+    // Apply lock state after rendering dynamic controls (stats/chips)
+    updateEditButton();
+    applyFichaLock();
   }
 
   // --- Recompensas (general + por héroe) ---
@@ -903,20 +970,11 @@ function renderHeroAvatar(hero){
   // “Edición” sin PIN aún (solo demo)
   function setRole(nextRole){
     state.role = nextRole;
-    const btn = $('#btnEdicion');
-    if (state.role === 'teacher'){
-      btn.textContent = '🔓 Edición';
-      btn.classList.remove('pill--danger');
-      btn.classList.add('is-active');
-      toast('Modo edición (demo)');
-    }else{
-      btn.textContent = '🔒 Edición';
-      btn.classList.add('pill--danger');
-      btn.classList.remove('is-active');
-      toast('Modo vista (demo)');
-    }
+    updateEditButton();
+    applyFichaLock();
     updateDataDebug();
     renderChallengeDetail();
+    toast(state.role === 'teacher' ? 'Edición activada' : 'Modo solo ver');
   }
 
   function bumpHeroXp(delta){

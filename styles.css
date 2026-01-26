@@ -1329,3 +1329,41 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   letter-spacing:0.6px;
   color:rgba(240,240,240,0.80);
 }
+
+
+/* Make notes fill available width inside centered card (desktop) */
+.card--center .noteGrid{ width:100%; align-self:stretch; }
+.card--center .noteCol{ width:100%; }
+
+/* Edit button visibility & contrast */
+#btnEdicion{
+  border-color: rgba(0,210,255,0.28);
+  color: rgb(220,220,230);
+}
+#btnEdicion.is-active{
+  border-color: rgba(114,26,255,0.55);
+  box-shadow: 0 0 0 1px rgba(114,26,255,0.20), 0 10px 26px rgba(114,26,255,0.12);
+}
+#btnEdicion.pill--danger{ /* keep danger class but make it subtle (locked state) */
+  background: rgba(0,0,0,0.20);
+  border-color: rgba(0,210,255,0.28);
+  color: rgba(220,220,230,0.85);
+}
+
+/* Locked state visual hints */
+body.is-view-locked .pill[data-xp],
+body.is-view-locked #btnXpM5,
+body.is-view-locked #btnXpM1,
+body.is-view-locked #btnXpP1,
+body.is-view-locked #btnXpP5,
+body.is-view-locked #btnWeekReset,
+body.is-view-locked #btnNuevoHeroe,
+body.is-view-locked #btnEliminar,
+body.is-view-locked #btnPonerFoto,
+body.is-view-locked #btnEditarFoto,
+body.is-view-locked #btnQuitarFoto{
+  opacity: .55;
+  filter: grayscale(.35);
+  pointer-events:none;
+}
+
