@@ -1241,6 +1241,7 @@ function renderHeroAvatar(hero){
   // --- Level Up Modal + reward claiming ---
   state.ui.levelUpOpen = false;
   state.ui.pendingToastHeroId = null;
+  state.ui.claimingReward = false;
 
   function getNextPendingReward(hero){
     const list = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
@@ -1401,30 +1402,52 @@ function renderHeroAvatar(hero){
   function claimPendingReward({rewardId, title, badge}){
     const hero = currentHero();
     if (!hero) return;
-    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
-    const pending = hero.pendingRewards.shift(); // remove first
-    if (!pending) return;
 
-    hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
-    hero.rewardsHistory.push({
-      level: pending.level,
-      rewardId,
-      title,
-      badge,
-      date: new Date().toISOString()
-    });
+    // Guard: prevent double-claim / multiple handlers firing
+    if (state.ui.claimingReward) return;
+    state.ui.claimingReward = true;
 
-    saveLocal(state.data);
-    if (state.dataSource === 'remote') state.dataSource = 'local';
-    updateDataDebug();
-    renderAll();
+    // Disable UI immediately
+    const grid = $('#rewardPickGrid');
+    if (grid){
+      grid.classList.add('is-claiming');
+      grid.querySelectorAll('button').forEach(b=>{ b.disabled = true; });
+    }
 
+    // Close the modal right away so you can't chain-claim quickly
     closeLevelUpModal();
-    toast('✅ Recompensa reclamada');
 
-    // If more pending rewards remain, nudge again
-    if (hero.pendingRewards.length){
-      setTimeout(()=> toast('🎁 Te falta reclamar otra recompensa'), 650);
+    try{
+      hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
+      const pending = hero.pendingRewards.shift(); // FIFO
+      if (!pending) return;
+
+      hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
+      hero.rewardsHistory.push({
+        level: pending.level,
+        rewardId,
+        title,
+        badge,
+        date: new Date().toISOString()
+      });
+
+      saveLocal(state.data);
+      if (state.dataSource === 'remote') state.dataSource = 'local';
+      updateDataDebug();
+      renderAll();
+
+      toast('✅ Recompensa reclamada');
+
+      // If more pending rewards remain, just nudge (do not auto-open)
+      if (hero.pendingRewards.length){
+        setTimeout(()=> toast('🎁 Te falta reclamar otra recompensa'), 650);
+      }
+    } finally {
+      state.ui.claimingReward = false;
+      if (grid){
+        grid.classList.remove('is-claiming');
+        grid.querySelectorAll('button').forEach(b=>{ b.disabled = false; });
+      }
     }
   }
 

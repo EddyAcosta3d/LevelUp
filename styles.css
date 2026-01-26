@@ -1152,6 +1152,50 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
     0 0 0 1px rgba(0,210,255,0.10) inset,
     0 22px 70px rgba(0,0,0,0.70),
     0 0 34px rgba(114,26,255,0.20);
+
+.modal__card--levelup::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius: 18px;
+  background: conic-gradient(from 180deg,
+    rgba(114,26,255,0.0),
+    rgba(114,26,255,0.65),
+    rgba(0,210,255,0.45),
+    rgba(114,26,255,0.65),
+    rgba(114,26,255,0.0));
+  filter: blur(0.2px);
+  opacity: .75;
+  z-index: 0;
+  animation: lvlRing 2.2s linear infinite;
+  pointer-events:none;
+}
+.modal__card--levelup::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius: 16px;
+  background:
+    radial-gradient(800px 220px at 50% 0%, rgba(114,26,255,0.22), transparent 60%),
+    radial-gradient(600px 240px at 50% 100%, rgba(0,210,255,0.12), transparent 60%);
+  opacity: .9;
+  z-index: 0;
+  pointer-events:none;
+}
+.modal__card--levelup > *{ position: relative; z-index: 1; }
+
+@keyframes lvlRing{
+  0%{ transform: rotate(0deg); }
+  100%{ transform: rotate(360deg); }
+}
+#levelUpModal .modal__backdrop{
+  background: radial-gradient(600px 380px at 50% 30%, rgba(114,26,255,0.20), rgba(0,0,0,0.72));
+}
+.levelUpBig__num{
+  text-shadow: 0 0 22px rgba(114,26,255,0.30), 0 0 20px rgba(0,210,255,0.16);
+}
+
+
 }
 
 /* Game-ish entry + subtle sparkle layer */
@@ -1292,12 +1336,23 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   text-shadow: 0 0 14px rgba(0,210,255,0.22);
 }
 .rewardPick--stat{
-  padding: 12px 12px;
+  padding: 8px 10px;
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
+  align-items:center;
   justify-content:space-between;
-  min-height: 74px;
+  gap:10px;
+  min-height: 52px;
 }
+.rewardPick--stat .rewardPick__title{
+  font-weight: 900;
+  letter-spacing: .6px;
+}
+.rewardPick--stat .rewardPick__meta{
+  margin-top: 0;
+  gap:8px;
+}
+
 .levelUpStatHead{
   grid-column: 1 / -1;
   display:flex;
@@ -1459,9 +1514,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   touch-action: pan-x;
 }
 .statNum{
-  min-width: 38px;
+  min-width: 34px;
   text-align:center;
   font-weight: 900;
+  font-size: 12px;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.2px;
   color: rgba(220,220,230,0.95);
@@ -1469,9 +1526,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   background: rgba(0,0,0,0.18);
   border: 1px solid rgba(0,210,255,0.18);
   border-radius: 999px;
-  padding: 6px 10px;
-  box-shadow: 0 0 12px rgba(0,210,255,0.10);
+  padding: 2px 8px;
+  box-shadow: 0 0 10px rgba(0,210,255,0.08);
 }
+
 
 .statNum.is-pop{ animation: statPop .18s ease-out both; }
 @keyframes statPop{
@@ -1549,3 +1607,22 @@ body.is-view-locked #btnQuitarFoto{
   pointer-events:none;
 }
 
+
+.rewardPickGrid.is-claiming{ opacity:.65; pointer-events:none; }
+
+/* Confirm modal: cleaner + centered */
+#confirmModal .modal__card{
+  max-width: 420px;
+  text-align: center;
+}
+#confirmModal .modal__header{
+  justify-content: center;
+}
+#confirmModal #confirmMessage{
+  font-size: 14px;
+  line-height: 1.35;
+  opacity: .92;
+}
+#confirmModal .modal__body > div[style*="justify-content:flex-end"]{
+  justify-content: center !important;
+}
