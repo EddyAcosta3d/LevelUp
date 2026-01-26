@@ -10,7 +10,7 @@
   <!-- Icono de la pestaña (pon tu archivo en assets/logo.png o cambia la ruta) -->
   <link rel="icon" href="assets/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
-  <link rel="stylesheet" href="./styles.css?v=20260126G" />
+  <link rel="stylesheet" href="./styles.css?v=20260126H" />
 </head>
 <body>
   <!--
@@ -227,24 +227,51 @@
         </article>
 
           <article class="page" data-page="desafios">
-            <div class="pageIntro">
-              <h2 class="h2">Desafíos</h2>
-              <p class="muted">
-                En modo alumno (viewer) solo se muestra el <b>nombre</b>.
-                En modo edición (teacher) se ve el detalle.
-              </p>
-            </div>
-
-            <div class="cards2">
-              <div class="card">
-                <div class="cardTitle">Lista</div>
-                <div class="challengeList" id="challengeList"></div>
+            <div class="chHeader">
+              <div class="chTitleRow">
+                <h2 class="h2">Desafíos</h2>
+                <div class="chActions">
+                  <button class="pill pill--small" id="btnChNew">+ Nuevo</button>
+                  <button class="pill pill--small pill--ghost" id="btnChEdit" disabled>✎ Editar</button>
+                  <button class="pill pill--small pill--danger" id="btnChDelete" disabled>🗑 Borrar</button>
+                </div>
               </div>
 
-              <div class="card">
-                <div class="cardTitle">Detalle</div>
-                <div class="muted" id="challengeHint">Selecciona un desafío.</div>
-                <div class="ghostBox" id="challengeBody">Contenido del desafío (solo teacher)</div>
+              <div class="chFilters">
+                <select class="input chSelect" id="chSubject" aria-label="Materia"></select>
+
+                <div class="chDiff" id="chDiff" role="group" aria-label="Dificultad">
+                  <button class="pill pill--small pill--ghost is-active" data-diff="all">Todos</button>
+                  <button class="pill pill--small pill--ghost" data-diff="facil">Fácil</button>
+                  <button class="pill pill--small pill--ghost" data-diff="medio">Medio</button>
+                  <button class="pill pill--small pill--ghost" data-diff="dificil">Difícil</button>
+                </div>
+
+                <input class="input chSearch" id="chSearch" placeholder="Buscar desafío…" aria-label="Buscar" />
+                <div class="chCount muted small" id="chCount">0</div>
+              </div>
+            </div>
+
+            <div class="chLayout">
+              <div class="card chListCard">
+                <div class="cardTitle">Lista</div>
+                <div class="challengeListV2" id="challengeList"></div>
+              </div>
+
+              <div class="card chDetailCard">
+                <div class="chDetailHead">
+                  <div class="chDetailHead__main">
+                    <div class="chDetailTitle" id="chDetailTitle">Selecciona un desafío</div>
+                    <div class="chDetailMeta" id="chDetailMeta"></div>
+                  </div>
+                  <div class="chDetailHead__btns">
+                    <button class="pill pill--small" id="btnChComplete" disabled>✅ Completado</button>
+                  </div>
+                </div>
+
+                <div class="chDetailBody" id="chDetailBody">
+                  <div class="muted" id="chDetailHint">Elige un desafío de la lista.</div>
+                </div>
               </div>
             </div>
           </article>
@@ -391,6 +418,6 @@
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="./app.js?v=20260126G" defer></script>
+  <script src="./app.js?v=20260126H" defer></script>
 </body>
 </html>
