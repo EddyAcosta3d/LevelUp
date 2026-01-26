@@ -205,6 +205,8 @@ function readFileAsDataURL(file){
     const upd = state.data?.meta?.updatedAt ? new Date(state.data.meta.updatedAt).toLocaleString() : '—';
     $('#dbgUpdated').textContent = upd;
     $('#brandSubtitle').textContent = (state.data?.meta?.app || 'LevelUp');
+    const dm = $('#dataModal');
+    if (dm && !dm.hidden) syncDataModalInfo();
   }
 
   // Dropdown
@@ -216,6 +218,39 @@ function readFileAsDataURL(file){
     $('#btnDatos').setAttribute('aria-expanded', String(next));
   }
   function closeDatos(){ toggleDatos(false); }
+
+
+// Datos modal (móvil): en mobile el header esconde el dropdown, así que usamos un modal
+function isDatosModalMode(){
+  const btn = $('#btnDatos');
+  if (!btn) return false;
+  // Mobile breakpoint del CSS: topbar__right { display:none; }
+  if (window.matchMedia('(max-width: 640px)').matches) return true;
+  // Si el botón está oculto por CSS, offsetParent será null
+  return btn.offsetParent === null;
+}
+function syncDataModalInfo(){
+  const srcEl = $('#dataModalSrc');
+  const updEl = $('#dataModalUpdated');
+  if (srcEl) srcEl.textContent = (state.dataSource || '—');
+  if (updEl){
+    const upd = state.data?.meta?.updatedAt ? new Date(state.data.meta.updatedAt).toLocaleString() : '—';
+    updEl.textContent = upd;
+  }
+}
+function openDataModal(){
+  const m = $('#dataModal');
+  if (!m) return;
+  syncDataModalInfo();
+  m.hidden = false;
+  const closeBtn = $('#btnCloseDataModal');
+  if (closeBtn) closeBtn.focus();
+}
+function closeDataModal(){
+  const m = $('#dataModal');
+  if (!m) return;
+  m.hidden = true;
+}
 
   // Top "..." menu (mobile)
   function initTopMoreMenu(){
@@ -1416,7 +1451,7 @@ function bind(){
     }
 
     // Datos dropdown
-    $('#btnDatos').addEventListener('click', (e)=>{ e.stopPropagation(); toggleDatos(); });
+    $('#btnDatos').addEventListener('click', (e)=>{ e.stopPropagation(); if (isDatosModalMode()) { closeDatos(); openDataModal(); } else { toggleDatos(); } });
     document.addEventListener('click', ()=> closeDatos());
     $('#menuDatos').addEventListener('click', (e)=> e.stopPropagation());
 
@@ -1446,6 +1481,40 @@ function bind(){
       toast('Copia local borrada');
       loadData({forceRemote:false});
     });
+
+
+// Datos modal (móvil/iPad)
+const dataModal = $('#dataModal');
+if (dataModal){
+  const close = () => closeDataModal();
+
+  $('#btnCloseDataModal')?.addEventListener('click', close);
+  $('#dataBackdrop')?.addEventListener('click', close);
+
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'Escape' && !dataModal.hidden) close();
+  });
+
+  $('#btnDataReload')?.addEventListener('click', async ()=>{
+    close();
+    await loadData({forceRemote:true});
+  });
+  $('#btnDataImport')?.addEventListener('click', ()=>{
+    close();
+    $('#fileJson').value = '';
+    $('#fileJson').click();
+  });
+  $('#btnDataExport')?.addEventListener('click', ()=>{
+    close();
+    handleExportJson();
+  });
+  $('#btnDataResetLocal')?.addEventListener('click', ()=>{
+    close();
+    clearLocal();
+    toast('Copia local borrada');
+    loadData({forceRemote:false});
+  });
+}
 
     // Role (sin PIN)
     $('#btnEdicion').addEventListener('click', ()=>{
