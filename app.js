@@ -425,53 +425,87 @@ function readFileAsDataURL(file){
   }
 
   function renderStats(hero){
-    const box = $('#statsBox');
-    if (!box) return;
-    hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
-    const order = ['INT','SAB','CAR','RES','CRE'];
-    const maxVal = 20;
+    const box = document.createElement('div');
+    box.className = 'statsBox';
 
-    box.innerHTML = '';
-    order.forEach((key)=>{
-      const val = Math.max(0, Math.min(maxVal, Number(hero.stats[key] ?? 0)));
-      const pct = (val / maxVal) * 100;
+    const stats = [
+      ['int','INT'],
+      ['sab','SAB'],
+      ['car','CAR'],
+      ['res','RES'],
+      ['cre','CRE'],
+    ];
 
+    const selected = getSelectedHero();
+
+    stats.forEach(([k,label])=>{
       const row = document.createElement('div');
       row.className = 'statRow';
+      row.dataset.stat = k;
+
+      const val = clampNum(hero.stats?.[k] ?? 0, 0, 20);
+
       row.innerHTML = `
-        <div class="statRow__label">
-          <div class="badge">${key}</div>
-          <div class="statRow__val" id="statVal_${key}">${val}</div>
-        </div>
-        <div class="statRow__bar">
-          <div class="statRow__fill" style="width:${pct}%"></div>
-          <input class="statRow__range" type="range" min="0" max="${maxVal}" step="1" value="${val}" aria-label="Ajustar ${key}">
-        </div>
+        <button class="badge statBadge" type="button" title="Reset a 0">${label}</button>
+        <div class="statDots" aria-label="${label}"></div>
+        <div class="statNum" aria-label="Valor ${label}">${val}</div>
+        <input class="statRange" type="range" min="0" max="20" step="1" value="${val}" ${state.editUnlocked ? '' : 'disabled'} />
       `;
 
-      const range = row.querySelector('input.statRow__range');
-      const valEl = row.querySelector(`#statVal_${key}`);
+      const badge = row.querySelector('.statBadge');
+      const dots = row.querySelector('.statDots');
+      const num = row.querySelector('.statNum');
+      const input = row.querySelector('.statRange');
 
-      // viewer: read-only (still movable would be confusing)
-      if (state.role === 'viewer') range.disabled = true;
+      // build 20 dots (1..20). 0 is achieved by clicking the label.
+      for(let i=1;i<=20;i++){
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'statDot';
+        b.dataset.v = String(i);
+        b.setAttribute('aria-label', `${label} ${i}`);
+        dots.appendChild(b);
+      }
 
-      range.addEventListener('input', ()=>{
-        const n = Number(range.value || 0);
-        hero.stats[key] = n;
-        if (valEl) valEl.textContent = String(n);
-        const fill = row.querySelector('.statRow__fill');
-        if (fill) fill.style.width = `${(n/maxVal)*100}%`;
+      const paint = (v)=>{
+        num.textContent = String(v);
+        input.value = String(v);
+        dots.querySelectorAll('.statDot').forEach(dot=>{
+          const dv = Number(dot.dataset.v)||0;
+          dot.classList.toggle('active', dv <= v);
+        });
+      };
+
+      const commit = (v)=>{
+        v = clampNum(v, 0, 20);
+        paint(v);
+        if(!state.editUnlocked) return;
+        const h = getSelectedHero();
+        if(!h) return;
+        h.stats = h.stats || {};
+        h.stats[k] = v;
+        saveState();
+        updateHeroCard(h.id);
+      };
+
+      paint(val);
+
+      // Interactions
+      badge.addEventListener('click', ()=>{ if(state.editUnlocked) commit(0); });
+      dots.addEventListener('click', (e)=>{
+        const b = e.target.closest('button.statDot');
+        if(!b || !state.editUnlocked) return;
+        commit(Number(b.dataset.v)||0);
       });
-      range.addEventListener('change', ()=>{
-        saveLocal(state.data);
-        if (state.dataSource === 'remote') state.dataSource = 'local';
-        updateDataDebug();
-        renderHeroList();
-      });
+      input.addEventListener('input', ()=> commit(Number(input.value)||0));
+      input.addEventListener('change', ()=> commit(Number(input.value)||0));
 
       box.appendChild(row);
     });
-  }
+
+    return box;
+}
+
 
   function stripDiacritics(str){
     try{ return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(_){ return String(str); }
@@ -679,11 +713,44 @@ function renderHeroAvatar(hero){
 
   // --- Recompensas (general + por héroe) ---
   const REWARD_OPTIONS = [
-    { id:'stat+1', title:'+1 punto a una estadística', desc:'Elige una stat para aumentar en +1.' },
-    { id:'weekMax+10', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal de actividades pequeñas.' },
-    { id:'token+1', title:'+1 comodín', desc:'Un comodín para canjear después (reintento, pase, etc.).' },
-    { id:'perk', title:'Privilegio en clase', desc:'Un privilegio acordado contigo (ej. elegir equipo, música 5 min).' }
-  ];
+  {
+    id: 'stat_point',
+    title: '+1 punto de Stat',
+    desc: 'Ganas 1 punto para asignar a una stat (INT, SAB, CAR, RES o CRE).',
+    details: ['Elige 1 stat para subir +1', 'Máximo 20 por stat', 'Ideal para personalizar tu progreso']
+  },
+  {
+    id: 'boss_retry',
+    title: 'Reintento de jefe',
+    desc: 'Puedes retar de nuevo a un jefe aunque hayas fallado o no te toque turno.',
+    details: ['1 reintento extra', 'Se usa cuando tú decidas', 'No se acumula infinito']
+  },
+  {
+    id: 'challenge_hint',
+    title: 'Pista en un desafío',
+    desc: 'Recibes una pista/ayuda del maestro en un desafío específico.',
+    details: ['Aplica a 1 desafío', 'Pista breve (no la respuesta)', 'Útil para destrabarte']
+  },
+  {
+    id: 'extra_time',
+    title: 'Tiempo extra',
+    desc: 'Ganas tiempo adicional para entregar una actividad o terminar un reto en clase.',
+    details: ['Extensión corta', 'No aplica a exámenes formales', 'Sujeto a aprobación del maestro']
+  },
+  {
+    id: 'skip_small_task',
+    title: 'Salto de mini-actividad',
+    desc: 'Puedes saltarte 1 mini-actividad (sin perder XP), si el maestro lo permite.',
+    details: ['Solo mini-actividades', 'No aplica a tareas grandes', 'Se registra como recompensa usada']
+  },
+  {
+    id: 'cosmetic_title',
+    title: 'Título/Insignia',
+    desc: 'Obtienes un título cosmético para tu ficha (solo visual).',
+    details: ['No da ventaja', 'Se muestra en tu perfil', 'Puede ser raro/épico']
+  }
+];
+
 
   function formatDateMX(iso){
     try{
@@ -878,36 +945,36 @@ function renderHeroAvatar(hero){
   }
 
   function bumpHeroXp(delta){
-    const hero = currentHero();
-    if (!hero) return;
+    const hero = getSelectedHero();
+    if(!hero) return;
+    const xpMax = Number(hero.xpMax || 100);
 
-    hero.xp = Number(hero.xp ?? 0) + Number(delta || 0);
-    hero.xpMax = Number(hero.xpMax ?? 100);
-    hero.level = Number(hero.level ?? 1);
-    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
-    hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
+    // Apply delta (allow passing 100 to trigger level up)
+    let xp = Number(hero.xp || 0) + Number(delta || 0);
+    if(!Number.isFinite(xp)) xp = 0;
+    if(xp < 0) xp = 0;
 
-    // clamp low
-    if (hero.xp < 0) hero.xp = 0;
-
-    // Level-up loop (in case someone adds lots of XP)
-    let leveledUp = false;
-    while (hero.xpMax > 0 && hero.xp >= hero.xpMax){
-      hero.xp -= hero.xpMax;
-      hero.level += 1;
-      leveledUp = true;
-      hero.pendingRewards.push({ level: hero.level, createdAt: Date.now() });
+    // Level up as many times as needed
+    let leveled = false;
+    while(xp >= xpMax){
+      xp -= xpMax;
+      hero.level = (Number(hero.level)||1) + 1;
+      leveled = true;
+      // enqueue one pending reward per level gained
+      hero.pendingRewards = hero.pendingRewards || [];
+      hero.pendingRewards.push({
+        level: hero.level,
+        createdAt: new Date().toISOString(),
+        chosen: null
+      });
     }
 
-    saveLocal(state.data);
-    if (state.dataSource === 'remote') state.dataSource = 'local';
-    updateDataDebug();
-    renderHeroList();
-    renderHeroDetail();
+    hero.xp = xp;
+    saveState();
+    renderAll();
 
-    if (leveledUp){
-      // Open celebration modal for the most recent pending reward
-      openLevelUpModal();
+    if(leveled){
+      openLevelUpModal(hero);
     }
   }
 

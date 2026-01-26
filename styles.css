@@ -1138,44 +1138,64 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
 
 
 
-/* Stats sliders (Fichas) */
+/* Stats dots (Fichas) */
 .statRow{
   display:flex;
-  flex-direction:column;
-  gap:8px;
-  padding:10px 10px;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
   border:1px solid rgba(255,255,255,.10);
   background: rgba(255,255,255,.03);
   border-radius:14px;
 }
-.statRow__label{
-  display:flex;
+.statRow .badge{ flex:0 0 auto; }
+.statDots{
+  flex:1 1 auto;
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns: minmax(8px, 1fr);
+  gap:4px;
   align-items:center;
-  justify-content:space-between;
-  gap:10px;
 }
-.statRow__val{
-  font-weight:800;
-  opacity:.9;
-}
-.statRow__bar{
-  position:relative;
-  height:14px;
-  border-radius:999px;
-  background: rgba(255,255,255,.06);
-  overflow:hidden;
-}
-.statRow__fill{
-  height:100%;
-  width:0%;
-  background: rgba(255,255,255,.26);
-}
-.statRow__range{
-  position:absolute;
-  inset: -6px 0 -6px 0;
-  width:100%;
-  opacity:0;
+.statDot{
+  height:10px;
+  border-radius:3px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
   cursor:pointer;
+  padding:0;
+}
+.statDot.active{
+  background: rgba(228,196,120,.95);
+  border-color: rgba(228,196,120,.55);
+  box-shadow: 0 0 0 1px rgba(228,196,120,.15) inset;
+}
+.statRow__num{
+  flex:0 0 auto;
+  min-width: 22px;
+  text-align:right;
+  font-weight:800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing:.02em;
+  opacity:.92;
+}
+
+/* hidden range but still accessible */
+.statRow .srOnly{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  padding:0 !important;
+  margin:-1px !important;
+  overflow:hidden !important;
+  clip:rect(0,0,0,0) !important;
+  white-space:nowrap !important;
+  border:0 !important;
+}
+
+@media (max-width: 720px){
+  .statDots{ gap:3px; }
+  .statDot{ height:9px; }
 }
 
 /* --- Recompensas (layout) --- */
@@ -1189,3 +1209,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
 }
 
 .rewardGeneralItem .rewardItem__badge{ opacity: .85; }
+
+
+/* Reward cards */
+.rewardCard__title{font-weight:700; letter-spacing:.02em; margin:0 0 6px;}
+.rewardCard__desc{opacity:.86; font-size:13px; line-height:1.35;}
+.rewardCard__details{margin:8px 0 0 18px; padding:0; opacity:.82; font-size:12px; line-height:1.3;}
+.rewardCard__details li{margin:3px 0;}
+.rewardHistory{list-style:none; padding:0; margin:0;}
+.rewardHistory__item{padding:10px 12px; border:1px solid rgba(255,255,255,.10); border-radius:16px; background:rgba(255,255,255,.03); margin-bottom:10px;}
+.rewardHistory__title{font-weight:700; margin-bottom:6px;}
+.rewardHistory__meta{opacity:.75; font-size:12px;}
