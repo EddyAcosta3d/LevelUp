@@ -106,6 +106,9 @@ body{
   box-shadow: 0 10px 26px rgba(0,0,0,0.45);
 }
 .topbar__menu{ display:none; }
+/* Mobile-only: botón de trofeo para ir a Recompensas */
+.topbar__trophyBtn{ display:none; }
+.trophyIcon{ width:22px; height:22px; }
 /* show hamburger only on small screens */
 @media (min-width: 901px){ .topbar__menu{ display:none !important; } }
 @media (max-width: 900px){ .topbar__menu{ display:flex !important; } }
@@ -128,7 +131,7 @@ body{
   min-width: 220px;
 
   z-index: 20060;
-  background: rgba(25,42,86,0.96);
+  background: rgba(10,12,18,0.92);
   border: 1px solid rgba(0,210,255,0.26);
   border-radius: 16px;
   box-shadow: 0 18px 60px rgba(0,0,0,0.65);
@@ -803,24 +806,27 @@ body{
 /* Mobile */
 @media (max-width: 640px){
   :root{ --gap: 12px; }
-  /* Mobile header: center brand, left hamburger, right "more" */
+  /* Mobile header: center brand, left hamburger, right trophy */
   .topbar{ display:grid; grid-template-columns: 52px 1fr 52px; align-items:center; padding: 10px 10px; gap: 10px; }
   .topbar{ position: relative; }
   .topbar__left{ display: contents; padding-right: 0; width:auto; }
   #btnMenu{ grid-column:1; justify-self:start; }
   .brand{ grid-column:2; justify-self:center; }
   .topbar__right{ display: none; }
-  .topbar__moreBtn{
-  display: inline-flex;
-  width:42px; height:42px; border-radius:12px;
-  align-items:center; justify-content:center;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(0,210,255,.18);
-  color:#eae7df;
-}
-  .topbar__moreWrap{ display:flex; position:static; transform:none; grid-column:3; justify-self:end; }
+  .topbar__trophyBtn{
+    display: inline-flex;
+    width:42px; height:42px; border-radius:12px;
+    align-items:center; justify-content:center;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(0,210,255,.18);
+    color:#eae7df;
+    grid-column:3;
+    justify-self:end;
+  }
+  .trophyIcon{ width:22px; height:22px; }
   .topbar__right .pill, .topbar__right .dropdown{ padding: 10px 10px; font-size: 12px; border-radius: 16px; }
   .brand__subtitle{ display:none; }
+  .brand__text{ display:none; }
   .bottomNav{ display:flex; padding-bottom: calc(10px + var(--safe-bottom)); }
 
   .cardGrid{ grid-template-columns: 1fr; }
@@ -1626,139 +1632,3 @@ body.is-view-locked #btnQuitarFoto{
 #confirmModal .modal__body > div[style*="justify-content:flex-end"]{
   justify-content: center !important;
 }
-
-/* =========================
-   DESAFÍOS · MAQUETADO (SAFE)
-   ========================= */
-
-.chFilters{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin: 0 0 10px 0;
-}
-
-.chSubjectWrap{ position: relative; }
-
-/* Menu de materias (usa el mismo patrón del dropdown de Datos) */
-#menuMateria{
-  min-width: 200px;
-  max-height: 320px;
-  overflow:auto;
-}
-
-#btnMateria{
-  border:1px solid rgba(0,210,255,0.22);
-  background: rgba(25,42,86,0.55);
-  color: rgba(220,220,230,0.95);
-  padding: 7px 12px;
-  border-radius: 999px;
-  font-weight: 850;
-  font-size: 12px;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.20);
-}
-#btnMateria:hover{
-  border-color: rgba(0,210,255,0.45);
-  box-shadow: 0 0 0 1px rgba(0,210,255,0.14), 0 14px 34px rgba(0,0,0,0.25);
-}
-.chSubjectWrap .dropdown__menu{ left:0; right:auto; }
-
-#challengeHint{
-  color: rgba(220,220,230,0.92);
-  font-weight: 800;
-}
-
-#challengeBody{
-  height: auto;
-  min-height: 240px;
-  display: block;
-  padding: 14px;
-  text-align: left;
-  align-items: initial;
-  justify-content: initial;
-  background: rgba(25,42,86,0.30);
-  border: 1px solid rgba(0,210,255,0.22);
-  color: rgba(220,220,230,0.95);
-  white-space: pre-wrap;
-  line-height: 1.55;
-}
-
-.chDiffWrap{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.chDiffBtn{
-  border:1px solid rgba(0,210,255,0.18);
-  background: rgba(25,42,86,0.55);
-  color: rgba(220,220,230,0.92);
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-weight: 850;
-  font-size: 12px;
-  cursor:pointer;
-  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
-}
-.chDiffBtn:hover{
-  transform: translateY(-1px);
-  border-color: rgba(0,210,255,0.45);
-}
-.chDiffBtn.is-active{
-  border-color: rgba(114,26,255,0.75);
-  box-shadow: 0 0 0 1px rgba(114,26,255,0.18), 0 0 20px rgba(114,26,255,0.10);
-}
-
-@media (max-width: 700px){
-  .chFilters{ flex-wrap:wrap; justify-content:flex-start; }
-  .chDiffWrap{ width:100%; }
-  .chDiffBtn{ flex:1; text-align:center; }
-}
-
-#challengeList{ display:flex; flex-direction:column; gap:8px; }
-
-.challengeItem{
-  padding: 10px 10px;
-  border: 1px solid rgba(0,210,255,0.20);
-  background: rgba(25,42,86,0.55);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
-}
-.challengeItem:hover{
-  transform: translateY(-1px);
-  border-color: rgba(0,210,255,0.45);
-  box-shadow: 0 0 0 1px rgba(0,210,255,0.08), 0 10px 24px rgba(0,0,0,0.18);
-}
-.challengeItem.is-selected{
-  border-color: rgba(114,26,255,0.70);
-  box-shadow: 0 0 0 1px rgba(114,26,255,0.18), 0 0 22px rgba(114,26,255,0.10);
-}
-
-.chRowTop{ display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; }
-.chTitle{ font-weight: 850; letter-spacing: .2px; }
-
-.chBadge{
-  font-size: 11px;
-  font-weight: 850;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(220,220,230,0.16);
-  background: rgba(15,15,20,0.35);
-  white-space: nowrap;
-}
-.chBadge--facil{ border-color: rgba(0,210,255,0.35); }
-.chBadge--medio{ border-color: rgba(114,26,255,0.45); }
-.chBadge--dificil{ border-color: rgba(114,26,255,0.75); box-shadow: 0 0 18px rgba(114,26,255,0.10); }
-
-.chRowBottom{ margin-top: 7px; display:flex; align-items:center; justify-content:space-between; gap: 10px; }
-.chTag{ font-size: 12px; opacity: .9; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(0,210,255,0.22); background: rgba(15,15,20,0.35); }
-.chPts{ font-weight: 850; letter-spacing: .2px; }
-
-#challengeBody{ white-space: pre-wrap; }
-
-
-/* Challenges overflow */
-.page[data-page="desafios"], .cards2{ overflow: visible; }

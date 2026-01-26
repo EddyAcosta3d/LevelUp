@@ -68,8 +68,6 @@ function makeBlankHero(group){
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
-    challengeSubject: 'Todas',
-    challengeDiff: 'facil',
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
@@ -120,38 +118,6 @@ function readFileAsDataURL(file){
     d.heroes = Array.isArray(d.heroes) ? d.heroes : [];
     d.challenges = Array.isArray(d.challenges) ? d.challenges : [];
     d.events = Array.isArray(d.events) ? d.events : [];
-
-    // Seed de desafíos (solo si no existen): 5 materias, 2 por dificultad
-    if (!d.challenges.length){
-      const subjects = ['Tecnología','Inglés','Español','Matemáticas','Tutoría'];
-      const now = new Date().toISOString();
-      const mk = (id, subject, difficulty, points, title, body)=>({ id, subject, difficulty, points, title, body, createdAt: now, updatedAt: now });
-      d.challenges = [
-        mk('c_facil_1', subjects[0], 'facil', 10, 'Mini ejercicio (Fácil)', 'Escribe 5 líneas sobre el tema visto hoy.\n\n(Después lo editas tú.)'),
-        mk('c_facil_2', subjects[1], 'facil', 10, 'Vocabulario (Fácil)', 'Anota 10 palabras y su significado.\n\n(Después lo editas tú.)'),
-        mk('c_medio_1', subjects[2], 'medio', 20, 'Lectura y resumen (Medio)', 'Lee un texto corto y escribe un resumen de 5–8 líneas.\n\n(Después lo editas tú.)'),
-        mk('c_medio_2', subjects[3], 'medio', 20, 'Problemas (Medio)', 'Resuelve 5 problemas del tema.\n\n(Después lo editas tú.)'),
-        mk('c_dificil_1', subjects[4], 'dificil', 40, 'Proyecto corto (Difícil)', 'Actividad más completa con evidencia (foto/entrega).\n\n(Después lo editas tú.)'),
-        mk('c_dificil_2', subjects[0], 'dificil', 40, 'Reto extra (Difícil)', 'Un reto más pesado del tema.\n\n(Después lo editas tú.)'),
-      ];
-    }
-
-    // Normaliza desafíos (compat y defaults)
-    d.challenges.forEach(c=>{
-      if(!c || typeof c !== 'object') return;
-      c.id = c.id || uid('c');
-      c.subject = c.subject || c.materia || 'General';
-      c.difficulty = c.difficulty || c.dif || 'facil';
-      c.points = Number(c.points ?? c.puntos ?? 0);
-      if (!c.points){
-        const map = {facil:10, medio:20, dificil:40};
-        c.points = map[String(c.difficulty||'facil')] || 10;
-      }
-      c.title = c.title || '';
-      c.body = c.body || c.instructions || '';
-      c.createdAt = c.createdAt || new Date().toISOString();
-      c.updatedAt = c.updatedAt || c.createdAt;
-    });
 
     d.heroes.forEach(h=>{
       h.id = h.id || uid('h');
@@ -213,9 +179,10 @@ function readFileAsDataURL(file){
   function updateEditButton(){
     const btn = $('#btnEdicion');
     if(!btn) return;
-    // Edit toggle visible across pages (tú controlas cambios)
-    btn.hidden = false;
-
+    // Only show edit toggle on Fichas
+    const show = (state.route === 'fichas');
+    btn.hidden = !show;
+    if(!show) return;
     if(isEditEnabled()){
       btn.textContent = '✎ Editar';
       btn.classList.remove('pill--danger');
@@ -946,112 +913,35 @@ function renderHeroAvatar(hero){
   }
 }
 
-  function renderMateriaMenu(){
-    const menu = $('#menuMateria');
-    const btn = $('#btnMateria');
-    if (!menu) return;
-
-    const all = state.data?.challenges || [];
-    const subjects = Array.from(new Set(all.map(c => (c && c.subject) ? String(c.subject) : 'General')))
-      .filter(Boolean)
-      .sort((a,b)=> a.localeCompare(b, 'es', {sensitivity:'base'}));
-
-    // fallback
-    if (!state.challengeSubject) state.challengeSubject = 'Todas';
-    if (btn) btn.textContent = `${state.challengeSubject} ▾`;
-
-    const makeItem = (label)=>{
-      const isSel = String(state.challengeSubject||'Todas') === String(label);
-      return `<button type="button" class="menuitem" data-subject="${escapeHtml(label)}">${isSel ? '✓ ' : ''}${escapeHtml(label)}</button>`;
-    };
-
-    let html = '';
-    html += makeItem('Todas');
-    if (subjects.length) html += '<div class="menudivider"></div>';
-    subjects.forEach(s=>{ html += makeItem(s); });
-    menu.innerHTML = html;
-  }
-
   function renderChallenges(){
     const list = $('#challengeList');
-    if (!list) return;
     list.innerHTML = '';
-
-    const all = state.data?.challenges || [];
-    const subjects = Array.from(new Set(all.map(c => (c && c.subject) ? String(c.subject) : 'General')))
-      .filter(Boolean)
-      .sort((a,b)=> a.localeCompare(b, 'es', {sensitivity:'base'}));
-
-    // Default subject
-    if (!state.challengeSubject) state.challengeSubject = 'Todas';
-    if (state.challengeSubject !== 'Todas' && !subjects.includes(state.challengeSubject)){
-      state.challengeSubject = subjects[0] || 'Todas';
-    }
-
-    // Sync UI labels
-    const btnMateria = $('#btnMateria');
-    if (btnMateria) btnMateria.textContent = `${state.challengeSubject} ▾`;
-    $$('.chDiffBtn').forEach(b=>{
-      b.classList.toggle('is-active', (b.getAttribute('data-diff')||'') === String(state.challengeDiff||'facil'));
-    });
-
-    const diffSel = String(state.challengeDiff || 'facil');
-    const challenges = all.filter(c=>{
-      if (!c) return false;
-      if (state.challengeSubject !== 'Todas' && String(c.subject||'General') !== String(state.challengeSubject)) return false;
-      if (diffSel && String(c.difficulty||'facil') !== diffSel) return false;
-      return true;
-    });
-
-    if (!all.length){
-      list.innerHTML = '<div class="muted" style="padding:8px;">Sin desafíos.</div>';
-      $('#challengeHint').textContent = 'Selecciona un desafío.';
-      $('#challengeBody').textContent = '';
-      return;
-    }
-
+    const challenges = state.data?.challenges || [];
     if (!challenges.length){
-      list.innerHTML = `<div class="muted" style="padding:8px;">No hay desafíos para <b>${escapeHtml(state.challengeSubject)}</b> · <b>${escapeHtml(diffSel)}</b>.</div>`;
-      $('#challengeHint').textContent = 'Selecciona un desafío.';
-      $('#challengeBody').textContent = '';
+      list.innerHTML = '<div class="muted">Sin desafíos.</div>';
       return;
     }
-
-    // Ensure selection within filtered set
     if (!state.selectedChallengeId) state.selectedChallengeId = challenges[0].id;
-    if (!challenges.some(c=>c.id===state.selectedChallengeId)) state.selectedChallengeId = challenges[0].id;
 
     challenges.forEach(ch=>{
       const item = document.createElement('div');
-      const isSel = ch.id === state.selectedChallengeId;
-      item.className = 'challengeItem' + (isSel ? ' is-selected' : '');
-      item.tabIndex = 0;
-
-      const diff = String(ch.difficulty || 'facil');
-      const diffText = diff === 'dificil' ? 'Difícil' : (diff === 'medio' ? 'Medio' : 'Fácil');
-      const pts = Number(ch.points ?? 0);
-
+      item.className = 'challengeItem';
+      item.style.cursor = 'pointer';
       item.innerHTML = `
-        <div class="chRowTop">
-          <div class="chTitle">${escapeHtml(ch.title || 'Desafío')}</div>
-          <div class="chBadge chBadge--${escapeHtml(diff)}">${escapeHtml(diffText)}</div>
-        </div>
-        <div class="chRowBottom">
-          <div class="chTag">${escapeHtml(ch.subject || 'General')}</div>
-          <div class="chPts">${escapeHtml(String(pts))}</div>
-        </div>
+        <div class="challengeName">${escapeHtml(ch.title || 'Desafío')}</div>
+        <div class="challengeMeta">Estado: ${escapeHtml(ch.status || '—')}</div>
       `;
-
-      const open = ()=>{ state.selectedChallengeId = ch.id; renderChallenges(); };
-      item.addEventListener('click', open);
-      item.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); open(); }});
+      item.addEventListener('click', ()=>{
+        state.selectedChallengeId = ch.id;
+        renderChallengeDetail();
+      });
       list.appendChild(item);
     });
 
     renderChallengeDetail();
   }
 
-  // Regla proyector: si NO está en edición, oculta instrucciones
+  // 🔥 AQUÍ está la regla: alumno no ve contenido
   function renderChallengeDetail(){
     const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
     if (!ch){
@@ -1059,15 +949,13 @@ function renderHeroAvatar(hero){
       $('#challengeBody').textContent = '';
       return;
     }
-
-    const diff = String(ch.difficulty || 'facil');
-    const diffText = diff === 'dificil' ? 'Difícil' : (diff === 'medio' ? 'Medio' : 'Fácil');
-    const pts = Number(ch.points ?? 0);
-
-    $('#challengeHint').textContent = `${ch.subject || 'General'} · ${diffText} · ${pts} pts`;
-
-    // Mostrar instrucciones siempre (tú controlas la edición)
-    $('#challengeBody').textContent = ch.body || '(sin instrucciones)';
+    if (state.role === 'viewer'){
+      $('#challengeHint').textContent = 'Modo alumno: solo nombre.';
+      $('#challengeBody').textContent = 'Contenido oculto.';
+    }else{
+      $('#challengeHint').textContent = 'Modo edición: detalle visible.';
+      $('#challengeBody').textContent = ch.body || '(sin contenido)';
+    }
   }
 
   function renderEvents(){
@@ -1637,6 +1525,17 @@ function bind(){
       window.addEventListener('orientationchange', ()=>{ closeTopMore(); closeDrawer(); });
     }
 
+    // Mobile: botón directo a Recompensas (trofeo). Más confiable que el menú "..." en iOS.
+    const btnMobileRewards = $('#btnMobileRewards');
+    if (btnMobileRewards){
+      btnMobileRewards.addEventListener('click', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveRoute('recompensas');
+        closeDrawer();
+      });
+    }
+
     $$('.segmented__btn').forEach(b=>{
       b.addEventListener('click', ()=>{
         $$('.segmented__btn').forEach(x=>x.classList.remove('is-active'));
@@ -1722,57 +1621,6 @@ function bind(){
       } else {
         setActiveRoute('recompensas');
       }
-    });
-
-    // --- Desafíos: filtro por Materia + botones de Dificultad ---
-    const btnMateria = $('#btnMateria');
-    const menuMateria = $('#menuMateria');
-    const closeMateria = ()=>{
-      if (!menuMateria || !btnMateria) return;
-      const dd = btnMateria.closest('.dropdown');
-      if (dd) dd.classList.remove('is-open');
-      btnMateria.setAttribute('aria-expanded','false');
-    };
-    const toggleMateria = ()=>{
-      if (!menuMateria || !btnMateria) return;
-      const dd = btnMateria.closest('.dropdown');
-      if (!dd) return;
-      const next = !dd.classList.contains('is-open');
-      dd.classList.toggle('is-open', next);
-      btnMateria.setAttribute('aria-expanded', next ? 'true' : 'false');
-      if (next) renderMateriaMenu();
-    };
-    if (btnMateria && menuMateria){
-      btnMateria.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); toggleMateria(); });
-      menuMateria.addEventListener('click', (e)=>{
-        const item = e.target.closest('[data-subject]');
-        if (!item) return;
-        const subj = item.getAttribute('data-subject') || 'Todas';
-        state.challengeSubject = subj;
-        // reset selection within filtered set
-        state.selectedChallengeId = null;
-        closeMateria();
-        renderChallenges();
-      });
-      document.addEventListener('click', (e)=>{
-        const dd = btnMateria.closest('.dropdown');
-        if (!dd || !dd.classList.contains('is-open')) return;
-        if (e.target === btnMateria) return;
-        if (menuMateria.contains(e.target)) return;
-        closeMateria();
-      });
-      window.addEventListener('resize', closeMateria);
-      window.addEventListener('orientationchange', closeMateria);
-    }
-
-    $$('.chDiffBtn').forEach(b=>{
-      b.addEventListener('click', ()=>{
-        $$('.chDiffBtn').forEach(x=>x.classList.remove('is-active'));
-        b.classList.add('is-active');
-        state.challengeDiff = b.getAttribute('data-diff') || 'facil';
-        state.selectedChallengeId = null;
-        renderChallenges();
-      });
     });
 
     $('#btnDebugPanel').addEventListener('click', toggleDetails);

@@ -10,7 +10,7 @@
   <!-- Icono de la pestaña (pon tu archivo en assets/logo.png o cambia la ruta) -->
   <link rel="icon" href="assets/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
-  <link rel="stylesheet" href="./styles.css?v=20260126H5" />
+  <link rel="stylesheet" href="./styles.css?v=20260126H" />
 </head>
 <body>
   <!--
@@ -28,23 +28,17 @@
       <div class="topbar__left">
         <button class="iconbtn topbar__menu" id="btnMenu" aria-label="Abrir menú lateral" title="Menú">☰</button>
 
-        <!-- Mobile overflow menu for header actions (Recompensas/Estado/Datos/Edición) -->
-        <div class="topbar__moreWrap">
-          <button
-            class="iconbtn topbar__moreBtn"
-            id="btnTopMore"
-            aria-label="Más opciones"
-            title="Más"
-            aria-expanded="false"
-            aria-controls="topMoreMenu"
-          >⋯</button>
-          <div class="topMoreMenu" id="topMoreMenu" hidden>
-            <button class="topMoreMenu__item" data-proxy-click="btnRecompensas">🏆 Recompensas</button>
-            <button class="topMoreMenu__item" data-proxy-click="btnDebugPanel">🧪 Estado</button>
-            <button class="topMoreMenu__item" data-proxy-click="btnDatos">💾 Datos</button>
-            <button class="topMoreMenu__item" data-proxy-click="btnEdicion">🔒 Edición</button>
-          </div>
-        </div>
+        <!-- Mobile: acceso directo a Recompensas (trofeo). Más simple y confiable en iOS. -->
+        <button class="iconbtn topbar__trophyBtn" id="btnMobileRewards" aria-label="Recompensas" title="Recompensas">
+          <svg class="trophyIcon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <path d="M22 12h20v6c0 8-5 14-10 14s-10-6-10-14v-6z" fill="rgba(114,26,255,.18)" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+            <path d="M18 14h-6c0 12 6 18 14 20" fill="none" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+            <path d="M46 14h6c0 12-6 18-14 20" fill="none" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+            <path d="M28 36h8v6h-8z" fill="rgba(25,42,86,.85)" stroke="rgba(0,210,255,.45)" stroke-width="2"/>
+            <path d="M22 42h20v8H22z" fill="rgba(25,42,86,.85)" stroke="rgba(0,210,255,.45)" stroke-width="2"/>
+            <path d="M18 50h28" stroke="rgba(0,210,255,.25)" stroke-width="2"/>
+          </svg>
+        </button>
 
         <div class="brand" aria-label="LevelUp">
           <div class="brand__logo" aria-hidden="true">
@@ -230,27 +224,14 @@
             <div class="pageIntro">
               <h2 class="h2">Desafíos</h2>
               <p class="muted">
-                Elige una <b>materia</b> y una <b>dificultad</b>. Luego selecciona un ejercicio para ver sus instrucciones.
-              </p></p>
+                En modo alumno (viewer) solo se muestra el <b>nombre</b>.
+                En modo edición (teacher) se ve el detalle.
+              </p>
             </div>
 
             <div class="cards2">
               <div class="card">
                 <div class="cardTitle">Lista</div>
-
-                <div class="chFilters" aria-label="Filtros de desafíos">
-                  <div class="chSubjectWrap dropdown">
-                    <button class="btn btn--ghost" id="btnMateria">Materia ▾</button>
-                    <div class="dropdown__menu" id="menuMateria"></div>
-                  </div>
-
-                  <div class="chDiffWrap" role="group" aria-label="Dificultad">
-                    <button class="chDiffBtn is-active" data-diff="facil" type="button">Fácil</button>
-                    <button class="chDiffBtn" data-diff="medio" type="button">Medio</button>
-                    <button class="chDiffBtn" data-diff="dificil" type="button">Difícil</button>
-                  </div>
-                </div>
-
                 <div class="challengeList" id="challengeList"></div>
               </div>
 
@@ -404,6 +385,6 @@
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="./app.js?v=20260126H5" defer></script>
+  <script src="./app.js?v=20260126H" defer></script>
 </body>
 </html>
