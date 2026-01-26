@@ -692,91 +692,76 @@ function renderHeroAvatar(hero){
     }catch(_){ return iso || ''; }
   }
 
-  function renderHeroRewards(hero){
-    const list = $('#heroRewardsList');
-    const empty = $('#heroRewardsEmpty');
-    if (!list || !empty) return;
-
-    const hist = Array.isArray(hero?.rewardsHistory) ? hero.rewardsHistory : [];
-    list.innerHTML = '';
+  function renderHeroRewardsList(hero, listEl, emptyEl){
+    const hist = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
+    listEl.innerHTML = '';
     if (!hist.length){
-      empty.hidden = false;
+      if (emptyEl) emptyEl.hidden = false;
       return;
     }
-    empty.hidden = true;
+    if (emptyEl) emptyEl.hidden = true;
 
     hist.slice().reverse().forEach(item=>{
-      const opt = REWARD_OPTIONS.find(o=>o.id===item.rewardId);
-      const title = item.title || (opt ? opt.title : 'Recompensa');
-      const badge = item.badge || (opt ? opt.id : '');
       const div = document.createElement('div');
       div.className = 'rewardItem';
-      div.innerHTML = `
-        <div class="rewardItem__left">
-          <div class="rewardItem__title">${escapeHtml(title)}</div>
-          <div class="rewardItem__meta">Nivel ${escapeHtml(String(item.level ?? '—'))} · ${escapeHtml(formatDateMX(item.date))}</div>
-        </div>
-        <div class="rewardItem__badge">${escapeHtml(badge)}</div>
-      `;
-      list.appendChild(div);
+
+      const title = item.title || 'Recompensa';
+      const level = (item.level === 0 || item.level) ? String(item.level) : '—';
+      const date = item.date ? formatDateMX(item.date) : '—';
+      const badge = item.badge || '🏆';
+
+      div.innerHTML =
+        '<div class="rewardItem__left">' +
+          '<div class="rewardItem__title">' + escapeHtml(title) + '</div>' +
+          '<div class="rewardItem__meta">Nivel ' + escapeHtml(level) + ' · ' + escapeHtml(date) + '</div>' +
+        '</div>' +
+        '<div class="rewardItem__badge">' + escapeHtml(badge) + '</div>';
+
+      listEl.appendChild(div);
     });
   }
 
   function renderRewards(){
-    const hero = currentHero();
+    const hero = getCurrentHero();
     if (!hero) return;
 
-    // Render inside Fichas
-    renderHeroRewards(hero);
+    // Página Recompensas (columna central: historial, columna derecha: generales)
+    const histSub = $('#rewardsHistorySubtitle');
+    const histList = $('#rewardsHistoryList');
+    const histEmpty = $('#rewardsHistoryEmpty');
+    const genList = $('#rewardsGeneralList');
 
-    // Recompensas page: show general options + current hero history
-    const page = document.querySelector('.page[data-page="recompensas"]');
-    if (page){
-      const cards = page.querySelector('.cardGrid') || page;
-      const placeholder = page.querySelector('.card');
-      if (placeholder){
-        placeholder.innerHTML = `
-          <div class="cardTitle">Recompensas disponibles</div>
-          <div class="muted">Estas son las recompensas generales al subir de nivel (las podemos ajustar después).</div>
-          <div style="height:10px"></div>
-          <div class="rewardPickGrid">
-            ${REWARD_OPTIONS.map(o=>`
-              <div class="rewardPick" style="cursor:default">
-                <div class="rewardPick__title">${escapeHtml(o.title)}</div>
-                <div class="rewardPick__desc">${escapeHtml(o.desc)}</div>
-              </div>
-            `).join('')}
-          </div>
-          <div style="height:14px"></div>
-          <div class="cardTitle">Historial del héroe seleccionado</div>
-          <div class="muted" id="rewardsHeroHint"></div>
-          <div style="height:8px"></div>
-          <div class="rewardHistory" id="rewardsHeroHistory"></div>
-        `;
-      }
+    if (histSub) histSub.textContent = hero.name ? ('De ' + hero.name) : 'De este personaje';
 
-      const hint = page.querySelector('#rewardsHeroHint');
-      const histBox = page.querySelector('#rewardsHeroHistory');
-      if (hint && histBox){
-        hint.textContent = hero.name ? `Héroe: ${hero.name}` : 'Héroe: (sin nombre)';
-        const hist = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
-        histBox.innerHTML = hist.length ? hist.slice().reverse().map(item=>{
-          const opt = REWARD_OPTIONS.find(o=>o.id===item.rewardId);
-          const title = item.title || (opt?opt.title:'Recompensa');
-          return `
-            <div class="rewardItem">
-              <div class="rewardItem__left">
-                <div class="rewardItem__title">${escapeHtml(title)}</div>
-                <div class="rewardItem__meta">Nivel ${escapeHtml(String(item.level ?? '—'))} · ${escapeHtml(formatDateMX(item.date))}</div>
-              </div>
-              <div class="rewardItem__badge">${escapeHtml(item.rewardId||'')}</div>
-            </div>
-          `;
-        }).join('') : '<div class="muted">Aún no ha reclamado recompensas.</div>';
-      }
+    if (histList && histEmpty){
+      renderHeroRewardsList(hero, histList, histEmpty);
+    }
+
+    if (genList){
+      genList.innerHTML = '';
+      REWARD_OPTIONS.forEach(opt=>{
+        const div = document.createElement('div');
+        div.className = 'rewardItem rewardGeneralItem';
+
+        const title = opt.title || 'Recompensa';
+        const desc = opt.desc || '';
+        const badge =
+          opt.id === 'stat+1' ? '✨' :
+          opt.id === 'weekMax+10' ? '📈' :
+          opt.id === 'token+1' ? '🎟️' :
+          opt.id === 'perk' ? '⭐' : '🏆';
+
+        div.innerHTML =
+          '<div class="rewardItem__left">' +
+            '<div class="rewardItem__title">' + escapeHtml(title) + '</div>' +
+            '<div class="rewardItem__meta">' + escapeHtml(desc) + '</div>' +
+          '</div>' +
+          '<div class="rewardItem__badge">' + escapeHtml(badge) + '</div>';
+
+        genList.appendChild(div);
+      });
     }
   }
-
 
   function renderChallenges(){
     const list = $('#challengeList');

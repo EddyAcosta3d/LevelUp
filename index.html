@@ -133,16 +133,7 @@
               <div class="noteTitle">Meta del trimestre</div>
               <textarea class="textarea textarea--short" id="txtMeta" ></textarea>
             </div>
-          
-                <div class="heroRewardsBox">
-                  <div class="noteTitle">Recompensas reclamadas</div>
-                  <div class="muted" id="heroRewardsEmpty">Aún no ha reclamado recompensas.</div>
-                  <div class="rewardHistory" id="heroRewardsList"></div>
-                </div>
 </div>
-
-
-                
               </div>
 
               <div class="card">
@@ -199,17 +190,35 @@
             </div>
           </article>
 
-          <article class="page" data-page="recompensas">
-            <div class="pageIntro">
-              <h2 class="h2">Recompensas</h2>
-              <p class="muted">Esta sección la vamos a reubicar y diseñar después. Por ahora queda como acceso directo desde el header.</p>
-            </div>
-            <div class="cardGrid">
-              <div class="card">
-                <div class="muted">(Placeholder) Aquí irán las recompensas, tienda, títulos, etc.</div>
+        <article class="page" data-page="recompensas">
+          <div class="pageIntro">
+            <h2 class="h2">Recompensas</h2>
+            <p class="muted">Historial por personaje y lista general de recompensas.</p>
+          </div>
+
+          <div class="rewardsGrid">
+            <section class="card" aria-label="Historial de recompensas">
+              <div class="cardHead">
+                <h3 class="h3">Historial</h3>
+                <div class="muted small" id="rewardsHistorySubtitle">Selecciona un personaje para ver su historial.</div>
               </div>
-            </div>
-          </article>
+              <div class="cardBody">
+                <div id="rewardsHistoryList" class="rewardsList"></div>
+                <div id="rewardsHistoryEmpty" class="muted" style="padding:8px;">Aún no hay recompensas reclamadas.</div>
+              </div>
+            </section>
+
+            <section class="card" aria-label="Recompensas generales">
+              <div class="cardHead">
+                <h3 class="h3">Recompensas generales</h3>
+                <div class="muted small">Lo que pueden ganar al subir de nivel.</div>
+              </div>
+              <div class="cardBody">
+                <div id="rewardsGeneralList" class="rewardsList"></div>
+              </div>
+            </section>
+          </div>
+        </article>
 
           <article class="page" data-page="desafios">
             <div class="pageIntro">
