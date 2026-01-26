@@ -554,7 +554,14 @@ function readFileAsDataURL(file){
       hero.stats[upKey] = v;
 
       const numEl = row.querySelector('.statNum');
-      if(numEl) numEl.textContent = String(v);
+      if(numEl){
+        numEl.textContent = String(v);
+        // tiny "pop" feedback
+        numEl.classList.remove('is-pop');
+        void numEl.offsetWidth;
+        numEl.classList.add('is-pop');
+        setTimeout(()=> numEl.classList.remove('is-pop'), 220);
+      }
 
       const segWrap = row.querySelector('.statSegs');
       if(segWrap){
@@ -954,6 +961,7 @@ function renderHeroAvatar(hero){
   function renderEvents(){
     const grid = $('#eventGrid');
     grid.innerHTML = '';
+    grid.classList.toggle('is-stat', mode === 'stat');
     const evs = state.data?.events || [];
     if (!evs.length){
       grid.innerHTML = '<div class="muted">Sin eventos.</div>';
@@ -1301,24 +1309,35 @@ function renderHeroAvatar(hero){
     grid.innerHTML = '';
 
     if (mode === 'stat'){
-      const title = document.createElement('div');
-      title.className = 'muted';
-      title.textContent = 'Elige la estadística a subir (+1):';
-      grid.appendChild(title);
+      // Header row: title + back
+      const head = document.createElement('div');
+      head.className = 'levelUpStatHead';
+      head.innerHTML = `
+        <div class="levelUpStatHead__title">Elige una stat</div>
+        <button class="pill pill--small pill--ghost" type="button" id="btnLevelUpBack">← Volver</button>
+      `;
+      grid.appendChild(head);
+
+      const backBtn = head.querySelector('#btnLevelUpBack');
+      backBtn?.addEventListener('click', ()=> renderRewardPickGrid('main'));
 
       const statKeys = ['INT','SAB','CAR','RES','CRE'];
       statKeys.forEach(k=>{
         const lowKey = k.toLowerCase();
-        const curVal = Number((hero.stats?.[k] ?? hero.stats?.[lowKey] ?? 0));
-        const btn = document.createElement('div');
-        btn.className = 'rewardPick';
+        // IMPORTANT: UI uses lowercase keys; prefer them to avoid desync issues.
+        const curVal = Number((hero.stats?.[lowKey] ?? hero.stats?.[k] ?? 0));
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'rewardPick rewardPick--stat';
         btn.innerHTML = `
           <div class="rewardPick__title">${k}</div>
-          <div class="rewardPick__desc">Sube ${k} de ${curVal} a ${curVal + 1}</div>
+          <div class="rewardPick__meta"><span class="badge badge--mini">${curVal}</span><span class="rewardPick__plus">+1</span></div>
         `;
         btn.addEventListener('click', ()=>{
           hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
-          const current = Number((hero.stats[k] ?? hero.stats[lowKey] ?? 0));
+          // Prefer lowercase to match what is rendered.
+          const current = Number((hero.stats[lowKey] ?? hero.stats[k] ?? 0));
           const next = Math.min(20, current + 1);
           // Mantener sincronizadas llaves mayúsculas y minúsculas (UI usa minúsculas)
           hero.stats[k] = next;
@@ -1332,31 +1351,29 @@ function renderHeroAvatar(hero){
         });
         grid.appendChild(btn);
       });
-
-      const back = document.createElement('button');
-      back.type = 'button';
-      back.className = 'pill pill--small pill--ghost';
-      back.textContent = '← Volver';
-      back.style.marginTop = '8px';
-      back.addEventListener('click', ()=> renderRewardPickGrid('main'));
-      grid.appendChild(back);
       return;
     }
 
     // main rewards
     const opts = [
-      { id:'stat+1', title:'+1 punto a una estadística', desc:'Elige una stat para aumentar en +1.' },
-      { id:'weekMax+10', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal de actividades pequeñas.' },
-      { id:'token+1', title:'+1 comodín', desc:'Un comodín para canjear después (reintento, pase, etc.).' },
-      { id:'perk', title:'Privilegio en clase', desc:'Un privilegio acordado contigo (ej. elegir equipo, música 5 min).' }
+      { id:'stat+1', icon:'⚡', title:'+1 a una estadística', desc:'Elige una stat para subir en +1.' },
+      { id:'weekMax+10', icon:'📈', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal.' },
+      { id:'token+1', icon:'🪙', title:'+1 comodín', desc:'Un comodín para canjear después.' },
+      { id:'perk', icon:'✨', title:'Privilegio en clase', desc:'Un privilegio acordado contigo.' }
     ];
 
     opts.forEach(o=>{
-      const div = document.createElement('div');
+      const div = document.createElement('button');
+      div.type = 'button';
       div.className = 'rewardPick';
       div.innerHTML = `
-        <div class="rewardPick__title">${escapeHtml(o.title)}</div>
-        <div class="rewardPick__desc">${escapeHtml(o.desc)}</div>
+        <div class="rewardPick__row">
+          <div class="rewardPick__icon" aria-hidden="true">${escapeHtml(o.icon)}</div>
+          <div class="rewardPick__main">
+            <div class="rewardPick__title">${escapeHtml(o.title)}</div>
+            <div class="rewardPick__desc">${escapeHtml(o.desc)}</div>
+          </div>
+        </div>
       `;
       div.addEventListener('click', ()=>{
         if (!pending) return;
@@ -1417,7 +1434,11 @@ function renderHeroAvatar(hero){
       const modal = $('#confirmModal');
       if (!modal){ resolve(window.confirm(message)); return; }
       $('#confirmTitle').textContent = title;
-      $('#confirmMessage').textContent = message;
+      const msgEl = $('#confirmMessage');
+      if (msgEl){
+        msgEl.textContent = message || '';
+        msgEl.style.display = message ? '' : 'none';
+      }
       const okBtn = $('#btnConfirmOk');
       const cancelBtn = $('#btnConfirmCancel');
       okBtn.textContent = okText;
@@ -1720,8 +1741,8 @@ function bind(){
       if (!h) return;
 
       const ok = await openConfirmModal({
-        title: 'Eliminar ficha',
-        message: `¿Eliminar a "${h.name || 'este héroe'}"?\n\nEsto borra la ficha. Solo se puede recuperar con un respaldo (JSON).`,
+        title: `Eliminar ficha: ${h.name || '—'}`,
+        message: '',
         okText: 'Eliminar',
         cancelText: 'Cancelar'
       });

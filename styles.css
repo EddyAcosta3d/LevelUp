@@ -1146,6 +1146,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   max-width: 560px;
   position: relative;
   overflow: hidden;
+  /* Special border for "wow" moments */
+  border: 1px solid rgba(114,26,255,0.55);
+  box-shadow:
+    0 0 0 1px rgba(0,210,255,0.10) inset,
+    0 22px 70px rgba(0,0,0,0.70),
+    0 0 34px rgba(114,26,255,0.20);
 }
 
 /* Game-ish entry + subtle sparkle layer */
@@ -1225,21 +1231,44 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   gap:10px;
   grid-template-columns: repeat(1, 1fr);
 }
+.rewardPickGrid.is-stat{
+  grid-template-columns: repeat(3, 1fr);
+}
 @media (min-width: 520px){
   .rewardPickGrid{ grid-template-columns: repeat(2, 1fr); }
+  .rewardPickGrid.is-stat{ grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 .rewardPick{
-  border:1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.03);
+  border:1px solid rgba(0,210,255,0.16);
+  background: rgba(25,42,86,0.40);
   border-radius:14px;
   padding:12px;
   cursor:pointer;
   transition: transform .12s ease, border-color .12s ease, background .12s ease;
 }
+.rewardPick__row{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+.rewardPick__icon{
+  width:38px;
+  height:38px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(0,210,255,0.18);
+  box-shadow: inset 0 0 0 1px rgba(0,210,255,0.06);
+  font-size:18px;
+}
+.rewardPick__main{ flex:1; min-width: 0; }
 .rewardPick:hover{
   transform: translateY(-1px);
-  border-color: rgba(255,255,255,.20);
-  background: rgba(255,255,255,.05);
+  border-color: rgba(0,210,255,0.30);
+  background: rgba(25,42,86,0.52);
+  box-shadow: 0 0 18px rgba(0,210,255,0.10), 0 0 18px rgba(114,26,255,0.08);
 }
 .rewardPick__title{
   font-weight:800;
@@ -1248,6 +1277,38 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
 .rewardPick__desc{
   opacity:.82;
   font-size:.95rem;
+}
+.rewardPick__meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:6px;
+}
+.rewardPick__plus{
+  font-weight:900;
+  letter-spacing: 0.6px;
+  color: rgba(0,210,255,0.92);
+  text-shadow: 0 0 14px rgba(0,210,255,0.22);
+}
+.rewardPick--stat{
+  padding: 12px 12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  min-height: 74px;
+}
+.levelUpStatHead{
+  grid-column: 1 / -1;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+.levelUpStatHead__title{
+  font-weight: 900;
+  letter-spacing: .6px;
 }
 .levelUpHint{ margin-top: 10px; }
 
@@ -1398,12 +1459,24 @@ html::-webkit-scrollbar, body::-webkit-scrollbar{ width:0; height:0; }
   touch-action: pan-x;
 }
 .statNum{
-  min-width:34px;
-  text-align:right;
-  font-weight:700;
+  min-width: 38px;
+  text-align:center;
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
-  letter-spacing:0.3px;
-  color:rgba(235,235,235,0.92);
+  letter-spacing: 0.2px;
+  color: rgba(220,220,230,0.95);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(0,210,255,0.18);
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 0 12px rgba(0,210,255,0.10);
+}
+
+.statNum.is-pop{ animation: statPop .18s ease-out both; }
+@keyframes statPop{
+  0%{ transform: scale(0.92); filter: brightness(0.9); }
+  100%{ transform: scale(1); filter: brightness(1); }
 }
 
 /* --- Rewards list (derecha): más detalle --- */
