@@ -68,9 +68,6 @@ function makeBlankHero(group){
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
-    chSubject: 'all',
-    chDiff: 'all',
-    chQuery: '',
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
@@ -122,39 +119,22 @@ function readFileAsDataURL(file){
     d.challenges = Array.isArray(d.challenges) ? d.challenges : [];
     d.events = Array.isArray(d.events) ? d.events : [];
 
-
     // Seed de desafíos (solo si no existen): 5 materias, 2 por dificultad
     if (!d.challenges.length){
       const subjects = ['Tecnología','Inglés','Español','Matemáticas','Tutoría'];
-      const mk = (id, subject, diff, pts, title, body)=>({
-        id, subject, difficulty: diff, points: pts, title, body,
-        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-      });
+      const now = new Date().toISOString();
+      const mk = (id, subject, difficulty, points, title, body)=>({ id, subject, difficulty, points, title, body, createdAt: now, updatedAt: now });
       d.challenges = [
-        // Fácil (10)
-        mk('c_facil_1', subjects[0], 'facil', 10, 'Fácil · Mini ejercicio', 'Instrucciones (ejemplo): Realiza una actividad breve en tu libreta.
-
-(Después lo editas tú.)'),
-        mk('c_facil_2', subjects[1], 'facil', 10, 'Fácil · Vocabulario', 'Escribe 10 palabras nuevas y su significado.
-
-(Después lo editas tú.)'),
-        // Medio (20)
-        mk('c_medio_1', subjects[2], 'medio', 20, 'Medio · Lectura y resumen', 'Lee un texto corto y escribe un resumen de 5–8 líneas.
-
-(Después lo editas tú.)'),
-        mk('c_medio_2', subjects[3], 'medio', 20, 'Medio · Problemas', 'Resuelve 5 problemas relacionados con el tema visto.
-
-(Después lo editas tú.)'),
-        // Difícil (40)
-        mk('c_dificil_1', subjects[4], 'dificil', 40, 'Difícil · Proyecto corto', 'Realiza un producto/actividad más completa y entrégala con evidencia.
-
-(Después lo editas tú.)'),
-        mk('c_dificil_2', subjects[0], 'dificil', 40, 'Difícil · Reto extra', 'Actividad retadora.
-
-(Después lo editas tú.)'),
+        mk('c_facil_1', subjects[0], 'facil', 10, 'Mini ejercicio (Fácil)', 'Escribe 5 líneas sobre el tema visto hoy.\n\n(Después lo editas tú.)'),
+        mk('c_facil_2', subjects[1], 'facil', 10, 'Vocabulario (Fácil)', 'Anota 10 palabras y su significado.\n\n(Después lo editas tú.)'),
+        mk('c_medio_1', subjects[2], 'medio', 20, 'Lectura y resumen (Medio)', 'Lee un texto corto y escribe un resumen de 5–8 líneas.\n\n(Después lo editas tú.)'),
+        mk('c_medio_2', subjects[3], 'medio', 20, 'Problemas (Medio)', 'Resuelve 5 problemas del tema.\n\n(Después lo editas tú.)'),
+        mk('c_dificil_1', subjects[4], 'dificil', 40, 'Proyecto corto (Difícil)', 'Actividad más completa con evidencia (foto/entrega).\n\n(Después lo editas tú.)'),
+        mk('c_dificil_2', subjects[0], 'dificil', 40, 'Reto extra (Difícil)', 'Un reto más pesado del tema.\n\n(Después lo editas tú.)'),
       ];
     }
 
+    // Normaliza desafíos (compat y defaults)
     d.challenges.forEach(c=>{
       if(!c || typeof c !== 'object') return;
       c.id = c.id || uid('c');
@@ -967,143 +947,72 @@ function renderHeroAvatar(hero){
 
   function renderChallenges(){
     const list = $('#challengeList');
-    const selSubject = $('#chSubject');
-    const inpSearch = $('#chSearch');
-    const countEl = $('#chCount');
-
     if (!list) return;
-
-    const all = state.data?.challenges || [];
-
-    // Populate subject filter (once per render, but stable)
-    if (selSubject && !selSubject.options.length){
-      const subjects = Array.from(new Set(all.map(c=> String(c.subject || 'General')))).sort((a,b)=>a.localeCompare(b,'es'));
-      const opts = ['all', ...subjects];
-      selSubject.innerHTML = '';
-      opts.forEach(v=>{
-        const o = document.createElement('option');
-        o.value = v;
-        o.textContent = v === 'all' ? 'Todas las materias' : v;
-        selSubject.appendChild(o);
-      });
-      selSubject.value = state.chSubject || 'all';
-    } else if (selSubject){
-      selSubject.value = state.chSubject || 'all';
-    }
-
-    if (inpSearch) inpSearch.value = state.chQuery || '';
-
-    const q = (state.chQuery || '').trim().toLowerCase();
-    const subj = state.chSubject || 'all';
-    const diff = state.chDiff || 'all';
-
-    const filtered = all.filter(c=>{
-      const okSubj = subj === 'all' || String(c.subject||'') === subj;
-      const okDiff = diff === 'all' || String(c.difficulty||'') === diff;
-      const hay = (String(c.title||'') + ' ' + String(c.subject||'') + ' ' + String(c.body||'')).toLowerCase();
-      const okQ = !q || hay.includes(q);
-      return okSubj && okDiff && okQ;
-    });
-
-    if (countEl) countEl.textContent = String(filtered.length);
-
-    // Ensure selection is valid
-    if (filtered.length){
-      if (!state.selectedChallengeId || !filtered.some(c=>c.id===state.selectedChallengeId)){
-        state.selectedChallengeId = filtered[0].id;
-      }
-    } else {
-      state.selectedChallengeId = null;
-    }
-
-    // Render list
     list.innerHTML = '';
-    if (!filtered.length){
-      list.innerHTML = '<div class="muted" style="padding:8px;">No hay desafíos con esos filtros.</div>';
-      renderChallengeDetail(null);
+
+    const challenges = state.data?.challenges || [];
+    if (!challenges.length){
+      list.innerHTML = '<div class="muted" style="padding:8px;">Sin desafíos.</div>';
+      $('#challengeHint').textContent = 'Selecciona un desafío.';
+      $('#challengeBody').textContent = '';
       return;
     }
 
-    filtered.forEach(c=>{
-      const div = document.createElement('div');
-      const isSel = c.id === state.selectedChallengeId;
-      div.className = 'chItem' + (isSel ? ' is-selected' : '');
-      div.tabIndex = 0;
-      const diffLabel = String(c.difficulty||'facil');
-      const diffText = diffLabel === 'dificil' ? 'Difícil' : (diffLabel === 'medio' ? 'Medio' : 'Fácil');
-      div.innerHTML = `
-        <div class="chItem__top">
-          <div class="chItem__title">${escapeHtml(c.title || 'Desafío')}</div>
-          <div class="chBadge chBadge--${escapeHtml(diffLabel)}">${escapeHtml(diffText)}</div>
+    // Ensure selection
+    if (!state.selectedChallengeId) state.selectedChallengeId = challenges[0].id;
+    if (!challenges.some(c=>c.id===state.selectedChallengeId)) state.selectedChallengeId = challenges[0].id;
+
+    challenges.forEach(ch=>{
+      const item = document.createElement('div');
+      const isSel = ch.id === state.selectedChallengeId;
+      item.className = 'challengeItem' + (isSel ? ' is-selected' : '');
+      item.tabIndex = 0;
+
+      const diff = String(ch.difficulty || 'facil');
+      const diffText = diff === 'dificil' ? 'Difícil' : (diff === 'medio' ? 'Medio' : 'Fácil');
+      const pts = Number(ch.points ?? 0);
+
+      item.innerHTML = `
+        <div class="chRowTop">
+          <div class="chTitle">${escapeHtml(ch.title || 'Desafío')}</div>
+          <div class="chBadge chBadge--${escapeHtml(diff)}">${escapeHtml(diffText)}</div>
         </div>
-        <div class="chItem__meta">
-          <span class="chTag">${escapeHtml(c.subject || 'General')}</span>
-          <span class="chPts">${escapeHtml(String(c.points ?? ''))}</span>
+        <div class="chRowBottom">
+          <div class="chTag">${escapeHtml(ch.subject || 'General')}</div>
+          <div class="chPts">${escapeHtml(String(pts))}</div>
         </div>
       `;
-      const open = ()=>{ state.selectedChallengeId = c.id; renderChallenges(); };
-      div.addEventListener('click', open);
-      div.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); open(); }});
-      list.appendChild(div);
+
+      const open = ()=>{ state.selectedChallengeId = ch.id; renderChallenges(); };
+      item.addEventListener('click', open);
+      item.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); open(); }});
+      list.appendChild(item);
     });
 
-    renderChallengeDetail((state.data?.challenges || []).find(x=>x.id===state.selectedChallengeId) || null);
+    renderChallengeDetail();
   }
 
-  function renderChallengeDetail(ch){
-    const titleEl = $('#chDetailTitle');
-    const metaEl = $('#chDetailMeta');
-    const bodyEl = $('#chDetailBody');
-    const btnComplete = $('#btnChComplete');
-    const btnNew = $('#btnChNew');
-    const btnEdit = $('#btnChEdit');
-    const btnDel = $('#btnChDelete');
-
-    // Management buttons: solo útiles cuando estás editando (teacher)
-    const canEdit = isEditEnabled();
-    if (btnNew) btnNew.disabled = !canEdit;
-    if (btnEdit) btnEdit.disabled = !canEdit || !ch;
-    if (btnDel) btnDel.disabled = !canEdit || !ch;
-
-    if (btnComplete) btnComplete.disabled = !ch || !currentHero();
-
+  // Regla proyector: si NO está en edición, oculta instrucciones
+  function renderChallengeDetail(){
+    const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
     if (!ch){
-      if (titleEl) titleEl.textContent = 'Selecciona un desafío';
-      if (metaEl) metaEl.innerHTML = '';
-      if (bodyEl) bodyEl.innerHTML = '<div class="muted" id="chDetailHint">Elige un desafío de la lista.</div>';
+      $('#challengeHint').textContent = 'Selecciona un desafío.';
+      $('#challengeBody').textContent = '';
       return;
     }
 
-    const diff = String(ch.difficulty||'facil');
+    const diff = String(ch.difficulty || 'facil');
     const diffText = diff === 'dificil' ? 'Difícil' : (diff === 'medio' ? 'Medio' : 'Fácil');
+    const pts = Number(ch.points ?? 0);
 
-    if (titleEl) titleEl.textContent = ch.title || 'Desafío';
-    if (metaEl){
-      metaEl.innerHTML = `
-        <span class="chTag">${escapeHtml(ch.subject || 'General')}</span>
-        <span class="chBadge chBadge--${escapeHtml(diff)}">${escapeHtml(diffText)}</span>
-        <span class="chTag">${escapeHtml(String(ch.points ?? ''))} pts</span>
-      `;
-    }
+    $('#challengeHint').textContent = `${ch.subject || 'General'} · ${diffText} · ${pts} pts`;
 
-    // Si NO está en edición: oculta instrucciones (modo proyector)
-    if (!canEdit){
-      if (bodyEl){
-        bodyEl.innerHTML = `
-          <div class="chLockedBox">
-            <div class="muted">🔒 Detalles ocultos. Activa <b>Edición</b> para ver las instrucciones.</div>
-          </div>
-        `;
-      }
+    if (!isEditEnabled()){
+      $('#challengeBody').textContent = '🔒 Detalles ocultos. Activa Edición para ver instrucciones.';
       return;
     }
 
-    // En edición: muestra instrucciones
-    if (bodyEl){
-      bodyEl.innerHTML = `
-        <div class="chBodyText">${escapeHtml(ch.body || '(sin instrucciones)')}</div>
-      `;
-    }
+    $('#challengeBody').textContent = ch.body || '(sin instrucciones)';
   }
 
   function renderEvents(){
@@ -1762,37 +1671,6 @@ function bind(){
 
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 
-    // Desafíos: filtros + acciones (maquetado)
-    const chSubject = $('#chSubject');
-    chSubject?.addEventListener('change', ()=>{ state.chSubject = chSubject.value || 'all'; renderChallenges(); });
-
-    const chSearch = $('#chSearch');
-    chSearch?.addEventListener('input', ()=>{ state.chQuery = String(chSearch.value || ''); renderChallenges(); });
-
-    const chDiff = $('#chDiff');
-    chDiff?.addEventListener('click', (e)=>{
-      const btn = e.target.closest('[data-diff]');
-      if(!btn) return;
-      $$('#chDiff [data-diff]').forEach(b=>b.classList.remove('is-active'));
-      btn.classList.add('is-active');
-      state.chDiff = btn.getAttribute('data-diff') || 'all';
-      renderChallenges();
-    });
-
-    // Completado (por ahora: solo suma XP segun dificultad)
-    const btnChComplete = $('#btnChComplete');
-    btnChComplete?.addEventListener('click', ()=>{
-      const h = currentHero();
-      if(!h) return toast('Selecciona un héroe.');
-      const ch = (state.data?.challenges || []).find(c=>c.id===state.selectedChallengeId);
-      if(!ch) return;
-      const pts = Number(ch.points || 0) || 0;
-      if(!pts) return toast('Este desafío no tiene puntos.');
-      bumpHeroXp(pts);
-      toast(`+${pts} XP (Desafío)`);
-    });
-
-
     $('#inRol').addEventListener('click', openRoleModal);
     $('#inRol').addEventListener('keydown', (e)=>{
       if (e.key === 'Enter' || e.key === ' '){
@@ -1917,46 +1795,6 @@ function bind(){
 
     // UI helpers
     initTopMoreMenu();
-
-    // Desafíos · filtros (maquetado)
-    const subjSel = $('#chSubject');
-    subjSel?.addEventListener('change', ()=>{ state.chSubject = subjSel.value || 'all'; renderChallenges(); });
-
-    const chSearch = $('#chSearch');
-    chSearch?.addEventListener('input', ()=>{ state.chQuery = chSearch.value || ''; renderChallenges(); });
-
-    const diffBox = $('#chDiff');
-    diffBox?.addEventListener('click', (e)=>{
-      const b = e.target.closest('[data-diff]');
-      if (!b) return;
-      const v = b.getAttribute('data-diff') || 'all';
-      state.chDiff = v;
-      $$('#chDiff [data-diff]').forEach(x=>x.classList.remove('is-active'));
-      b.classList.add('is-active');
-      renderChallenges();
-    });
-
-    $('#btnChComplete')?.addEventListener('click', ()=>{
-      const h = currentHero();
-      const ch = (state.data?.challenges || []).find(x=>x.id===state.selectedChallengeId);
-      if (!h || !ch) return;
-      // Por ahora solo maquetado: suma XP según puntos (10/20/40)
-      const gain = Number(ch.points||0) || 0;
-      if (gain>0) bumpHeroXp(gain);
-      toast(`Completado: +${gain} XP`);
-      // Más adelante: marcar completado por héroe y rachas
-      saveLocal();
-      if (state.dataSource === 'remote') state.dataSource = 'local';
-      updateDataDebug();
-      renderHeroDetail(h);
-    });
-
-    // CRUD (placeholder)
-    $('#btnChNew')?.addEventListener('click', ()=>{
-      if (!isEditEnabled()) return;
-      toast('Crear desafío (siguiente fase).');
-    });
-
     const resetBtn = $('#btnWeekReset');
     resetBtn?.addEventListener('click', async (e)=>{
       e.preventDefault();
