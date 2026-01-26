@@ -131,7 +131,9 @@ function readFileAsDataURL(file){
       h.weekXp = Number(h.weekXp ?? 0);
       h.weekXpMax = Number(h.weekXpMax ?? DEFAULT_WEEK_XP_MAX);
       // Tope inicial de autoevaluación: 0–8. Después puedes subirlo en el JSON a 20.
-      h.statsCap = Number(h.statsCap ?? 8);
+      // statsCap was used in an older autoevaluación clamp; kept for future use but not enforced.
+      // Default to 20 so it doesn't imply a hard cap.
+      h.statsCap = Number(h.statsCap ?? 20);
       h.photoFit = h.photoFit || { x:50, y:50, scale:1 };
       h.photoSrc = h.photoSrc || '';
       h.desc = h.desc || '';
@@ -1306,15 +1308,21 @@ function renderHeroAvatar(hero){
 
       const statKeys = ['INT','SAB','CAR','RES','CRE'];
       statKeys.forEach(k=>{
+        const lowKey = k.toLowerCase();
+        const curVal = Number((hero.stats?.[k] ?? hero.stats?.[lowKey] ?? 0));
         const btn = document.createElement('div');
         btn.className = 'rewardPick';
         btn.innerHTML = `
           <div class="rewardPick__title">${k}</div>
-          <div class="rewardPick__desc">Sube ${k} de ${Number(hero.stats?.[k] ?? 0)} a ${Number(hero.stats?.[k] ?? 0) + 1}</div>
+          <div class="rewardPick__desc">Sube ${k} de ${curVal} a ${curVal + 1}</div>
         `;
         btn.addEventListener('click', ()=>{
           hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
-          hero.stats[k] = Math.min(20, Number(hero.stats[k] ?? 0) + 1);
+          const current = Number((hero.stats[k] ?? hero.stats[lowKey] ?? 0));
+          const next = Math.min(20, current + 1);
+          // Mantener sincronizadas llaves mayúsculas y minúsculas (UI usa minúsculas)
+          hero.stats[k] = next;
+          hero.stats[lowKey] = next;
 
           claimPendingReward({
             rewardId: 'stat+1',

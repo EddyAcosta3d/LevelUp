@@ -10,7 +10,7 @@
   <!-- Icono de la pestaña (pon tu archivo en assets/logo.png o cambia la ruta) -->
   <link rel="icon" href="assets/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
-  <link rel="stylesheet" href="./styles.css?v=20260126D" />
+  <link rel="stylesheet" href="./styles.css?v=20260126E" />
 </head>
 <body>
   <!--
@@ -109,7 +109,18 @@
               <div class="card card--center card--avatar">
                 <!-- Eliminar héroe (fuera del marco para no descentrar la foto) -->
                 <button class="iconBtn heroChestBtn" id="btnChest" title="Recompensas" aria-label="Recompensas">
-                  🧰
+                  <!-- Inline SVG para que se vea como cofre (no emoji caja de herramientas) -->
+                  <svg class="chestIcon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                    <!-- tapa -->
+                    <path d="M12 26c0-10 8-18 20-18s20 8 20 18v4H12v-4z" fill="rgba(114,26,255,.18)" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+                    <!-- cuerpo -->
+                    <path d="M10 30h44v22c0 3-2 6-6 6H16c-4 0-6-3-6-6V30z" fill="rgba(25,42,86,.85)" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+                    <!-- refuerzo -->
+                    <path d="M10 40h44" stroke="rgba(0,210,255,.35)" stroke-width="2"/>
+                    <!-- cerradura -->
+                    <path d="M28 41h8v10h-8z" fill="rgba(220,220,230,.12)" stroke="rgba(220,220,230,.55)" stroke-width="2"/>
+                    <circle cx="32" cy="46" r="1.8" fill="rgba(0,210,255,.9)"/>
+                  </svg>
                   <span class="notifBadge" id="chestBadge" aria-hidden="true" hidden>1</span>
                 </button>
                 <button class="iconBtn iconBtn--danger heroDeleteBtn" id="btnEliminar" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
@@ -191,11 +202,6 @@
           </article>
 
         <article class="page" data-page="recompensas">
-          <div class="pageIntro">
-            <h2 class="h2">Recompensas</h2>
-            <p class="muted">Historial por personaje y lista general de recompensas.</p>
-          </div>
-
           <div class="rewardsGrid">
             <section class="card" aria-label="Historial de recompensas">
               <div class="cardHead">
@@ -385,6 +391,6 @@
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="./app.js?v=20260126D" defer></script>
+  <script src="./app.js?v=20260126E" defer></script>
 </body>
 </html>
