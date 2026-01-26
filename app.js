@@ -130,6 +130,8 @@ function readFileAsDataURL(file){
       h.xpMax = Number(h.xpMax ?? 100);
       h.weekXp = Number(h.weekXp ?? 0);
       h.weekXpMax = Number(h.weekXpMax ?? DEFAULT_WEEK_XP_MAX);
+      // Tope inicial de autoevaluación: 0–8. Después puedes subirlo en el JSON a 20.
+      h.statsCap = Number(h.statsCap ?? 8);
       h.photoFit = h.photoFit || { x:50, y:50, scale:1 };
       h.photoSrc = h.photoSrc || '';
       h.desc = h.desc || '';
@@ -139,7 +141,15 @@ function readFileAsDataURL(file){
       h.tokens = Number(h.tokens ?? 0);
       // keep stats object
       h.stats = h.stats && typeof h.stats === 'object' ? h.stats : {};
-      ['INT','SAB','CAR','RES','CRE'].forEach(k=>{ if (h.stats[k] === undefined) h.stats[k] = 0; });
+      // Compat: algunos JSON viejos usan INT/SAB... (mayúsculas) y otros usan int/sab... (minúsculas)
+      const statMap = { int:'INT', sab:'SAB', car:'CAR', res:'RES', cre:'CRE' };
+      Object.keys(statMap).forEach(low=>{
+        const up = statMap[low];
+        if (h.stats[low] === undefined && h.stats[up] !== undefined) h.stats[low] = Number(h.stats[up] ?? 0);
+        if (h.stats[up] === undefined && h.stats[low] !== undefined) h.stats[up] = Number(h.stats[low] ?? 0);
+        if (h.stats[low] === undefined) h.stats[low] = 0;
+        if (h.stats[up] === undefined) h.stats[up] = 0;
+      });
     });
     return d;
   }
@@ -159,6 +169,7 @@ function readFileAsDataURL(file){
     if (dbgRoute) dbgRoute.textContent = route;
     updateEditButton();
     applyFichaLock();
+    updateRewardNotifUI(currentHero());
   }
 
   
@@ -181,14 +192,22 @@ function readFileAsDataURL(file){
     }
   }
 
+  function updateRewardNotifUI(hero){
+    const btn = $('#btnRewardNotif');
+    const badge = $('#rewardBadge');
+    if (!btn || !badge) return;
+    const count = hero && Array.isArray(hero.pendingRewards) ? hero.pendingRewards.length : 0;
+    const show = (state.route === 'fichas') && count > 0;
+    btn.hidden = !show;
+    badge.textContent = String(count || 1);
+  }
+
   // Locking framework for Fichas (easy to extend: add selectors here)
   const FICHA_LOCK = {
     disableSelectors: [
       '#btnNuevoHeroe',
       '#btnEliminar',
-      '#btnPonerFoto',
-      '#btnEditarFoto',
-      '#btnQuitarFoto',
+      '#btnFotoOverlay',
       '#inNombre',
       '#inEdad',
       '#selRol',
@@ -499,6 +518,7 @@ function readFileAsDataURL(file){
     { key:'cre', label:'CRE' },
   ];
   const maxVal = 20;
+  const cap = Math.max(0, Math.min(maxVal, Number(hero.statsCap ?? 8)));
 
   box.innerHTML = '';
   order.forEach((s)=>{
@@ -508,7 +528,11 @@ function readFileAsDataURL(file){
 
     const row = document.createElement('div');
     row.className = 'statLine';
-    const segs = Array.from({length:maxVal}, (_,i)=> `<span class="statSeg ${i < val ? 'on' : ''}"></span>`).join('');
+    const segs = Array.from({length:maxVal}, (_,i)=> {
+      const isOn = i < val;
+      const isLocked = i >= cap;
+      return `<span class="statSeg ${isOn ? 'on' : ''} ${isLocked ? 'locked' : ''}"></span>`;
+    }).join('');
 
     row.innerHTML = `
       <div class="statBadge badge">${label}</div>
@@ -521,8 +545,16 @@ function readFileAsDataURL(file){
 
     const range = row.querySelector('.statRange');
     range.addEventListener('input', ()=>{
-      const v = Math.max(0, Math.min(maxVal, Number(range.value || 0)));
+      let v = Math.max(0, Math.min(maxVal, Number(range.value || 0)));
+      if (cap < maxVal && v > cap){
+        v = cap;
+        range.value = String(cap);
+        toast(`Tope inicial: ${cap}`);
+      }
       hero.stats[key] = v;
+      // mantener también la versión en mayúsculas para compatibilidad
+      const upKey = key.toUpperCase();
+      hero.stats[upKey] = v;
 
       const numEl = row.querySelector('.statNum');
       if(numEl) numEl.textContent = String(v);
@@ -746,6 +778,9 @@ function renderHeroAvatar(hero){
         state.ui.pendingToastHeroId = hero.id;
       }
     }
+
+    // Header notification button
+    updateRewardNotifUI(hero);
 
     // Apply lock state after rendering dynamic controls (stats/chips)
     updateEditButton();
@@ -1242,6 +1277,7 @@ function renderHeroAvatar(hero){
 
     renderRewardPickGrid('main');
     modal.hidden = false;
+    modal.classList.add('is-open');
     state.ui.levelUpOpen = true;
 
     // Mini notification while pending
@@ -1252,6 +1288,7 @@ function renderHeroAvatar(hero){
     const modal = $('#levelUpModal');
     if (!modal) return;
     modal.hidden = true;
+    modal.classList.remove('is-open');
     state.ui.levelUpOpen = false;
   }
 
@@ -1510,6 +1547,21 @@ function bind(){
       setRole(state.role === 'viewer' ? 'teacher' : 'viewer');
     });
 
+    // Notificación de recompensa pendiente (solo visible si hay pendientes)
+    $('#btnRewardNotif')?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const h = currentHero();
+      if (!h) return;
+      h.pendingRewards = Array.isArray(h.pendingRewards) ? h.pendingRewards : [];
+      if (!h.pendingRewards.length){
+        toast('No hay recompensas pendientes');
+        updateRewardNotifUI(h);
+        return;
+      }
+      openLevelUpModal();
+    });
+
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 
     $('#inRol').addEventListener('click', openRoleModal);
@@ -1689,25 +1741,23 @@ function bind(){
       photoInput.click();
     };
 
-    $('#btnPonerFoto')?.addEventListener('click', (e)=>{
+    // Icono overlay (hover en desktop / siempre visible en touch)
+    const btnFotoOverlay = $('#btnFotoOverlay');
+    btnFotoOverlay?.addEventListener('click', (e)=>{
       e.preventDefault();
-      openPhotoPicker();
-    });
-    $('#btnEditarFoto')?.addEventListener('click', (e)=>{
-      e.preventDefault();
+      e.stopPropagation();
+      // openPhotoModal ya abre selector si no hay imagen
       openPhotoModal();
     });
-    $('#btnQuitarFoto')?.addEventListener('click', (e)=>{
-      e.preventDefault();
-      const h = currentHero();
-      if (!h) return;
-      h.photo = '';
-      h.img = '';
-      h.image = '';
-      saveLocal();
-      renderHeroDetail(h);
-      renderHeroList();
-      toast('Foto eliminada.');
+
+    // En iPad/iPhone también es cómodo que tocar la imagen abra el editor
+    const avatarFrame = $('#avatarFrame');
+    avatarFrame?.addEventListener('click', (e)=>{
+      // evita doble trigger cuando se toca el botón
+      if (e.target && (e.target === btnFotoOverlay)) return;
+      if (!window.matchMedia('(hover: none)').matches) return; // solo touch
+      if (!isEditEnabled()) return;
+      openPhotoModal();
     });
 
     photoInput?.addEventListener('change', async ()=>{

@@ -70,6 +70,11 @@
       <div class="topbar__right">
         <!-- Reemplaza "Presentación" por acceso directo a Recompensas (pantalla separada por ahora) -->
         <button class="pill pill--ghost" id="btnRecompensas" data-route="recompensas">🏆 Recompensas</button>
+        <!-- Notificación de recompensa pendiente (estilo notificación móvil) -->
+        <button class="notifBtn" id="btnRewardNotif" title="Recompensa pendiente" aria-label="Recompensa pendiente" hidden>
+          🎁
+          <span class="notifBadge" id="rewardBadge" aria-hidden="true">1</span>
+        </button>
         <button class="pill pill--ghost" id="btnDebugPanel" aria-pressed="false">🧪 Estado</button>
 
         <div class="dropdown">
@@ -114,12 +119,9 @@
 					<div class="avatar__box" id="avatarBox">
 						<div class="avatar__placeholder">Sin foto</div>
 					</div>
+                    <!-- Overlay edit icon: appears on hover (desktop) or always on touch -->
+                    <button class="avatarEditBtn" id="btnFotoOverlay" title="Editar foto" aria-label="Editar foto">✎</button>
 				  </div>
-                  <div class="avatar__actions">
-                    <button class="pill pill--small" id="btnPonerFoto">📷 Poner foto</button>
-                    <button class="pill pill--small pill--ghost" id="btnEditarFoto">✎ Editar foto</button>
-                    <button class="pill pill--small pill--ghost pill--icon" id="btnQuitarFoto" aria-label="Quitar foto" title="Quitar foto">✕</button>
-                  </div>
                 </div>
 
                 <div class="heroName" id="heroName">NUEVO HÉROE</div>
