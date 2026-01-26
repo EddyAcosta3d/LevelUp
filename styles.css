@@ -517,6 +517,25 @@ body{
   box-shadow: 0 0 0 4px rgba(0,210,255,0.14), 0 6px 14px rgba(0,0,0,0.35);
   z-index: 1;
 }
+
+/* Desktop: compact stats block so it doesn't eat too much vertical space */
+@media (min-width: 901px){
+  .stats{
+    padding: 8px;
+    gap: 6px 12px;
+    margin-bottom: 8px;
+  }
+  .stat{ gap: 8px; }
+  .badge{
+    width: 38px;
+    height: 24px;
+    border-radius: 9px;
+    font-size: 11px;
+  }
+  .stat__track{ height: 5px; }
+  .stat__dot{ width: 12px; height: 12px; box-shadow: 0 0 0 3px rgba(0,210,255,0.14), 0 6px 14px rgba(0,0,0,0.35); }
+  .stat__val{ font-size: 12px; }
+}
 .xpHeader{ display:flex; align-items:center; gap: 10px; flex-wrap:wrap; margin-top:24px; }
 .xpLevel{ font-size: 22px; font-weight: 900; }
 .xpText{ opacity:.75; }
