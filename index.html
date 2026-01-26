@@ -10,7 +10,7 @@
   <!-- Icono de la pestaña (pon tu archivo en assets/logo.png o cambia la ruta) -->
   <link rel="icon" href="assets/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
-  <link rel="stylesheet" href="./styles.css?v=20260126H4" />
+  <link rel="stylesheet" href="./styles.css?v=20260126H5" />
 </head>
 <body>
   <!--
@@ -238,6 +238,20 @@
             <div class="cards2">
               <div class="card">
                 <div class="cardTitle">Lista</div>
+
+                <div class="chFilters" aria-label="Filtros de desafíos">
+                  <div class="chSubjectWrap dropdown">
+                    <button class="btn btn--ghost" id="btnMateria">Materia ▾</button>
+                    <div class="dropdown__menu" id="menuMateria"></div>
+                  </div>
+
+                  <div class="chDiffWrap" role="group" aria-label="Dificultad">
+                    <button class="chDiffBtn is-active" data-diff="facil" type="button">Fácil</button>
+                    <button class="chDiffBtn" data-diff="medio" type="button">Medio</button>
+                    <button class="chDiffBtn" data-diff="dificil" type="button">Difícil</button>
+                  </div>
+                </div>
+
                 <div class="challengeList" id="challengeList"></div>
               </div>
 
@@ -391,6 +405,6 @@
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="./app.js?v=20260126H4" defer></script>
+  <script src="./app.js?v=20260126H5" defer></script>
 </body>
 </html>

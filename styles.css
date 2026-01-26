@@ -1631,6 +1631,55 @@ body.is-view-locked #btnQuitarFoto{
    DESAFÍOS · MAQUETADO (SAFE)
    ========================= */
 
+.chFilters{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin: 0 0 10px 0;
+}
+
+.chSubjectWrap{ position: relative; }
+
+/* Menu de materias (usa el mismo patrón del dropdown de Datos) */
+#menuMateria{
+  min-width: 200px;
+  max-height: 320px;
+  overflow:auto;
+}
+
+.chDiffWrap{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.chDiffBtn{
+  border:1px solid rgba(0,210,255,0.18);
+  background: rgba(25,42,86,0.55);
+  color: rgba(220,220,230,0.92);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 850;
+  font-size: 12px;
+  cursor:pointer;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.chDiffBtn:hover{
+  transform: translateY(-1px);
+  border-color: rgba(0,210,255,0.45);
+}
+.chDiffBtn.is-active{
+  border-color: rgba(114,26,255,0.75);
+  box-shadow: 0 0 0 1px rgba(114,26,255,0.18), 0 0 20px rgba(114,26,255,0.10);
+}
+
+@media (max-width: 700px){
+  .chFilters{ flex-wrap:wrap; justify-content:flex-start; }
+  .chDiffWrap{ width:100%; }
+  .chDiffBtn{ flex:1; text-align:center; }
+}
+
 #challengeList{ display:flex; flex-direction:column; gap:8px; }
 
 .challengeItem{

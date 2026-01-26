@@ -68,6 +68,8 @@ function makeBlankHero(group){
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
+    challengeSubject: 'Todas',
+    challengeDiff: 'facil',
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
@@ -945,20 +947,78 @@ function renderHeroAvatar(hero){
   }
 }
 
+  function renderMateriaMenu(){
+    const menu = $('#menuMateria');
+    const btn = $('#btnMateria');
+    if (!menu) return;
+
+    const all = state.data?.challenges || [];
+    const subjects = Array.from(new Set(all.map(c => (c && c.subject) ? String(c.subject) : 'General')))
+      .filter(Boolean)
+      .sort((a,b)=> a.localeCompare(b, 'es', {sensitivity:'base'}));
+
+    // fallback
+    if (!state.challengeSubject) state.challengeSubject = 'Todas';
+    if (btn) btn.textContent = `${state.challengeSubject} ▾`;
+
+    const makeItem = (label)=>{
+      const isSel = String(state.challengeSubject||'Todas') === String(label);
+      return `<button type="button" class="menuitem" data-subject="${escapeHtml(label)}">${isSel ? '✓ ' : ''}${escapeHtml(label)}</button>`;
+    };
+
+    let html = '';
+    html += makeItem('Todas');
+    if (subjects.length) html += '<div class="menudivider"></div>';
+    subjects.forEach(s=>{ html += makeItem(s); });
+    menu.innerHTML = html;
+  }
+
   function renderChallenges(){
     const list = $('#challengeList');
     if (!list) return;
     list.innerHTML = '';
 
-    const challenges = state.data?.challenges || [];
-    if (!challenges.length){
+    const all = state.data?.challenges || [];
+    const subjects = Array.from(new Set(all.map(c => (c && c.subject) ? String(c.subject) : 'General')))
+      .filter(Boolean)
+      .sort((a,b)=> a.localeCompare(b, 'es', {sensitivity:'base'}));
+
+    // Default subject
+    if (!state.challengeSubject) state.challengeSubject = 'Todas';
+    if (state.challengeSubject !== 'Todas' && !subjects.includes(state.challengeSubject)){
+      state.challengeSubject = subjects[0] || 'Todas';
+    }
+
+    // Sync UI labels
+    const btnMateria = $('#btnMateria');
+    if (btnMateria) btnMateria.textContent = `${state.challengeSubject} ▾`;
+    $$('.chDiffBtn').forEach(b=>{
+      b.classList.toggle('is-active', (b.getAttribute('data-diff')||'') === String(state.challengeDiff||'facil'));
+    });
+
+    const diffSel = String(state.challengeDiff || 'facil');
+    const challenges = all.filter(c=>{
+      if (!c) return false;
+      if (state.challengeSubject !== 'Todas' && String(c.subject||'General') !== String(state.challengeSubject)) return false;
+      if (diffSel && String(c.difficulty||'facil') !== diffSel) return false;
+      return true;
+    });
+
+    if (!all.length){
       list.innerHTML = '<div class="muted" style="padding:8px;">Sin desafíos.</div>';
       $('#challengeHint').textContent = 'Selecciona un desafío.';
       $('#challengeBody').textContent = '';
       return;
     }
 
-    // Ensure selection
+    if (!challenges.length){
+      list.innerHTML = `<div class="muted" style="padding:8px;">No hay desafíos para <b>${escapeHtml(state.challengeSubject)}</b> · <b>${escapeHtml(diffSel)}</b>.</div>`;
+      $('#challengeHint').textContent = 'Selecciona un desafío.';
+      $('#challengeBody').textContent = '';
+      return;
+    }
+
+    // Ensure selection within filtered set
     if (!state.selectedChallengeId) state.selectedChallengeId = challenges[0].id;
     if (!challenges.some(c=>c.id===state.selectedChallengeId)) state.selectedChallengeId = challenges[0].id;
 
@@ -1667,6 +1727,57 @@ function bind(){
       } else {
         setActiveRoute('recompensas');
       }
+    });
+
+    // --- Desafíos: filtro por Materia + botones de Dificultad ---
+    const btnMateria = $('#btnMateria');
+    const menuMateria = $('#menuMateria');
+    const closeMateria = ()=>{
+      if (!menuMateria || !btnMateria) return;
+      const dd = btnMateria.closest('.dropdown');
+      if (dd) dd.classList.remove('is-open');
+      btnMateria.setAttribute('aria-expanded','false');
+    };
+    const toggleMateria = ()=>{
+      if (!menuMateria || !btnMateria) return;
+      const dd = btnMateria.closest('.dropdown');
+      if (!dd) return;
+      const next = !dd.classList.contains('is-open');
+      dd.classList.toggle('is-open', next);
+      btnMateria.setAttribute('aria-expanded', next ? 'true' : 'false');
+      if (next) renderMateriaMenu();
+    };
+    if (btnMateria && menuMateria){
+      btnMateria.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); toggleMateria(); });
+      menuMateria.addEventListener('click', (e)=>{
+        const item = e.target.closest('[data-subject]');
+        if (!item) return;
+        const subj = item.getAttribute('data-subject') || 'Todas';
+        state.challengeSubject = subj;
+        // reset selection within filtered set
+        state.selectedChallengeId = null;
+        closeMateria();
+        renderChallenges();
+      });
+      document.addEventListener('click', (e)=>{
+        const dd = btnMateria.closest('.dropdown');
+        if (!dd || !dd.classList.contains('is-open')) return;
+        if (e.target === btnMateria) return;
+        if (menuMateria.contains(e.target)) return;
+        closeMateria();
+      });
+      window.addEventListener('resize', closeMateria);
+      window.addEventListener('orientationchange', closeMateria);
+    }
+
+    $$('.chDiffBtn').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        $$('.chDiffBtn').forEach(x=>x.classList.remove('is-active'));
+        b.classList.add('is-active');
+        state.challengeDiff = b.getAttribute('data-diff') || 'facil';
+        state.selectedChallengeId = null;
+        renderChallenges();
+      });
     });
 
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
