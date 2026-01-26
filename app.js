@@ -213,10 +213,9 @@ function readFileAsDataURL(file){
   function updateEditButton(){
     const btn = $('#btnEdicion');
     if(!btn) return;
-    // Only show edit toggle on Fichas
-    const show = (state.route === 'fichas');
-    btn.hidden = !show;
-    if(!show) return;
+    // Edit toggle visible across pages (tú controlas cambios)
+    btn.hidden = false;
+
     if(isEditEnabled()){
       btn.textContent = '✎ Editar';
       btn.classList.remove('pill--danger');
@@ -1067,11 +1066,7 @@ function renderHeroAvatar(hero){
 
     $('#challengeHint').textContent = `${ch.subject || 'General'} · ${diffText} · ${pts} pts`;
 
-    if (!isEditEnabled()){
-      $('#challengeBody').textContent = '🔒 Detalles ocultos. Activa Edición para ver instrucciones.';
-      return;
-    }
-
+    // Mostrar instrucciones siempre (tú controlas la edición)
     $('#challengeBody').textContent = ch.body || '(sin instrucciones)';
   }
 

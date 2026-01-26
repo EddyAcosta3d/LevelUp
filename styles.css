@@ -128,7 +128,7 @@ body{
   min-width: 220px;
 
   z-index: 20060;
-  background: rgba(10,12,18,0.92);
+  background: rgba(25,42,86,0.96);
   border: 1px solid rgba(0,210,255,0.26);
   border-radius: 16px;
   box-shadow: 0 18px 60px rgba(0,0,0,0.65);
@@ -1648,6 +1648,43 @@ body.is-view-locked #btnQuitarFoto{
   overflow:auto;
 }
 
+#btnMateria{
+  border:1px solid rgba(0,210,255,0.22);
+  background: rgba(25,42,86,0.55);
+  color: rgba(220,220,230,0.95);
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-weight: 850;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.20);
+}
+#btnMateria:hover{
+  border-color: rgba(0,210,255,0.45);
+  box-shadow: 0 0 0 1px rgba(0,210,255,0.14), 0 14px 34px rgba(0,0,0,0.25);
+}
+.chSubjectWrap .dropdown__menu{ left:0; right:auto; }
+
+#challengeHint{
+  color: rgba(220,220,230,0.92);
+  font-weight: 800;
+}
+
+#challengeBody{
+  height: auto;
+  min-height: 240px;
+  display: block;
+  padding: 14px;
+  text-align: left;
+  align-items: initial;
+  justify-content: initial;
+  background: rgba(25,42,86,0.30);
+  border: 1px solid rgba(0,210,255,0.22);
+  color: rgba(220,220,230,0.95);
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
 .chDiffWrap{
   display:flex;
   align-items:center;
@@ -1721,3 +1758,7 @@ body.is-view-locked #btnQuitarFoto{
 .chPts{ font-weight: 850; letter-spacing: .2px; }
 
 #challengeBody{ white-space: pre-wrap; }
+
+
+/* Challenges overflow */
+.page[data-page="desafios"], .cards2{ overflow: visible; }
