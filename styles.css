@@ -2009,3 +2009,114 @@ body.is-view-locked #btnQuitarFoto{
   opacity: 0.55;
   filter: blur(0.5px);
 }
+
+
+/* Hide edit-only controls in Solo ver */
+html:not(.is-edit) [data-edit-only="1"]{ display:none !important; }
+
+
+/* Themed selects (modals) */
+.modal select, .panel select{
+  appearance:none;
+  -webkit-appearance:none;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(220,220,230,.85) 50%),
+                    linear-gradient(135deg, rgba(220,220,230,.85) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+}
+
+
+/* Difficulty buttons (modal) */
+.diffButtons{ display:flex; gap:10px; }
+.diffButtons .pill{ flex:1; }
+.pill{ border:1px solid rgba(0,210,255,.18); background: rgba(0,0,0,.18); color: rgba(220,220,230,.92); padding:10px 12px; border-radius:999px; cursor:pointer; }
+.pill.is-active{ border-color: rgba(0,210,255,.55); box-shadow: 0 0 0 2px rgba(0,210,255,.10) inset, 0 0 18px rgba(0,210,255,.12); }
+.pill--easy.is-active{ border-color: rgba(0,210,255,.65); }
+.pill--medium.is-active{ border-color: rgba(114,26,255,.55); }
+.pill--hard.is-active{ border-color: rgba(255,90,90,.55); }
+
+
+/* Events / Bosses cards */
+.eventCard{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  text-align:left;
+  padding:14px;
+  border-radius:18px;
+  border:1px solid rgba(0,210,255,.18);
+  background: rgba(0,0,0,.20);
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  cursor:pointer;
+}
+.eventCard:hover{ border-color: rgba(0,210,255,.35); }
+.eventCard__img{
+  width:100%;
+  aspect-ratio: 3/4;
+  border-radius:16px;
+  border:1px solid rgba(0,210,255,.16);
+  background: radial-gradient(circle at 40% 30%, rgba(0,210,255,.12), rgba(0,0,0,0) 55%),
+              rgba(0,0,0,.28);
+  background-size: cover;
+  background-position: center;
+  position:relative;
+}
+.eventCard__img.is-locked::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:16px;
+  background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.65));
+}
+.eventCard__meta{ display:flex; flex-direction:column; gap:6px; }
+.eventCard__name{ font-weight:700; letter-spacing:.3px; }
+.eventCard__req{ color: rgba(220,220,230,.75); font-size: 13px; }
+
+.modal__card--event{ max-width: 860px; }
+.eventModalGrid{ display:grid; grid-template-columns: 280px 1fr; gap:18px; align-items:start; }
+.eventModalImg{ width:100%; aspect-ratio:3/4; border-radius:18px; border:1px solid rgba(0,210,255,.18); background: rgba(0,0,0,.28); background-size:cover; background-position:center; }
+.eventModalImg.is-locked{ filter: grayscale(1) contrast(1.1) brightness(.75); }
+@media (max-width: 720px){
+  .eventModalGrid{ grid-template-columns: 1fr; }
+  .eventModalImg{ aspect-ratio: 16/10; }
+}
+
+
+/* --- V2.00.031 additions --- */
+html:not(.is-edit) [data-edit-only="1"]{
+  display:none !important;
+}
+
+.input--select{
+  -webkit-appearance:none;
+  appearance:none;
+  padding-right:34px;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(0,210,255,.9) 50%),
+                    linear-gradient(135deg, rgba(0,210,255,.9) 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 13px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat:no-repeat;
+}
+
+.diffPick{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.diffPick .pill{
+  flex:1;
+  justify-content:center;
+}
+.diffPick .pill.is-active{
+  border-color: rgba(114,26,255,.8);
+  box-shadow: 0 0 0 2px rgba(114,26,255,.18), 0 0 18px rgba(114,26,255,.22);
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}

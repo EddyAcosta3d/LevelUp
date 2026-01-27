@@ -108,7 +108,7 @@ function seedChallengesDemo(S){
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
-    challengeFilter: { subjectId: null, diff: null },
+    challengeFilter: { subjectId: null, diff: 'easy' },
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
@@ -116,13 +116,13 @@ function seedChallengesDemo(S){
 
   // Build marker (para confirmar en GitHub que sí cargó la versión correcta)
   // Build identifier (also used for cache-busting via querystring in index.html)
-  const BUILD_ID = 'LevelUP_V2_00.030';
+  const BUILD_ID = 'LevelUP_V2_00.031';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
   // Modal helper (evita que un modal quede debajo de otro)
-  const MODAL_IDS = ['roleModal','photoModal','levelUpModal','confirmModal','subjectsModal','challengeModal'];
+  const MODAL_IDS = ['roleModal','photoModal','levelUpModal','confirmModal','subjectsModal','challengeModal', 'eventModal'];
   const getModal = (id) => document.getElementById(id);
   function closeAllModals(exceptId=null){
     MODAL_IDS.forEach(id=>{
@@ -166,7 +166,71 @@ function readFileAsDataURL(file){
     };
   }
 
-  function normalizeData(data){
+  
+function seedEventsDemo(){
+  return [
+    {
+      id:'ev_loquito',
+      kind:'boss',
+      title:'El Loquito del Centro',
+      unlocked:false,
+      unlock:{ type:'completions_total', count:3, label:'Completa 3 desafíos (en total)' },
+      eligibility:{ type:'level', min:1, label:'Cualquier héroe (nivel 1+)' }
+    },
+    {
+      id:'ev_garbanzo',
+      kind:'boss',
+      title:'El Garbanzo Coqueto',
+      unlocked:false,
+      unlock:{ type:'level_any', min:2, label:'Algún héroe llega a Nivel 2' },
+      eligibility:{ type:'level', min:2, label:'Nivel 2+' }
+    },
+    {
+      id:'ev_bonus',
+      kind:'event',
+      title:'Evento: Cofre Misterioso',
+      unlocked:false,
+      unlock:{ type:'completions_total', count:6, label:'Completa 6 desafíos (en total)' },
+      eligibility:{ type:'completions_hero', count:2, label:'Completa 2 desafíos con este héroe' }
+    }
+  ];
+}
+
+function totalCompletedAcrossHeroes(){
+  const heroes = Array.isArray(state.data?.heroes) ? state.data.heroes : [];
+  let n = 0;
+  heroes.forEach(h=>{
+    const c = (h.challengeCompletions && typeof h.challengeCompletions==='object') ? h.challengeCompletions : {};
+    n += Object.keys(c).length;
+  });
+  return n;
+}
+
+function countCompletedForHero(hero){
+  if (!hero) return 0;
+  const c = (hero.challengeCompletions && typeof hero.challengeCompletions==='object') ? hero.challengeCompletions : {};
+  return Object.keys(c).length;
+}
+
+function isEventUnlocked(ev){
+  if (!ev) return false;
+  if (ev.unlocked) return true;
+  const u = ev.unlock || {};
+  const heroes = Array.isArray(state.data?.heroes) ? state.data.heroes : [];
+  const total = totalCompletedAcrossHeroes();
+  if (u.type==='completions_total') return total >= Number(u.count||0);
+  if (u.type==='level_any') return heroes.some(h=>Number(h.level||1) >= Number(u.min||1));
+  return false;
+}
+
+function isHeroEligibleForEvent(hero, ev){
+  if (!hero || !ev) return false;
+  const r = ev.eligibility || {};
+  if (r.type==='level') return Number(hero.level||1) >= Number(r.min||1);
+  if (r.type==='completions_hero') return countCompletedForHero(hero) >= Number(r.count||0);
+  return true;
+}
+function normalizeData(data){
     const d = data && typeof data === 'object' ? data : {};
     d.meta = (d.meta && typeof d.meta === 'object') ? d.meta : {};
     d.meta.updatedAt = d.meta.updatedAt || new Date().toISOString();
@@ -215,7 +279,14 @@ function readFileAsDataURL(file){
       d.meta.seededDemo = true;
     }
 
-    d.heroes.forEach(h=>{
+    
+    // Seed demo de eventos/bosses (si no hay eventos aún)
+    if (!d.meta.seededEvents && !d.events.length){
+      d.events = seedEventsDemo();
+      d.meta.seededEvents = true;
+    }
+
+d.heroes.forEach(h=>{
       h.id = h.id || uid('h');
       h.group = h.group || '2D';
       h.name = h.name ?? '';
@@ -1220,15 +1291,7 @@ function renderChallengeDetail(){
   const doneAt = done ? hero.challengeCompletions[String(ch.id)].at : null;
 
   if (hintEl){
-    const datePart = doneAt ? `<span class="badge badge--done">Completado: ${escapeHtml(new Date(doneAt).toLocaleDateString())}</span>` : '';
-    hintEl.innerHTML = `
-      <div class="challengeHintBadges">
-        <span class="badge badge--subj">${escapeHtml(subj)}</span>
-        <span class="badge badge--diff badge--${escapeHtml(String(ch.difficulty||'').toLowerCase())}">${escapeHtml(diffLabel)}</span>
-        <span class="badge badge--pts">${escapeHtml(String(pts))} XP</span>
-        ${datePart}
-      </div>
-    `;
+    hintEl.innerHTML = doneAt ? `<span class="badge badge--done">Completado: ${escapeHtml(new Date(doneAt).toLocaleDateString())}</span>` : '';
   }
   if (bodyEl){
     bodyEl.textContent = ch.body || '(sin instrucciones)';
@@ -1237,29 +1300,82 @@ function renderChallengeDetail(){
   if (btnComplete){
     btnComplete.disabled = !hero;
     btnComplete.classList.toggle('is-active', done);
-    btnComplete.textContent = done ? '↺ Descompletar' : '✔ Completado';
+    btnComplete.textContent = done ? '↺ Cancelar' : '✔ Completado';
   }
   if (btnEdit) btnEdit.disabled = (state.role !== 'teacher');
   if (btnDel) btnDel.disabled = (state.role !== 'teacher');
 }
 
+  
+  function openEventModal(eventId){
+    const modal = $('#eventModal');
+    if (!modal) return;
+    closeAllModals('eventModal');
+
+    const hero = currentHero();
+    const ev = (state.data?.events || []).find(e=>e.id === eventId);
+    if (!ev) return;
+
+    const unlocked = isEventUnlocked(ev);
+    const eligible = hero ? isHeroEligibleForEvent(hero, ev) : false;
+
+    $('#eventModalTitle').textContent = unlocked ? (ev.title || 'Evento') : '?????';
+    $('#eventModalReq').textContent = unlocked ? (ev.eligibility?.label || '') : (ev.unlock?.label || 'Requisito');
+    $('#eventModalKind').textContent = ev.kind === 'boss' ? 'JEFE' : 'EVENTO';
+
+    const img = $('#eventModalImg');
+    if (img){
+      img.classList.toggle('is-locked', !unlocked);
+      img.style.backgroundImage = unlocked && ev.image ? `url(${ev.image})` : (ev.lockedImage ? `url(${ev.lockedImage})` : '');
+    }
+
+    const btnFight = $('#btnEventFight');
+    if (btnFight){
+      btnFight.disabled = !(unlocked && eligible);
+      btnFight.textContent = unlocked ? (eligible ? '⚔️ Retar' : 'No elegible') : 'Bloqueado';
+    }
+
+    const btnToggleUnlock = $('#btnEventToggleUnlock');
+    if (btnToggleUnlock){
+      btnToggleUnlock.disabled = (state.role !== 'teacher');
+      btnToggleUnlock.textContent = unlocked ? 'Bloquear' : 'Desbloquear';
+      btnToggleUnlock.dataset.eventId = eventId;
+    }
+
+    modal.hidden = false;
+  }
+
   function renderEvents(){
     const grid = $('#eventGrid');
     if (!grid) return;
     grid.innerHTML = '';
-    const evs = state.data?.events || [];
+
+    const hero = currentHero();
+    const evs = Array.isArray(state.data?.events) ? state.data.events : [];
     if (!evs.length){
       grid.innerHTML = '<div class="muted">Sin eventos.</div>';
       return;
     }
+
     evs.forEach(ev=>{
-      const div = document.createElement('div');
-      div.className = 'tile' + (ev.locked ? ' locked' : '');
+      const unlocked = isEventUnlocked(ev);
+      const eligible = hero ? isHeroEligibleForEvent(hero, ev) : false;
+      const div = document.createElement('button');
+      div.type = 'button';
+      div.className = 'eventCard' + (unlocked ? ' is-unlocked' : ' is-locked') + (eligible ? ' is-eligible' : '');
       div.innerHTML = `
-        <div class="tile__img ${ev.locked ? '' : 'tile__img--unlocked'}"></div>
-        <div class="tile__name">${escapeHtml(ev.title || 'Evento')}</div>
-        <div class="tile__req">${escapeHtml(ev.req || '')}</div>
+        <div class="eventCard__img"></div>
+        <div class="eventCard__meta">
+          <div class="eventCard__name">${escapeHtml(unlocked ? (ev.title||'Evento') : '?????')}</div>
+          <div class="eventCard__req">${escapeHtml(unlocked ? (ev.eligibility?.label||'') : (ev.unlock?.label||'Requisito'))}</div>
+        </div>
       `;
+      const img = div.querySelector('.eventCard__img');
+      if (img){
+        img.classList.toggle('is-locked', !unlocked);
+        img.style.backgroundImage = unlocked && ev.image ? `url(${ev.image})` : (ev.lockedImage ? `url(${ev.lockedImage})` : '');
+      }
+      div.addEventListener('click', ()=> openEventModal(ev.id));
       grid.appendChild(div);
     });
   }
@@ -1931,8 +2047,7 @@ if (btnSubject && subjectMenu){
 $$('#diffPills [data-diff]').forEach(b=>{
   b.addEventListener('click', ()=>{
     const diff = b.dataset.diff;
-    const was = state.challengeFilter.diff;
-    state.challengeFilter.diff = (was === diff) ? null : diff;
+    state.challengeFilter.diff = diff;
     $$('#diffPills [data-diff]').forEach(x=> x.classList.toggle('is-active', state.challengeFilter.diff === x.dataset.diff));
     renderChallenges();
   });
@@ -2080,6 +2195,20 @@ function renderSubjectsModal(){
 
 // Desafío modal
 let editingChallengeId = null;
+
+function setChallengeModalDiff(diff){
+  const hid = document.getElementById('inChDiff');
+  if (hid) hid.value = String(diff||'easy');
+  document.querySelectorAll('#chDiffButtons [data-diff]').forEach(b=>{
+    b.classList.toggle('is-active', b.dataset.diff === String(diff||'easy'));
+  });
+  // Update points label
+  const pts = document.getElementById('inChPoints');
+  if (pts){
+    const d = String(diff||'easy');
+    pts.value = d==='hard'?40 : d==='medium'?20 : 10;
+  }
+}
 function openChallengeModal(mode='create', ch=null){
   if (state.role !== 'teacher'){ toast('Activa edición para crear/editar desafíos'); return; }
   const m = $('#challengeModal');
@@ -2109,23 +2238,26 @@ function openChallengeModal(mode='create', ch=null){
 
   const chosenSubject = ch?.subjectId || state.challengeFilter.subjectId || subjects[0]?.id || '';
   if (selSub) selSub.value = String(chosenSubject);
+
+  // Bind difficulty buttons (once)
+  if (!openChallengeModal._bound){
+    document.querySelectorAll('#inChDiffPick [data-diff]').forEach(b=>{
+      b.addEventListener('click', ()=> setChallengeModalDiff(b.dataset.diff));
+    });
+    openChallengeModal._bound = true;
+  }
+
   const chosenDiff = String(ch?.difficulty || state.challengeFilter.diff || 'easy').toLowerCase();
   if (selDiff) selDiff.value = chosenDiff;
+  setChallengeModalDiff(chosenDiff);
+
+  // If editing and points were set manually, keep them
   if (inPts) inPts.value = String(ch?.points ?? pointsForDifficulty(chosenDiff));
   if (inTitle) inTitle.value = String(ch?.title || '');
   if (inBody) inBody.value = String(ch?.body || '');
 
-  const syncPts = ()=>{
-    if (!selDiff || !inPts) return;
-    const d = String(selDiff.value || '').toLowerCase();
-    // Solo auto-ajusta si el usuario no ha tocado puntos o si coincide con un preset
-    const cur = Number(inPts.value || 0);
-    const presets = [10,20,40];
-    if (!inPts.dataset.touched || presets.includes(cur)){
-      inPts.value = String(pointsForDifficulty(d));
-    }
-  };
-  selDiff?.addEventListener('change', syncPts);
+  inPts?.addEventListener('input', ()=>{ if (inPts) inPts.dataset.touched = '1'; });
+
   inPts?.addEventListener('input', ()=>{ if (inPts) inPts.dataset.touched = '1'; });
 
   m.hidden = false;
