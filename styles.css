@@ -820,8 +820,9 @@ body{
   }
   .topbar{ position: relative; }
   .topbar__left{ display: contents; padding-right: 0; width:auto; }
-  #btnMenu{ grid-column:1; justify-self:start; }
-  .brand{ grid-column:2; justify-self:center; }
+  /* Force everything onto the same row (iOS was auto-placing the brand on row 2) */
+  #btnMenu{ grid-column:1; grid-row:1; justify-self:start; align-self:center; }
+  .brand{ grid-column:2; grid-row:1; justify-self:center; align-self:center; }
   .topbar__right{ display: none; }
   .topbar__trophyBtn{
     display: inline-flex;
@@ -831,7 +832,9 @@ body{
     border:1px solid rgba(0,210,255,.18);
     color:#eae7df;
     grid-column:3;
+    grid-row:1;
     justify-self:end;
+    align-self:center;
   }
   .trophyIcon{ width:22px; height:22px; }
   /* Slightly smaller logo to keep header compact */
@@ -1675,12 +1678,16 @@ body.is-view-locked #btnQuitarFoto{
     font-size: 22px !important;
     line-height: 1 !important;
     transform: translateY(-1px);
+    grid-row: 1 !important;
+    align-self: center !important;
   }
 
   .topbar__trophyBtn{
     width: 38px !important;
     height: 38px !important;
     border-radius: 12px !important;
+    grid-row: 1 !important;
+    align-self: center !important;
   }
   .trophyIcon{ width: 20px !important; height: 20px !important; }
 
