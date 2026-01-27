@@ -41,6 +41,11 @@ function makeId(prefix='h'){
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
 }
 
+// Compat / util: algunos bloques usan uid('x') en lugar de makeId('x')
+function uid(prefix='id'){
+  return makeId(prefix);
+}
+
 function makeBlankHero(group){
   return {
     id: makeId('h'),
@@ -73,6 +78,9 @@ function makeBlankHero(group){
     data: null,
     dataSource: '—'      // remote | local | demo
   };
+
+  // Build marker (para confirmar en GitHub que sí cargó la versión correcta)
+  const BUILD_ID = 'v20-desafios';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -339,6 +347,13 @@ if (!d.challenges.length){
     const upd = state.data?.meta?.updatedAt ? new Date(state.data.meta.updatedAt).toLocaleString() : '—';
     $('#dbgUpdated').textContent = upd;
     $('#brandSubtitle').textContent = (state.data?.meta?.app || 'LevelUp');
+
+    // Extra debug: build + conteos
+    const subCount = Array.isArray(state.data?.subjects) ? state.data.subjects.length : 0;
+    const chCount  = Array.isArray(state.data?.challenges) ? state.data.challenges.length : 0;
+    $('#dbgBuild') && ($('#dbgBuild').textContent = BUILD_ID);
+    $('#dbgSubCount') && ($('#dbgSubCount').textContent = String(subCount));
+    $('#dbgChCount') && ($('#dbgChCount').textContent = String(chCount));
   }
 
   // Dropdown
@@ -2116,6 +2131,20 @@ $('#btnChallengeDelete')?.addEventListener('click', ()=> toast('Borrar desafío:
   }
 
   async function init(){
+    // Captura errores para que en iPhone no se sienta "se rompió" sin pista
+    window.addEventListener('error', (ev)=>{
+      try{
+        const msg = (ev && ev.message) ? String(ev.message) : 'Error';
+        toast(`⚠️ ${msg}`);
+      }catch(e){}
+    });
+    window.addEventListener('unhandledrejection', (ev)=>{
+      try{
+        const msg = (ev && ev.reason) ? String(ev.reason) : 'Promesa rechazada';
+        toast(`⚠️ ${msg}`);
+      }catch(e){}
+    });
+
     bind();
     setActiveRoute(state.route);
     updateDeviceDebug();
