@@ -944,19 +944,55 @@ function renderHeroAvatar(hero){
     }
   }
 
-  const ROLE_OPTIONS = [
-    { id:'analista', name:'Analista', desc:'Observa, detecta patrones y propone mejoras.' },
+  // Roles pensados para secundaria (más identificables que clases de fantasía).
+  // Si el JSON trae meta.rolesCatalog, se usa ese (permite que lo ajustes sin tocar código).
+  const DEFAULT_ROLE_OPTIONS = [
+    { id:'lider', name:'Líder', desc:'Organiza al equipo y ayuda a tomar decisiones.' },
+    { id:'estratega', name:'Estratega', desc:'Planea cómo avanzar y optimiza el puntaje.' },
+    { id:'creativo', name:'Creativo', desc:'Propone ideas originales y soluciones distintas.' },
+    { id:'investigador', name:'Investigador', desc:'Busca información, verifica y resume.' },
+    { id:'comunicador', name:'Comunicador', desc:'Explica, expone y hace que se entienda.' },
+    { id:'mediador', name:'Mediador', desc:'Ayuda a resolver conflictos y unir al equipo.' },
+    { id:'organizador', name:'Organizador', desc:'Checklist, orden, tiempos y entregas.' },
+    { id:'analista', name:'Analista', desc:'Detecta patrones, errores y propone mejoras.' },
+    { id:'constructor', name:'Constructor', desc:'Ejecuta, arma, produce y lleva a cabo.' },
+    { id:'explorador', name:'Explorador', desc:'Prueba caminos nuevos y se adapta rápido.' },
     { id:'mentor', name:'Mentor', desc:'Acompaña, explica y ayuda a otros a avanzar.' },
-    { id:'creador', name:'Creador', desc:'Diseña ideas nuevas, soluciones y proyectos.' },
-    { id:'guardian', name:'Guardián', desc:'Cuida el orden, el enfoque y las reglas del equipo.' },
-    { id:'explorador', name:'Explorador', desc:'Prueba caminos nuevos y se adapta rápido a los retos.' }
+    { id:'resiliente', name:'Resiliente', desc:'Insiste, mejora y no se rinde.' },
+    { id:'observador', name:'Observador', desc:'Nota detalles que otros no ven.' },
+    { id:'equipo', name:'Jugador en Equipo', desc:'Coopera y mantiene buen ritmo de trabajo.' },
   ];
+
+  function getRoleOptions(){
+    const cat = state.data?.meta?.rolesCatalog;
+    if (Array.isArray(cat) && cat.length){
+      // Permite dos formatos:
+      // 1) ['Líder','Estratega',...]
+      // 2) [{name:'Líder', desc:'...'}, ...]
+      if (typeof cat[0] === 'string'){
+        return cat.map((name, idx)=>({
+          id: String(name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'') || ('rol_'+idx),
+          name: String(name),
+          desc: ''
+        }));
+      }
+      if (typeof cat[0] === 'object'){
+        return cat.map((r, idx)=>({
+          id: r.id || (String(r.name||'rol_'+idx).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')) || ('rol_'+idx),
+          name: String(r.name || ('Rol '+(idx+1))),
+          desc: String(r.desc || '')
+        }));
+      }
+    }
+    return DEFAULT_ROLE_OPTIONS;
+  }
 
   function renderRoleOptions(){
     const list = $('#roleList');
     if (!list) return;
     list.innerHTML = '';
-    ROLE_OPTIONS.forEach(role=>{
+    const roles = getRoleOptions();
+    roles.forEach(role=>{
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'roleItem';
@@ -1471,7 +1507,20 @@ function renderChallengeDetail(){
     // Ordena por "order" si existe (si no, conserva orden)
     evs = [...evs].sort((a,b)=> Number(a.order||0) - Number(b.order||0));
 
-    evs.forEach(ev=>{
+    const groups = [
+      { key:'boss', title:'JEFES', items: evs.filter(e=> (e.kind||'event') === 'boss') },
+      { key:'event', title:'EVENTOS', items: evs.filter(e=> (e.kind||'event') !== 'boss') },
+    ].filter(g=> g.items.length);
+
+    const frag = document.createDocumentFragment();
+    groups.forEach(group=>{
+      const h = document.createElement('div');
+      // Reuse existing section title styling (used in recompensas)
+      h.className = 'rewardsSectionTitle';
+      h.textContent = group.title;
+      frag.appendChild(h);
+
+      group.items.forEach(ev=>{
       const prereqMet = isEventPrereqMet(ev);
       const unlocked = prereqMet ? isEventUnlocked(ev) : false;
       const eligible = hero ? isHeroEligibleForEvent(hero, ev) : false;
@@ -1482,6 +1531,10 @@ function renderChallengeDetail(){
         <div class="eventCard__img"></div>
         <div class="eventCard__meta">
           <div class="eventCard__name">${escapeHtml(unlocked ? (ev.title||'Evento') : '?????')}</div>
+          <div class="challengeHintBadges">
+            <span class="badge badge--subj">${escapeHtml((ev.kind||'event') === 'boss' ? 'JEFE' : 'EVENTO')}</span>
+            ${unlocked ? '' : `<span class="badge badge--diff">BLOQUEADO</span>`}
+          </div>
           <div class="eventCard__req">${escapeHtml(!prereqMet ? 'Desbloquea el anterior' : (unlocked ? (ev.eligibility?.label||'') : (ev.unlock?.label||'Requisito')))}</div>
         </div>
       `;
@@ -1496,8 +1549,11 @@ function renderChallengeDetail(){
         }
       }
       div.addEventListener('click', ()=> openEventModal(ev.id));
-      grid.appendChild(div);
+        frag.appendChild(div);
+      });
     });
+
+    grid.appendChild(frag);
   }
 
   function renderPeopleTable(){
