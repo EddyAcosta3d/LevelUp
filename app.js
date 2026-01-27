@@ -67,6 +67,41 @@ function makeBlankHero(group){
   };
 }
 
+// Demo de desafíos (2 por dificultad) para probar layout/UI.
+// Se inyecta SOLO si el JSON viene vacío y aún no se ha marcado meta.seededDemo.
+function seedChallengesDemo(S){
+  const safe = (x, fallback) => (x && typeof x === 'object') ? x : fallback;
+  S = safe(S, {
+    tec:{id:'sub_tec', name:'Tecnología'},
+    ing:{id:'sub_ing', name:'Inglés'},
+    esp:{id:'sub_esp', name:'Español'},
+    mat:{id:'sub_mat', name:'Matemáticas'},
+    tut:{id:'sub_tut', name:'Tutoría'},
+  });
+  return [
+    { id: uid('c'), subjectId: S.tec.id, subject: S.tec.name, difficulty:'easy',   points:10,
+      title:'Fácil: Dibuja un ícono (10 min)',
+      body:'En tu libreta, diseña un ícono para una app escolar.\n\nRequisitos:\n- Debe ser simple\n- 2 a 3 formas geométricas\n- Explica qué significa' },
+    { id: uid('c'), subjectId: S.ing.id, subject: S.ing.name, difficulty:'easy',   points:10,
+      title:'Fácil: 10 palabras en inglés',
+      body:'Escribe 10 palabras en inglés relacionadas con la escuela.\n\nLuego, elige 3 y escribe una oración con cada una.' },
+
+    { id: uid('c'), subjectId: S.esp.id, subject: S.esp.name, difficulty:'medium', points:20,
+      title:'Medio: Mini historia (8 líneas)',
+      body:'Escribe una historia corta de 8 líneas.\n\nIncluye:\n- Un inicio claro\n- Un problema\n- Un final' },
+    { id: uid('c'), subjectId: S.mat.id, subject: S.mat.name, difficulty:'medium', points:20,
+      title:'Medio: 3 problemas con contexto',
+      body:'Resuelve 3 problemas en tu libreta (pueden ser inventados).\n\nCada problema debe tener:\n- Datos\n- Operación\n- Respuesta con unidades' },
+
+    { id: uid('c'), subjectId: S.tec.id, subject: S.tec.name, difficulty:'hard',   points:40,
+      title:'Difícil: Plan de proyecto (1 página)',
+      body:'Crea un plan de proyecto en 1 página.\n\nIncluye:\n- Objetivo\n- Materiales\n- Pasos\n- Tiempo estimado\n- Cómo evaluarás si quedó bien' },
+    { id: uid('c'), subjectId: S.tut.id, subject: S.tut.name, difficulty:'hard',   points:40,
+      title:'Difícil: Reflexión (2 párrafos)',
+      body:'Escribe 2 párrafos sobre un reto personal en la escuela.\n\nIncluye:\n- Qué pasó\n- Qué aprendiste\n- Qué harás diferente la próxima vez' },
+  ];
+}
+
   const state = {
     route: 'fichas',
     role: 'viewer',      // futuro: 'teacher' con PIN
@@ -80,10 +115,22 @@ function makeBlankHero(group){
   };
 
   // Build marker (para confirmar en GitHub que sí cargó la versión correcta)
-  const BUILD_ID = 'v22-desafios-ui';
+  // Build identifier (also used for cache-busting via querystring in index.html)
+  const BUILD_ID = 'LevelUP_V2_00.030';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  // Modal helper (evita que un modal quede debajo de otro)
+  const MODAL_IDS = ['roleModal','photoModal','levelUpModal','confirmModal','subjectsModal','challengeModal'];
+  const getModal = (id) => document.getElementById(id);
+  function closeAllModals(exceptId=null){
+    MODAL_IDS.forEach(id=>{
+      if (exceptId && id === exceptId) return;
+      const m = getModal(id);
+      if (m) m.hidden = true;
+    });
+  }
 
 
 function readFileAsDataURL(file){
@@ -121,59 +168,52 @@ function readFileAsDataURL(file){
 
   function normalizeData(data){
     const d = data && typeof data === 'object' ? data : {};
-    d.meta = d.meta || {};
+    d.meta = (d.meta && typeof d.meta === 'object') ? d.meta : {};
     d.meta.updatedAt = d.meta.updatedAt || new Date().toISOString();
 
     d.heroes = Array.isArray(d.heroes) ? d.heroes : [];
     d.challenges = Array.isArray(d.challenges) ? d.challenges : [];
     d.events = Array.isArray(d.events) ? d.events : [];
 
-d.subjects = Array.isArray(d.subjects) ? d.subjects : [];
+    d.subjects = Array.isArray(d.subjects) ? d.subjects : [];
 
-// Seed básico (solo si vienen vacíos): materias + desafíos demo para maquetado.
-if (!d.subjects.length){
-  d.subjects = [
-    { id:'sub_tec', name:'Tecnología' },
-    { id:'sub_ing', name:'Inglés' },
-    { id:'sub_esp', name:'Español' },
-    { id:'sub_mat', name:'Matemáticas' },
-    { id:'sub_tut', name:'Tutoría' },
-  ];
-}
+    // Si vienen desafíos pero no vienen materias, reconstruimos materias desde los desafíos
+    // (para evitar que la UI quede sin opciones en el dropdown).
+    if (!d.subjects.length && d.challenges.length){
+      const seen = new Set();
+      d.subjects = d.challenges
+        .map(c => ({ id: c.subjectId || uid('sub'), name: (c.subject || '').trim() || 'Materia' }))
+        .filter(s => {
+          const k = (s.name || '').toLowerCase();
+          if (!k || seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+    }
 
-if (!d.challenges.length){
-  const byName = (n)=> (d.subjects.find(s=> (s.name||'').toLowerCase() === n.toLowerCase()) || d.subjects[0] || {id:'sub_tec', name:'Tecnología'});
-  const S = {
-    tec: byName('Tecnología'),
-    ing: byName('Inglés'),
-    esp: byName('Español'),
-    mat: byName('Matemáticas'),
-    tut: byName('Tutoría'),
-  };
-  // 2 por dificultad (6 total) para probar layout
-  d.challenges = [
-    { id: uid('c'), subjectId: S.tec.id, subject: S.tec.name, difficulty:'easy',   points:10,
-      title:'Fácil: Dibuja un ícono (10 min)',
-      body:'En tu libreta, diseña un ícono para una app escolar.\n\nRequisitos:\n- Debe ser simple\n- 2 a 3 formas geométricas\n- Explica qué significa' },
-    { id: uid('c'), subjectId: S.ing.id, subject: S.ing.name, difficulty:'easy',   points:10,
-      title:'Fácil: 10 palabras en inglés',
-      body:'Escribe 10 palabras en inglés relacionadas con la escuela.\n\nLuego, elige 3 y escribe una oración con cada una.' },
+    // Seed demo SOLO una vez. Si ya exportaste tu JSON, esto no vuelve a inyectar datos.
+    const shouldSeedDemo = !d.meta.seededDemo && !d.subjects.length && !d.challenges.length;
+    if (shouldSeedDemo){
+      d.subjects = [
+        { id:'sub_tec', name:'Tecnología' },
+        { id:'sub_ing', name:'Inglés' },
+        { id:'sub_esp', name:'Español' },
+        { id:'sub_mat', name:'Matemáticas' },
+        { id:'sub_tut', name:'Tutoría' },
+      ];
 
-    { id: uid('c'), subjectId: S.esp.id, subject: S.esp.name, difficulty:'medium', points:20,
-      title:'Medio: Mini historia (8 líneas)',
-      body:'Escribe una historia corta de 8 líneas.\n\nIncluye:\n- Un inicio claro\n- Un problema\n- Un final' },
-    { id: uid('c'), subjectId: S.mat.id, subject: S.mat.name, difficulty:'medium', points:20,
-      title:'Medio: 3 problemas con contexto',
-      body:'Resuelve 3 problemas en tu libreta (pueden ser inventados).\n\nCada problema debe tener:\n- Datos\n- Operación\n- Respuesta con unidades' },
-
-    { id: uid('c'), subjectId: S.tec.id, subject: S.tec.name, difficulty:'hard',   points:40,
-      title:'Difícil: Plan de proyecto (1 página)',
-      body:'Crea un plan de proyecto en 1 página.\n\nIncluye:\n- Objetivo\n- Materiales\n- Pasos\n- Tiempo estimado\n- Cómo evaluarás si quedó bien' },
-    { id: uid('c'), subjectId: S.tut.id, subject: S.tut.name, difficulty:'hard',   points:40,
-      title:'Difícil: Reflexión (2 párrafos)',
-      body:'Escribe 2 párrafos sobre un reto personal en la escuela.\n\nIncluye:\n- Qué pasó\n- Qué aprendiste\n- Qué harás diferente la próxima vez' },
-  ];
-}
+      // Demo de desafíos (6 total) para probar layout
+      const byName = (n)=> (d.subjects.find(s=> (s.name||'').toLowerCase() === n.toLowerCase()) || d.subjects[0]);
+      const S = {
+        tec: byName('Tecnología'),
+        ing: byName('Inglés'),
+        esp: byName('Español'),
+        mat: byName('Matemáticas'),
+        tut: byName('Tutoría'),
+      };
+      d.challenges = seedChallengesDemo(S);
+      d.meta.seededDemo = true;
+    }
 
     d.heroes.forEach(h=>{
       h.id = h.id || uid('h');
@@ -784,6 +824,7 @@ function renderHeroAvatar(hero){
   function openRoleModal(){
     const modal = $('#roleModal');
     if (!modal) return;
+    closeAllModals('roleModal');
     renderRoleOptions();
     modal.hidden = false;
   }
@@ -1347,6 +1388,8 @@ function renderChallengeDetail(){
     const modal = $('#photoModal');
     if (!modal) return;
 
+    closeAllModals('photoModal');
+
     // Ensure fit defaults
     hero.photoFit = hero.photoFit || { x:50, y:50, scale:1 };
 
@@ -1503,6 +1546,8 @@ function renderChallengeDetail(){
 
     const modal = $('#levelUpModal');
     if (!modal) return;
+
+    closeAllModals('levelUpModal');
 
     $('#levelUpHeroName').textContent = hero.name || '(sin nombre)';
     const numEl = $('#levelUpNum');
@@ -1701,6 +1746,7 @@ function renderChallengeDetail(){
     return new Promise((resolve)=>{
       const modal = $('#confirmModal');
       if (!modal){ resolve(window.confirm(message)); return; }
+	      closeAllModals('confirmModal');
       $('#confirmTitle').textContent = title;
       const msgEl = $('#confirmMessage');
       if (msgEl){
@@ -1978,6 +2024,7 @@ function openSubjectsModal(){
   if (state.role !== 'teacher'){ toast('Activa edición para modificar materias'); return; }
   const m = $('#subjectsModal');
   if (!m) return;
+  closeAllModals('subjectsModal');
   renderSubjectsModal();
   m.hidden = false;
   setTimeout(()=> $('#inNewSubject')?.focus(), 50);
@@ -2037,6 +2084,7 @@ function openChallengeModal(mode='create', ch=null){
   if (state.role !== 'teacher'){ toast('Activa edición para crear/editar desafíos'); return; }
   const m = $('#challengeModal');
   if (!m) return;
+  closeAllModals('challengeModal');
   const title = $('#challengeModalTitle');
   if (title) title.textContent = (mode === 'edit') ? 'Editar desafío' : 'Nuevo desafío';
   editingChallengeId = (mode === 'edit' && ch) ? ch.id : null;

@@ -1976,3 +1976,36 @@ body.is-view-locked #btnQuitarFoto{
 
 /* Detail: que el bloque de badges no se comprima raro */
 .challengeDetailMeta > .challengeHintBadges{ min-width: 0; }
+
+/* =============================
+   LevelUP_V2_00.030 overrides
+   ============================= */
+
+/* Evita que los paneles flex se "aplasten" por alturas implícitas */
+.main,
+.mainContent,
+.page,
+.card,
+.cardBody{ min-height: 0; }
+
+/* Desafíos: cuerpo con un poquito más de aire en escritorio */
+.challengeBody{ min-height: 180px; }
+@media (max-width: 768px){
+  .challengeBody{ min-height: 150px; }
+}
+
+/* Badges: separación y lectura consistente */
+.challengeHintBadges{ gap:10px !important; flex-wrap:wrap; }
+.challengeHintBadges .badge{ padding:6px 10px; border-radius: 999px; }
+
+/* Modales: z-index claro para que confirmación siempre esté arriba */
+.modal{ z-index: 20000; }
+#confirmModal{ z-index: 30000; }
+
+/* Splash: logo más grande + brillo menos invasivo (evita barra blanca) */
+.splash__inner{ max-width: 560px; }
+.splash__logo{ width: clamp(320px, 50vw, 620px); }
+.splash__shine{
+  opacity: 0.55;
+  filter: blur(0.5px);
+}
