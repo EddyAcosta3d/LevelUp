@@ -73,7 +73,7 @@ function makeBlankHero(group){
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
-    challengeFilter: { subjectId: 'all', diff: null },
+    challengeFilter: { subjectId: null, diff: null },
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
@@ -986,43 +986,82 @@ function difficultyLabel(diff){
   return '—';
 }
 
+
 function ensureChallengeUI(){
   const menu = $('#subjectMenu');
   const btn  = $('#btnSubject');
+  const ddWrap = $('#subjectDropdown');
   if (!menu || !btn) return;
 
   const subjects = state.data?.subjects || [];
   menu.innerHTML = '';
 
+  // Single-subject view: default to first subject
+  if (!state.challengeFilter.subjectId && subjects.length){
+    state.challengeFilter.subjectId = subjects[0].id;
+  }
+
   const addItem = (label, subjectId)=>{
     const it = document.createElement('button');
     it.type = 'button';
     it.className = 'ddItem';
-    it.dataset.subjectId = subjectId;
+    it.dataset.subjectId = String(subjectId);
     it.textContent = label;
     it.addEventListener('click', (e)=>{
       e.preventDefault(); e.stopPropagation();
       state.challengeFilter.subjectId = subjectId;
-      btn.textContent = (subjectId === 'all') ? 'Materia ▾' : (label + ' ▾');
+      btn.textContent = (label + ' ▾');
       closeSubjectDropdown();
       renderChallenges();
     });
     menu.appendChild(it);
   };
 
-  addItem('Todas', 'all');
   subjects.forEach(s=> addItem(s.name || 'Materia', s.id));
+
+  const activeName = subjects.find(s=>String(s.id)===String(state.challengeFilter.subjectId))?.name || 'Materia';
+  btn.textContent = (activeName + ' ▾');
 
   // difficulty pills
   $$('#diffPills [data-diff]').forEach(b=>{
     const diff = b.dataset.diff;
     b.classList.toggle('is-active', state.challengeFilter.diff === diff);
   });
+
+  // Portal-like fixed dropdown (prevents clipping)
+  menu.classList.add('is-portal');
+  if (ddWrap) ddWrap.classList.add('dropdown--portal');
+}
+
+function positionSubjectMenu(){
+  const btn = $('#btnSubject');
+  const menu = $('#subjectMenu');
+  if (!btn || !menu) return;
+
+  const r = btn.getBoundingClientRect();
+  const pad = 10;
+  const desiredW = Math.max(240, Math.round(r.width));
+  let left = Math.min(Math.max(pad, r.left), window.innerWidth - desiredW - pad);
+  let top = r.bottom + 10;
+
+  const maxH = Math.min(window.innerHeight * 0.6, 360);
+  if (top + maxH > window.innerHeight - pad){
+    top = Math.max(pad, r.top - 10 - maxH);
+  }
+
+  menu.style.position = 'fixed';
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  menu.style.minWidth = `${desiredW}px`;
+  menu.style.maxHeight = `${maxH}px`;
+  menu.style.overflow = 'auto';
+  menu.style.zIndex = '40050';
 }
 
 function openSubjectDropdown(){
   const dd = $('#subjectDropdown');
   if (dd) dd.classList.add('is-open');
+  positionSubjectMenu();
 }
 function closeSubjectDropdown(){
   const dd = $('#subjectDropdown');
@@ -1030,20 +1069,30 @@ function closeSubjectDropdown(){
 }
 function toggleSubjectDropdown(){
   const dd = $('#subjectDropdown');
-  if (dd) dd.classList.toggle('is-open');
+  if (!dd) return;
+  dd.classList.toggle('is-open');
+  if (dd.classList.contains('is-open')) positionSubjectMenu();
 }
 
 function getFilteredChallenges(){
   const challenges = Array.isArray(state.data?.challenges) ? state.data.challenges : [];
-  const sub = state.challengeFilter?.subjectId || 'all';
+  const subjects = Array.isArray(state.data?.subjects) ? state.data.subjects : [];
+  let sub = state.challengeFilter?.subjectId || null;
   const diff = state.challengeFilter?.diff || null;
 
+  // Single-subject view: if none selected, default to first
+  if (!sub && subjects.length){
+    sub = subjects[0].id;
+    state.challengeFilter.subjectId = sub;
+  }
+
   return challenges.filter(ch=>{
-    if (sub !== 'all' && String(ch.subjectId || '') !== String(sub)) return false;
+    if (sub && String(ch.subjectId || '') !== String(sub)) return false;
     if (diff && String(ch.difficulty || '') !== diff) return false;
     return true;
   });
 }
+
 
 function isChallengeDone(hero, challengeId){
   if (!hero) return false;
@@ -1086,7 +1135,6 @@ function renderChallenges(){
       <div class="challengeRow">
         <div class="challengeName">${escapeHtml(ch.title || 'Desafío')}</div>
         <div class="challengeMetaRow">
-          <span class="badge badge--subj">${escapeHtml(subj)}</span>
           <span class="badge badge--diff badge--${escapeHtml(String(ch.difficulty||'').toLowerCase())}">${escapeHtml(diffLabel)}</span>
           <span class="badge badge--pts">${escapeHtml(String(pts))} XP</span>
           ${done ? '<span class="badge badge--done">✔</span>' : ''}
@@ -1131,7 +1179,15 @@ function renderChallengeDetail(){
   const doneAt = done ? hero.challengeCompletions[String(ch.id)].at : null;
 
   if (hintEl){
-    hintEl.textContent = `${subj} · ${diffLabel} · ${pts} XP` + (doneAt ? ` · Completado: ${new Date(doneAt).toLocaleDateString()}` : '');
+    const datePart = doneAt ? `<span class="badge badge--done">Completado: ${escapeHtml(new Date(doneAt).toLocaleDateString())}</span>` : '';
+    hintEl.innerHTML = `
+      <div class="challengeHintBadges">
+        <span class="badge badge--subj">${escapeHtml(subj)}</span>
+        <span class="badge badge--diff badge--${escapeHtml(String(ch.difficulty||'').toLowerCase())}">${escapeHtml(diffLabel)}</span>
+        <span class="badge badge--pts">${escapeHtml(String(pts))} XP</span>
+        ${datePart}
+      </div>
+    `;
   }
   if (bodyEl){
     bodyEl.textContent = ch.body || '(sin instrucciones)';
