@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'LevelUP_V2_00.032';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.033';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -673,6 +673,20 @@ d.heroes.forEach(h=>{
         state.selectedHeroId = hero.id;
         renderHeroList();
         renderHeroDetail();
+
+        // IMPORTANT: Refresh the current page so per-hero state (challenge completions, rewards, events eligibility)
+        // updates immediately when you switch heroes.
+        if (state.route === 'desafios') {
+          renderChallenges();
+        } else if (state.route === 'recompensas') {
+          renderRewards();
+        } else if (state.route === 'eventos') {
+          renderEvents();
+        }
+
+        // Ensure hero-specific chest badge updates as well
+        updateChestUI(currentHero());
+
         if (isDrawerLayout()) closeDrawer();
       });
       list.appendChild(btn);
