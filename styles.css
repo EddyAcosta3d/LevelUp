@@ -524,6 +524,11 @@ body{
   color: var(--text);
 }
 .input--select{
+  -webkit-appearance: none;
+  appearance: none;
+  /* iOS/Safari: keep custom styling */
+  background-color: rgba(0,0,0,0.22);
+  color-scheme: dark;
   padding-right: 40px;
   cursor:pointer;
   position:relative;
@@ -536,6 +541,7 @@ body{
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
 }
+.input--select::-ms-expand{ display:none; }
 .input--select:focus{ outline: none; border-color: rgba(0,210,255,0.32); }
 .textarea{
   width:100%;
@@ -698,6 +704,9 @@ html:not(.is-edit) #btnChallengeMore{ display:none !important; }
   place-items:center;
   padding: 20px;
 }
+
+/* Ensure confirmation modal always appears on top of other open modals */
+#confirmModal{ z-index: 45000; }
 .modal[hidden]{ display:none; }
 .modal__backdrop{
   position:absolute;
@@ -1757,7 +1766,14 @@ body.is-view-locked #btnQuitarFoto{
 .diffPills{display:flex;gap:8px;flex-wrap:wrap}
 .challengeDetailHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 10px}
 .challengeDetailActions{display:flex;gap:8px;flex-wrap:wrap}
-.challengeDetailMeta{color:var(--text, #dcdce6);opacity:.85}
+.challengeDetailMeta{
+  color:var(--text, #dcdce6);
+  opacity:.92;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
 .challengeBody{min-height:140px;white-space:pre-wrap;border:1px solid rgba(0,210,255,.18);background:rgba(15,15,20,.45);border-radius:16px;padding:12px;color:var(--text, #dcdce6)}
 @media (max-width:640px){
   .challengeBody{min-height:180px}
