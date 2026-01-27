@@ -221,15 +221,22 @@
         </article>
 
           <article class="page" data-page="desafios">
-            <div class="pageIntro">
-              <h2 class="h2">Desafíos</h2>
-              <p class="muted">
-                En modo alumno (viewer) solo se muestra el <b>nombre</b>.
-                En modo edición (teacher) se ve el detalle.
-              </p>
-            </div>
+            <div class="challengeTop">
+              <div class="dropdown" id="subjectDropdown">
+                <button class="pill" id="btnSubject" type="button">Materia ▾</button>
+                <div class="dropdown__menu" id="subjectMenu" role="menu" aria-label="Materias"></div>
+              </div>
 
-            <div class="cards2">
+              <div class="diffPills" id="diffPills" role="group" aria-label="Dificultad">
+                <button class="pill pill--ghost" id="btnDiffEasy" type="button" data-diff="easy">Fácil</button>
+                <button class="pill pill--ghost" id="btnDiffMed" type="button" data-diff="medium">Medio</button>
+                <button class="pill pill--ghost" id="btnDiffHard" type="button" data-diff="hard">Difícil</button>
+              </div>
+
+              <button class="pill" id="btnAddChallenge" type="button">+ Desafío</button>
+              <button class="pill pill--ghost" id="btnManageSubjects" type="button">✎ Materias</button>
+            </div>
+<div class="cards2">
               <div class="card">
                 <div class="cardTitle">Lista</div>
                 <div class="challengeList" id="challengeList"></div>
@@ -237,8 +244,15 @@
 
               <div class="card">
                 <div class="cardTitle">Detalle</div>
-                <div class="muted" id="challengeHint">Selecciona un desafío.</div>
-                <div class="ghostBox" id="challengeBody">Contenido del desafío (solo teacher)</div>
+                <div class="challengeDetailHead">
+                  <div class="challengeDetailMeta" id="challengeHint">Selecciona un desafío.</div>
+                  <div class="challengeDetailActions">
+                    <button class="pill pill--small" id="btnChallengeComplete" type="button">✔ Completado</button>
+                    <button class="pill pill--small pill--ghost" id="btnChallengeEdit" type="button">✎ Editar</button>
+                    <button class="pill pill--small pill--danger" id="btnChallengeDelete" type="button">🗑</button>
+                  </div>
+                </div>
+                <div class="challengeBody" id="challengeBody"></div>
               </div>
             </div>
           </article>

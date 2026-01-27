@@ -1695,3 +1695,16 @@ body.is-view-locked #btnQuitarFoto{
   .brand__logo{ width: 36px !important; height: 36px !important; border-radius: 12px !important; }
   .brand__logo svg{ width: 26px !important; height: 26px !important; }
 }
+
+/* --- Desafíos (nuevo header + detalle) --- */
+.challengeTop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
+.challengeTop .dropdown{position:relative}
+#subjectMenu{min-width:220px}
+.diffPills{display:flex;gap:8px;flex-wrap:wrap}
+.challengeDetailHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:6px 0 10px}
+.challengeDetailActions{display:flex;gap:8px;flex-wrap:wrap}
+.challengeDetailMeta{color:var(--text, #dcdce6);opacity:.85}
+.challengeBody{min-height:140px;white-space:pre-wrap;border:1px solid rgba(0,210,255,.18);background:rgba(15,15,20,.45);border-radius:16px;padding:12px;color:var(--text, #dcdce6)}
+@media (max-width:640px){
+  .challengeBody{min-height:180px}
+}
