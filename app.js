@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'LevelUP_V2_00.033';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.034';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -116,7 +116,7 @@ function seedChallengesDemo(S){
 
   // Build marker (para confirmar en GitHub que sí cargó la versión correcta)
   // Build identifier (also used for cache-busting via querystring in index.html)
-  const BUILD_ID = 'LevelUP_V2_00.031';
+  const BUILD_ID = 'LevelUP_V2_00.034';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -170,26 +170,39 @@ function readFileAsDataURL(file){
 function seedEventsDemo(){
   return [
     {
-      id:'ev_loquito',
+      id:'loquito',
       kind:'boss',
       title:'El Loquito del Centro',
       unlocked:false,
+      order: 1,
+      // Convención recomendada (como las estás nombrando):
+      // assets/jefes/Boss_loquito_unlocked.jpg y assets/jefes/Boss_loquito_locked.jpg
+      folder: 'jefes',
+      assetKey: 'loquito',
       unlock:{ type:'completions_total', count:3, label:'Completa 3 desafíos (en total)' },
       eligibility:{ type:'level', min:1, label:'Cualquier héroe (nivel 1+)' }
     },
     {
-      id:'ev_garbanzo',
+      id:'garbanzo',
       kind:'boss',
       title:'El Garbanzo Coqueto',
       unlocked:false,
+      order: 2,
+      requiresUnlockedId: 'loquito',
+      folder: 'jefes',
+      assetKey: 'garbanzo',
       unlock:{ type:'level_any', min:2, label:'Algún héroe llega a Nivel 2' },
       eligibility:{ type:'level', min:2, label:'Nivel 2+' }
     },
     {
-      id:'ev_bonus',
+      id:'cofre_misterioso',
       kind:'event',
       title:'Evento: Cofre Misterioso',
       unlocked:false,
+      order: 3,
+      requiresUnlockedId: 'garbanzo',
+      folder: 'eventos',
+      assetKey: 'cofre_misterioso',
       unlock:{ type:'completions_total', count:6, label:'Completa 6 desafíos (en total)' },
       eligibility:{ type:'completions_hero', count:2, label:'Completa 2 desafíos con este héroe' }
     }
@@ -214,13 +227,43 @@ function countCompletedForHero(hero){
 
 function isEventUnlocked(ev){
   if (!ev) return false;
-  if (ev.unlocked) return true;
+  // Manual override support (teacher demo):
+  // - if overrideUnlocked is true => forced unlocked
+  // - if overrideUnlocked is false => forced locked
+  if (ev.overrideUnlocked === true) return true;
+  if (ev.overrideUnlocked === false) return false;
+  // Back-compat: some older JSON uses `unlocked` boolean directly
+  if (ev.unlocked === true) return true;
   const u = ev.unlock || {};
   const heroes = Array.isArray(state.data?.heroes) ? state.data.heroes : [];
   const total = totalCompletedAcrossHeroes();
   if (u.type==='completions_total') return total >= Number(u.count||0);
   if (u.type==='level_any') return heroes.some(h=>Number(h.level||1) >= Number(u.min||1));
   return false;
+}
+
+function isEventPrereqMet(ev){
+  if (!ev) return true;
+  const reqId = ev.requiresUnlockedId;
+  if (!reqId) return true;
+  const prev = (state.data?.events || []).find(e=>e.id === reqId);
+  return prev ? isEventUnlocked(prev) : true;
+}
+
+function getUnlockProgress(ev){
+  const u = ev && ev.unlock ? ev.unlock : {};
+  const heroes = Array.isArray(state.data?.heroes) ? state.data.heroes : [];
+  if (u.type==='completions_total'){
+    const cur = totalCompletedAcrossHeroes();
+    const max = Number(u.count||0);
+    return { cur, max };
+  }
+  if (u.type==='level_any'){
+    const cur = Math.max(1, ...heroes.map(h=>Number(h.level||1)));
+    const max = Number(u.min||1);
+    return { cur, max };
+  }
+  return null;
 }
 
 function isHeroEligibleForEvent(hero, ev){
@@ -285,6 +328,37 @@ function normalizeData(data){
       d.events = seedEventsDemo();
       d.meta.seededEvents = true;
     }
+
+    // Normaliza eventos (campos y defaults)
+    d.events.forEach((ev, idx)=>{
+      if (!ev || typeof ev !== 'object') return;
+      ev.id = ev.id || uid('ev');
+      ev.kind = ev.kind || 'event';
+      ev.title = ev.title || 'Evento';
+      ev.order = Number(ev.order ?? (idx+1));
+      ev.requiresUnlockedId = ev.requiresUnlockedId || ev.requires || null;
+      // Compat: unlocked boolean
+      if (ev.unlocked === undefined && ev.locked !== undefined) ev.unlocked = !Boolean(ev.locked);
+      // Allow teacher override without breaking computed unlock logic
+      if (ev.overrideUnlocked === undefined) ev.overrideUnlocked = null;
+      ev.unlock = (ev.unlock && typeof ev.unlock === 'object') ? ev.unlock : (ev.unlock || {});
+      ev.eligibility = (ev.eligibility && typeof ev.eligibility === 'object') ? ev.eligibility : (ev.eligibility || {});
+      // Images: if none provided, assume a convention in assets/
+      // - Bosses: assets/jefes/Boss_<key>_unlocked.jpg  | Boss_<key>_locked.jpg
+      // - Events: assets/eventos/Event_<key>_unlocked.jpg | Event_<key>_locked.jpg
+      // You can override with ev.image / ev.lockedImage directly.
+      const keyRaw = (ev.assetKey || ev.id || '').toString();
+      const key = keyRaw.replace(/^ev_/, '').replace(/^boss_/, '');
+      const folder = (ev.folder || (ev.kind === 'boss' ? 'jefes' : 'eventos')).replace(/^assets\//,'');
+      if (!ev.image){
+        if (ev.kind === 'boss') ev.image = `assets/${folder}/Boss_${key}_unlocked.jpg`;
+        else ev.image = `assets/${folder}/Event_${key}_unlocked.jpg`;
+      }
+      if (!ev.lockedImage){
+        if (ev.kind === 'boss') ev.lockedImage = `assets/${folder}/Boss_${key}_locked.jpg`;
+        else ev.lockedImage = `assets/${folder}/Event_${key}_locked.jpg`;
+      }
+    });
 
 d.heroes.forEach(h=>{
       h.id = h.id || uid('h');
@@ -1334,11 +1408,27 @@ function renderChallengeDetail(){
     const ev = (state.data?.events || []).find(e=>e.id === eventId);
     if (!ev) return;
 
-    const unlocked = isEventUnlocked(ev);
+    const prereqMet = isEventPrereqMet(ev);
+    const unlocked = prereqMet ? isEventUnlocked(ev) : false;
     const eligible = hero ? isHeroEligibleForEvent(hero, ev) : false;
 
     $('#eventModalTitle').textContent = unlocked ? (ev.title || 'Evento') : '?????';
-    $('#eventModalReq').textContent = unlocked ? (ev.eligibility?.label || '') : (ev.unlock?.label || 'Requisito');
+    // Show a clearer hint: when locked, show unlock + progress; when unlocked, show eligibility or "Listo"
+    const reqEl = $('#eventModalReq');
+    if (reqEl){
+      if (!prereqMet){
+        const prev = (state.data?.events || []).find(e=>e.id === ev.requiresUnlockedId);
+        const prevName = prev && isEventUnlocked(prev) ? prev.title : 'el evento anterior';
+        reqEl.textContent = `Primero desbloquea: ${prevName}`;
+      } else if (!unlocked){
+        const p = getUnlockProgress(ev);
+        const base = ev.unlock?.label || 'Requisito';
+        reqEl.textContent = p && p.max ? `${base} · Progreso ${Math.min(p.cur,p.max)}/${p.max}` : base;
+      } else {
+        const base = ev.eligibility?.label || '';
+        reqEl.textContent = eligible ? (base ? `Elegible · ${base}` : 'Elegible para retar') : (base ? `No elegible · ${base}` : 'No elegible');
+      }
+    }
     $('#eventModalKind').textContent = ev.kind === 'boss' ? 'JEFE' : 'EVENTO';
 
     const img = $('#eventModalImg');
@@ -1349,8 +1439,10 @@ function renderChallengeDetail(){
 
     const btnFight = $('#btnEventFight');
     if (btnFight){
-      btnFight.disabled = !(unlocked && eligible);
-      btnFight.textContent = unlocked ? (eligible ? '⚔️ Retar' : 'No elegible') : 'Bloqueado';
+      const canFight = unlocked && eligible;
+      btnFight.disabled = !canFight;
+      btnFight.textContent = !prereqMet ? 'Bloqueado' : (unlocked ? (eligible ? '⚔️ Retar' : 'No elegible') : 'Bloqueado');
+      btnFight.dataset.eventId = eventId;
     }
 
     const btnToggleUnlock = $('#btnEventToggleUnlock');
@@ -1358,6 +1450,7 @@ function renderChallengeDetail(){
       btnToggleUnlock.disabled = (state.role !== 'teacher');
       btnToggleUnlock.textContent = unlocked ? 'Bloquear' : 'Desbloquear';
       btnToggleUnlock.dataset.eventId = eventId;
+      btnToggleUnlock.hidden = !isEditEnabled();
     }
 
     modal.hidden = false;
@@ -1369,29 +1462,38 @@ function renderChallengeDetail(){
     grid.innerHTML = '';
 
     const hero = currentHero();
-    const evs = Array.isArray(state.data?.events) ? state.data.events : [];
+    let evs = Array.isArray(state.data?.events) ? state.data.events : [];
     if (!evs.length){
       grid.innerHTML = '<div class="muted">Sin eventos.</div>';
       return;
     }
 
+    // Ordena por "order" si existe (si no, conserva orden)
+    evs = [...evs].sort((a,b)=> Number(a.order||0) - Number(b.order||0));
+
     evs.forEach(ev=>{
-      const unlocked = isEventUnlocked(ev);
+      const prereqMet = isEventPrereqMet(ev);
+      const unlocked = prereqMet ? isEventUnlocked(ev) : false;
       const eligible = hero ? isHeroEligibleForEvent(hero, ev) : false;
       const div = document.createElement('button');
       div.type = 'button';
-      div.className = 'eventCard' + (unlocked ? ' is-unlocked' : ' is-locked') + (eligible ? ' is-eligible' : '');
+      div.className = 'eventCard' + (unlocked ? ' is-unlocked' : ' is-locked') + (eligible ? ' is-eligible' : '') + (prereqMet ? '' : ' is-hidden');
       div.innerHTML = `
         <div class="eventCard__img"></div>
         <div class="eventCard__meta">
           <div class="eventCard__name">${escapeHtml(unlocked ? (ev.title||'Evento') : '?????')}</div>
-          <div class="eventCard__req">${escapeHtml(unlocked ? (ev.eligibility?.label||'') : (ev.unlock?.label||'Requisito'))}</div>
+          <div class="eventCard__req">${escapeHtml(!prereqMet ? 'Desbloquea el anterior' : (unlocked ? (ev.eligibility?.label||'') : (ev.unlock?.label||'Requisito')))}</div>
         </div>
       `;
       const img = div.querySelector('.eventCard__img');
       if (img){
         img.classList.toggle('is-locked', !unlocked);
-        img.style.backgroundImage = unlocked && ev.image ? `url(${ev.image})` : (ev.lockedImage ? `url(${ev.lockedImage})` : '');
+        const src = unlocked ? (ev.image || '') : (ev.lockedImage || ev.image || '');
+        if (src){
+          img.style.setProperty('--ev-img', `url(${src})`);
+        } else {
+          img.style.removeProperty('--ev-img');
+        }
       }
       div.addEventListener('click', ()=> openEventModal(ev.id));
       grid.appendChild(div);
@@ -2654,6 +2756,44 @@ $('#btnSaveChallenge')?.addEventListener('click', saveChallengeFromModal);
         toast('No se pudo cargar la foto.');
       }
     });
+
+    // --- Eventos: acciones del modal ---
+    const btnEventFight = $('#btnEventFight');
+    if (btnEventFight){
+      btnEventFight.addEventListener('click', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        const id = btnEventFight.dataset.eventId;
+        if (!id) return;
+        const ev = (state.data?.events || []).find(x=>x.id===id);
+        const hero = currentHero();
+        if (!ev || !hero) return;
+        // Solo demo por ahora: muestra feedback épico para tu presentación
+        toast(`⚔️ ${hero.name || 'Héroe'} reta: ${ev.title || 'Evento'} (demo)`);
+      });
+    }
+
+    const btnEventToggleUnlock = $('#btnEventToggleUnlock');
+    if (btnEventToggleUnlock){
+      btnEventToggleUnlock.addEventListener('click', (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isEditEnabled()) return;
+        const id = btnEventToggleUnlock.dataset.eventId;
+        const ev = id ? (state.data?.events || []).find(x=>x.id===id) : null;
+        if (!ev) return;
+
+        // Toggle forced unlock/lock (override) without losing computed unlock logic
+        const currentlyUnlocked = isEventUnlocked(ev);
+        ev.overrideUnlocked = currentlyUnlocked ? false : true;
+
+        saveLocal(state.data);
+        if (state.dataSource === 'remote') state.dataSource = 'local';
+        updateDataDebug();
+        renderEvents();
+        openEventModal(id);
+      });
+    }
 
     wireAutoGrow(document);
   }
