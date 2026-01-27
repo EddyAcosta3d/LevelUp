@@ -23,6 +23,31 @@
   // Weekly XP cap for "Actividades pequeñas" (per hero). If hero.weekXpMax is missing, we fall back to this.
   const DEFAULT_WEEK_XP_MAX = 40;
 
+  // Splash (intro con logo) — se oculta después de cargar datos
+  const SPLASH_MIN_MS = 1400;
+  const splashEl = document.getElementById('splash');
+  const splashStart = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  let splashLeaving = false;
+
+  function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+  async function finishSplash(){
+    if(!splashEl || splashLeaving) return;
+    splashLeaving = true;
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    const elapsed = now - splashStart;
+    if(elapsed < SPLASH_MIN_MS) await sleep(SPLASH_MIN_MS - elapsed);
+
+    // respeta reduce motion
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce){ splashEl.remove(); return; }
+
+    splashEl.classList.add('is-leaving');
+    const kill = ()=>{ try{ splashEl.remove(); }catch(_e){} };
+    splashEl.addEventListener('animationend', kill, { once:true });
+    setTimeout(kill, 900); // fallback
+  }
+
 // Convierte texto a un nombre seguro de archivo (sin perder mayúsculas/minúsculas)
 function sanitizeFileName(str){
   const raw = String(str || '').trim();
@@ -39,11 +64,6 @@ function sanitizeFileName(str){
 
 function makeId(prefix='h'){
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
-}
-
-// Compat / util: algunos bloques usan uid('x') en lugar de makeId('x')
-function uid(prefix='id'){
-  return makeId(prefix);
 }
 
 function makeBlankHero(group){
@@ -73,14 +93,10 @@ function makeBlankHero(group){
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
-    challengeFilter: { subjectId: null, diff: null },
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
   };
-
-  // Build marker (para confirmar en GitHub que sí cargó la versión correcta)
-  const BUILD_ID = 'v22-desafios-ui';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -128,53 +144,6 @@ function readFileAsDataURL(file){
     d.challenges = Array.isArray(d.challenges) ? d.challenges : [];
     d.events = Array.isArray(d.events) ? d.events : [];
 
-d.subjects = Array.isArray(d.subjects) ? d.subjects : [];
-
-// Seed básico (solo si vienen vacíos): materias + desafíos demo para maquetado.
-if (!d.subjects.length){
-  d.subjects = [
-    { id:'sub_tec', name:'Tecnología' },
-    { id:'sub_ing', name:'Inglés' },
-    { id:'sub_esp', name:'Español' },
-    { id:'sub_mat', name:'Matemáticas' },
-    { id:'sub_tut', name:'Tutoría' },
-  ];
-}
-
-if (!d.challenges.length){
-  const byName = (n)=> (d.subjects.find(s=> (s.name||'').toLowerCase() === n.toLowerCase()) || d.subjects[0] || {id:'sub_tec', name:'Tecnología'});
-  const S = {
-    tec: byName('Tecnología'),
-    ing: byName('Inglés'),
-    esp: byName('Español'),
-    mat: byName('Matemáticas'),
-    tut: byName('Tutoría'),
-  };
-  // 2 por dificultad (6 total) para probar layout
-  d.challenges = [
-    { id: uid('c'), subjectId: S.tec.id, subject: S.tec.name, difficulty:'easy',   points:10,
-      title:'Fácil: Dibuja un ícono (10 min)',
-      body:'En tu libreta, diseña un ícono para una app escolar.\n\nRequisitos:\n- Debe ser simple\n- 2 a 3 formas geométricas\n- Explica qué significa' },
-    { id: uid('c'), subjectId: S.ing.id, subject: S.ing.name, difficulty:'easy',   points:10,
-      title:'Fácil: 10 palabras en inglés',
-      body:'Escribe 10 palabras en inglés relacionadas con la escuela.\n\nLuego, elige 3 y escribe una oración con cada una.' },
-
-    { id: uid('c'), subjectId: S.esp.id, subject: S.esp.name, difficulty:'medium', points:20,
-      title:'Medio: Mini historia (8 líneas)',
-      body:'Escribe una historia corta de 8 líneas.\n\nIncluye:\n- Un inicio claro\n- Un problema\n- Un final' },
-    { id: uid('c'), subjectId: S.mat.id, subject: S.mat.name, difficulty:'medium', points:20,
-      title:'Medio: 3 problemas con contexto',
-      body:'Resuelve 3 problemas en tu libreta (pueden ser inventados).\n\nCada problema debe tener:\n- Datos\n- Operación\n- Respuesta con unidades' },
-
-    { id: uid('c'), subjectId: S.tec.id, subject: S.tec.name, difficulty:'hard',   points:40,
-      title:'Difícil: Plan de proyecto (1 página)',
-      body:'Crea un plan de proyecto en 1 página.\n\nIncluye:\n- Objetivo\n- Materiales\n- Pasos\n- Tiempo estimado\n- Cómo evaluarás si quedó bien' },
-    { id: uid('c'), subjectId: S.tut.id, subject: S.tut.name, difficulty:'hard',   points:40,
-      title:'Difícil: Reflexión (2 párrafos)',
-      body:'Escribe 2 párrafos sobre un reto personal en la escuela.\n\nIncluye:\n- Qué pasó\n- Qué aprendiste\n- Qué harás diferente la próxima vez' },
-  ];
-}
-
     d.heroes.forEach(h=>{
       h.id = h.id || uid('h');
       h.group = h.group || '2D';
@@ -186,29 +155,16 @@ if (!d.challenges.length){
       h.xpMax = Number(h.xpMax ?? 100);
       h.weekXp = Number(h.weekXp ?? 0);
       h.weekXpMax = Number(h.weekXpMax ?? DEFAULT_WEEK_XP_MAX);
-      // Tope inicial de autoevaluación: 0–8. Después puedes subirlo en el JSON a 20.
-      // statsCap was used in an older autoevaluación clamp; kept for future use but not enforced.
-      // Default to 20 so it doesn't imply a hard cap.
-      h.statsCap = Number(h.statsCap ?? 20);
       h.photoFit = h.photoFit || { x:50, y:50, scale:1 };
       h.photoSrc = h.photoSrc || '';
       h.desc = h.desc || '';
       h.goal = h.goal || '';
       h.rewardsHistory = Array.isArray(h.rewardsHistory) ? h.rewardsHistory : [];
-      h.challengeCompletions = (h.challengeCompletions && typeof h.challengeCompletions === 'object') ? h.challengeCompletions : {};
       h.pendingRewards = Array.isArray(h.pendingRewards) ? h.pendingRewards : []; // items: { level, createdAt }
       h.tokens = Number(h.tokens ?? 0);
       // keep stats object
       h.stats = h.stats && typeof h.stats === 'object' ? h.stats : {};
-      // Compat: algunos JSON viejos usan INT/SAB... (mayúsculas) y otros usan int/sab... (minúsculas)
-      const statMap = { int:'INT', sab:'SAB', car:'CAR', res:'RES', cre:'CRE' };
-      Object.keys(statMap).forEach(low=>{
-        const up = statMap[low];
-        if (h.stats[low] === undefined && h.stats[up] !== undefined) h.stats[low] = Number(h.stats[up] ?? 0);
-        if (h.stats[up] === undefined && h.stats[low] !== undefined) h.stats[up] = Number(h.stats[low] ?? 0);
-        if (h.stats[low] === undefined) h.stats[low] = 0;
-        if (h.stats[up] === undefined) h.stats[up] = 0;
-      });
+      ['INT','SAB','CAR','RES','CRE'].forEach(k=>{ if (h.stats[k] === undefined) h.stats[k] = 0; });
     });
     return d;
   }
@@ -226,81 +182,9 @@ if (!d.challenges.length){
     if (titleEl) titleEl.textContent = titleMap[route] || route.toUpperCase();
     const dbgRoute = $('#dbgRoute');
     if (dbgRoute) dbgRoute.textContent = route;
-    updateEditButton();
-    applyFichaLock();
-    updateChestUI(currentHero());
   }
 
-  
-  function isEditEnabled(){ return state.role === 'teacher'; }
-  function updateEditButton(){
-    const btn = $('#btnEdicion');
-    if(!btn) return;
-    // Visible (desktop): te permite habilitar edición también para Desafíos/Materias
-    const show = true;
-    btn.hidden = !show;
-    if(isEditEnabled()){
-      btn.textContent = '✎ Editar';
-      btn.classList.remove('pill--danger');
-      btn.classList.add('is-active');
-    }else{
-      btn.textContent = '🔒 Solo ver';
-      btn.classList.add('pill--danger');
-      btn.classList.remove('is-active');
-    }
-  }
-
-  // Cofre (por ficha): siempre visible; muestra badge si hay pendientes
-  function updateChestUI(hero){
-    const btn = $('#btnChest');
-    const badge = $('#chestBadge');
-    if (!btn || !badge) return;
-    const count = hero && Array.isArray(hero.pendingRewards) ? hero.pendingRewards.length : 0;
-    badge.hidden = !(count > 0);
-    badge.textContent = String(count || 1);
-    btn.classList.toggle('is-pending', count > 0);
-  }
-
-  // Locking framework for Fichas (easy to extend: add selectors here)
-  const FICHA_LOCK = {
-    disableSelectors: [
-      '#btnNuevoHeroe',
-      '#btnEliminar',
-      '#btnFotoOverlay',
-      '#inNombre',
-      '#inEdad',
-      '#selRol',
-      '#txtDesc',
-      '#txtMeta',
-      '#btnXpM5', '#btnXpM1', '#btnXpP1', '#btnXpP5',
-      '#actChips button',
-      '#btnWeekReset'
-    ],
-    statsRangeSelector: '#statsBox .statRange',
-    statsSegsSelector: '#statsBox .statSegs'
-  };
-
-  function applyFichaLock(){
-    const locked = !isEditEnabled();
-    document.body.classList.toggle('is-view-locked', locked);
-
-    // Disable only when we are on fichas; other pages don't need this lock yet
-    if(state.route !== 'fichas') return;
-
-    FICHA_LOCK.disableSelectors.forEach(sel=>{
-      $$(sel).forEach(el=>{
-        if('disabled' in el) el.disabled = locked;
-        el.setAttribute('aria-disabled', locked ? 'true' : 'false');
-      });
-    });
-
-    // Stats
-    $$(FICHA_LOCK.statsRangeSelector).forEach(r=>{ r.disabled = locked; });
-    $$(FICHA_LOCK.statsSegsSelector).forEach(seg=>{
-      seg.style.pointerEvents = locked ? 'none' : 'auto';
-    });
-  }
-// Drawer
+  // Drawer
   function isDrawerLayout(){ return window.matchMedia('(max-width: 980px)').matches; }
   function closeDrawer(){ $('#shell').classList.remove('is-drawer-open'); $('#overlay').hidden = true; }
   function openDrawer(){ $('#shell').classList.add('is-drawer-open'); $('#overlay').hidden = false; }
@@ -346,13 +230,6 @@ if (!d.challenges.length){
     const upd = state.data?.meta?.updatedAt ? new Date(state.data.meta.updatedAt).toLocaleString() : '—';
     $('#dbgUpdated').textContent = upd;
     $('#brandSubtitle').textContent = (state.data?.meta?.app || 'LevelUp');
-
-    // Extra debug: build + conteos
-    const subCount = Array.isArray(state.data?.subjects) ? state.data.subjects.length : 0;
-    const chCount  = Array.isArray(state.data?.challenges) ? state.data.challenges.length : 0;
-    $('#dbgBuild') && ($('#dbgBuild').textContent = BUILD_ID);
-    $('#dbgSubCount') && ($('#dbgSubCount').textContent = String(subCount));
-    $('#dbgChCount') && ($('#dbgChCount').textContent = String(chCount));
   }
 
   // Dropdown
@@ -406,8 +283,7 @@ if (!d.challenges.length){
   function autoGrowTextarea(el){
     if (!el) return;
     el.style.height = 'auto';
-    // Más compacto: las notas de descripción/meta no deben crecer demasiado.
-    el.style.height = Math.max(el.scrollHeight, 56) + 'px';
+    el.style.height = Math.max(el.scrollHeight, 80) + 'px';
   }
   function wireAutoGrow(root=document){
     $$('textarea', root).forEach(t => {
@@ -432,7 +308,7 @@ if (!d.challenges.length){
       el.style.padding = '10px 14px';
       el.style.borderRadius = '999px';
       el.style.background = 'rgba(10,10,10,0.92)';
-      el.style.border = '1px solid rgba(0,210,255,0.22)';
+      el.style.border = '1px solid rgba(255,215,120,0.20)';
       el.style.color = 'rgba(255,255,255,0.92)';
       el.style.boxShadow = '0 14px 40px rgba(0,0,0,0.55)';
       el.style.zIndex = '9999';
@@ -594,10 +470,7 @@ if (!d.challenges.length){
 
     const row = document.createElement('div');
     row.className = 'statLine';
-      const segs = Array.from({length:maxVal}, (_,i)=> {
-        const isOn = i < val;
-        return `<span class="statSeg ${isOn ? 'on' : ''}"></span>`;
-      }).join('');
+    const segs = Array.from({length:maxVal}, (_,i)=> `<span class="statSeg ${i < val ? 'on' : ''}"></span>`).join('');
 
     row.innerHTML = `
       <div class="statBadge badge">${label}</div>
@@ -609,22 +482,12 @@ if (!d.challenges.length){
     `;
 
     const range = row.querySelector('.statRange');
-      range.addEventListener('input', ()=>{
-        let v = Math.max(0, Math.min(maxVal, Number(range.value || 0)));
+    range.addEventListener('input', ()=>{
+      const v = Math.max(0, Math.min(maxVal, Number(range.value || 0)));
       hero.stats[key] = v;
-      // mantener también la versión en mayúsculas para compatibilidad
-      const upKey = key.toUpperCase();
-      hero.stats[upKey] = v;
 
       const numEl = row.querySelector('.statNum');
-      if(numEl){
-        numEl.textContent = String(v);
-        // tiny "pop" feedback
-        numEl.classList.remove('is-pop');
-        void numEl.offsetWidth;
-        numEl.classList.add('is-pop');
-        setTimeout(()=> numEl.classList.remove('is-pop'), 220);
-      }
+      if(numEl) numEl.textContent = String(v);
 
       const segWrap = row.querySelector('.statSegs');
       if(segWrap){
@@ -845,13 +708,6 @@ function renderHeroAvatar(hero){
         state.ui.pendingToastHeroId = hero.id;
       }
     }
-
-    // Cofre de recompensas (por ficha)
-    updateChestUI(hero);
-
-    // Apply lock state after rendering dynamic controls (stats/chips)
-    updateEditButton();
-    applyFichaLock();
   }
 
   // --- Recompensas (general + por héroe) ---
@@ -912,16 +768,14 @@ function renderHeroAvatar(hero){
   }
 
   function renderRewards(){
-  const listEl = document.querySelector('#rewardsHistoryList');
-  const emptyEl = document.querySelector('#rewardsHistoryEmpty');
-  const subtitle = document.querySelector('#rewardsHistorySubtitle');
+  const listEl = document.querySelector('#rewardsHeroList');
+  const emptyEl = document.querySelector('#rewardsHeroEmpty');
   const genList = document.querySelector('#rewardsGeneralList');
 
-  // Historial del héroe seleccionado (por fecha)
+  // Columna centro: historial del héroe seleccionado
   if(listEl && emptyEl){
-    const hero = currentHero();
-    if (subtitle) subtitle.textContent = hero ? `Historial de ${hero.name || '—'}` : 'Selecciona un personaje para ver su historial.';
-    renderHeroRewardsList(hero || {}, listEl, emptyEl);
+    const hero = getActiveHero();
+    renderHeroRewardsList(hero, listEl, emptyEl);
   }
 
   // Columna derecha: catálogo de recompensas (más detallado)
@@ -976,235 +830,53 @@ function renderHeroAvatar(hero){
   }
 }
 
-  
-function difficultyLabel(diff){
-  const d = String(diff || '').toLowerCase();
-  if (d === 'easy') return 'Fácil';
-  if (d === 'medium') return 'Medio';
-  if (d === 'hard') return 'Difícil';
-  return '—';
-}
+  function renderChallenges(){
+    const list = $('#challengeList');
+    list.innerHTML = '';
+    const challenges = state.data?.challenges || [];
+    if (!challenges.length){
+      list.innerHTML = '<div class="muted">Sin desafíos.</div>';
+      return;
+    }
+    if (!state.selectedChallengeId) state.selectedChallengeId = challenges[0].id;
 
-
-function ensureChallengeUI(){
-  const menu = $('#subjectMenu');
-  const btn  = $('#btnSubject');
-  const ddWrap = $('#subjectDropdown');
-  if (!menu || !btn) return;
-
-  const subjects = state.data?.subjects || [];
-  menu.innerHTML = '';
-
-  // Single-subject view: default to first subject
-  if (!state.challengeFilter.subjectId && subjects.length){
-    state.challengeFilter.subjectId = subjects[0].id;
-  }
-
-  const addItem = (label, subjectId)=>{
-    const it = document.createElement('button');
-    it.type = 'button';
-    it.className = 'ddItem';
-    it.dataset.subjectId = String(subjectId);
-    it.textContent = label;
-    it.addEventListener('click', (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      state.challengeFilter.subjectId = subjectId;
-      btn.textContent = (label + ' ▾');
-      closeSubjectDropdown();
-      renderChallenges();
-    });
-    menu.appendChild(it);
-  };
-
-  subjects.forEach(s=> addItem(s.name || 'Materia', s.id));
-
-  const activeName = subjects.find(s=>String(s.id)===String(state.challengeFilter.subjectId))?.name || 'Materia';
-  btn.textContent = (activeName + ' ▾');
-
-  // difficulty pills
-  $$('#diffPills [data-diff]').forEach(b=>{
-    const diff = b.dataset.diff;
-    b.classList.toggle('is-active', state.challengeFilter.diff === diff);
-  });
-
-  // Portal-like fixed dropdown (prevents clipping)
-  menu.classList.add('is-portal');
-  if (ddWrap) ddWrap.classList.add('dropdown--portal');
-}
-
-function positionSubjectMenu(){
-  const btn = $('#btnSubject');
-  const menu = $('#subjectMenu');
-  if (!btn || !menu) return;
-
-  const r = btn.getBoundingClientRect();
-  const pad = 10;
-  const desiredW = Math.max(240, Math.round(r.width));
-  let left = Math.min(Math.max(pad, r.left), window.innerWidth - desiredW - pad);
-  let top = r.bottom + 10;
-
-  const maxH = Math.min(window.innerHeight * 0.6, 360);
-  if (top + maxH > window.innerHeight - pad){
-    top = Math.max(pad, r.top - 10 - maxH);
-  }
-
-  menu.style.position = 'fixed';
-  menu.style.left = `${left}px`;
-  menu.style.top = `${top}px`;
-  menu.style.minWidth = `${desiredW}px`;
-  menu.style.maxHeight = `${maxH}px`;
-  menu.style.overflow = 'auto';
-  menu.style.zIndex = '40050';
-}
-
-function openSubjectDropdown(){
-  const dd = $('#subjectDropdown');
-  if (dd) dd.classList.add('is-open');
-  positionSubjectMenu();
-}
-function closeSubjectDropdown(){
-  const dd = $('#subjectDropdown');
-  if (dd) dd.classList.remove('is-open');
-}
-function toggleSubjectDropdown(){
-  const dd = $('#subjectDropdown');
-  if (!dd) return;
-  dd.classList.toggle('is-open');
-  if (dd.classList.contains('is-open')) positionSubjectMenu();
-}
-
-function getFilteredChallenges(){
-  const challenges = Array.isArray(state.data?.challenges) ? state.data.challenges : [];
-  const subjects = Array.isArray(state.data?.subjects) ? state.data.subjects : [];
-  let sub = state.challengeFilter?.subjectId || null;
-  const diff = state.challengeFilter?.diff || null;
-
-  // Single-subject view: if none selected, default to first
-  if (!sub && subjects.length){
-    sub = subjects[0].id;
-    state.challengeFilter.subjectId = sub;
-  }
-
-  return challenges.filter(ch=>{
-    if (sub && String(ch.subjectId || '') !== String(sub)) return false;
-    if (diff && String(ch.difficulty || '') !== diff) return false;
-    return true;
-  });
-}
-
-
-function isChallengeDone(hero, challengeId){
-  if (!hero) return false;
-  hero.challengeCompletions = (hero.challengeCompletions && typeof hero.challengeCompletions === 'object') ? hero.challengeCompletions : {};
-  return !!hero.challengeCompletions[String(challengeId || '')];
-}
-
-function renderChallenges(){
-  ensureChallengeUI();
-
-  const list = $('#challengeList');
-  if (!list) return;
-  list.innerHTML = '';
-
-  const hero = currentHero();
-  const filtered = getFilteredChallenges();
-
-  if (!filtered.length){
-    list.innerHTML = '<div class="muted">Sin desafíos.</div>';
-    state.selectedChallengeId = null;
-    renderChallengeDetail();
-    return;
-  }
-
-  if (!state.selectedChallengeId || !filtered.some(c=>c.id === state.selectedChallengeId)){
-    state.selectedChallengeId = filtered[0].id;
-  }
-
-  filtered.forEach(ch=>{
-    const done = isChallengeDone(hero, ch.id);
-    const item = document.createElement('div');
-    item.className = 'challengeItem' + (done ? ' is-done' : '');
-    item.dataset.diff = String(ch.difficulty || '').toLowerCase();
-    item.style.cursor = 'pointer';
-
-    const subj = ch.subject || (state.data?.subjects || []).find(s=>s.id === ch.subjectId)?.name || '—';
-    const diffLabel = difficultyLabel(ch.difficulty);
-    const pts = Number(ch.points ?? 0);
-
-    item.innerHTML = `
-      <div class="challengeRow">
+    challenges.forEach(ch=>{
+      const item = document.createElement('div');
+      item.className = 'challengeItem';
+      item.style.cursor = 'pointer';
+      item.innerHTML = `
         <div class="challengeName">${escapeHtml(ch.title || 'Desafío')}</div>
-        <div class="challengeMetaRow">
-          <span class="badge badge--diff badge--${escapeHtml(String(ch.difficulty||'').toLowerCase())}">${escapeHtml(diffLabel)}</span>
-          <span class="badge badge--pts">${escapeHtml(String(pts))} XP</span>
-          ${done ? '<span class="badge badge--done">✔</span>' : ''}
-        </div>
-      </div>
-    `;
-
-    item.addEventListener('click', ()=>{
-      state.selectedChallengeId = ch.id;
-      renderChallengeDetail();
+        <div class="challengeMeta">Estado: ${escapeHtml(ch.status || '—')}</div>
+      `;
+      item.addEventListener('click', ()=>{
+        state.selectedChallengeId = ch.id;
+        renderChallengeDetail();
+      });
+      list.appendChild(item);
     });
 
-    list.appendChild(item);
-  });
-
-  renderChallengeDetail();
-}
-
-function renderChallengeDetail(){
-  const hintEl = $('#challengeHint');
-  const bodyEl = $('#challengeBody');
-  const btnComplete = $('#btnChallengeComplete');
-  const btnEdit = $('#btnChallengeEdit');
-  const btnDel = $('#btnChallengeDelete');
-
-  const hero = currentHero();
-  const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
-
-  if (!ch){
-    if (hintEl) hintEl.textContent = 'Selecciona un desafío.';
-    if (bodyEl) bodyEl.textContent = '';
-    if (btnComplete) btnComplete.disabled = true;
-    if (btnEdit) btnEdit.disabled = true;
-    if (btnDel) btnDel.disabled = true;
-    return;
+    renderChallengeDetail();
   }
 
-  const subj = ch.subject || (state.data?.subjects || []).find(s=>s.id === ch.subjectId)?.name || '—';
-  const diffLabel = difficultyLabel(ch.difficulty);
-  const pts = Number(ch.points ?? 0);
-  const done = isChallengeDone(hero, ch.id);
-  const doneAt = done ? hero.challengeCompletions[String(ch.id)].at : null;
-
-  if (hintEl){
-    const datePart = doneAt ? `<span class="badge badge--done">Completado: ${escapeHtml(new Date(doneAt).toLocaleDateString())}</span>` : '';
-    hintEl.innerHTML = `
-      <div class="challengeHintBadges">
-        <span class="badge badge--subj">${escapeHtml(subj)}</span>
-        <span class="badge badge--diff badge--${escapeHtml(String(ch.difficulty||'').toLowerCase())}">${escapeHtml(diffLabel)}</span>
-        <span class="badge badge--pts">${escapeHtml(String(pts))} XP</span>
-        ${datePart}
-      </div>
-    `;
+  // 🔥 AQUÍ está la regla: alumno no ve contenido
+  function renderChallengeDetail(){
+    const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
+    if (!ch){
+      $('#challengeHint').textContent = 'Selecciona un desafío.';
+      $('#challengeBody').textContent = '';
+      return;
+    }
+    if (state.role === 'viewer'){
+      $('#challengeHint').textContent = 'Modo alumno: solo nombre.';
+      $('#challengeBody').textContent = 'Contenido oculto.';
+    }else{
+      $('#challengeHint').textContent = 'Modo edición: detalle visible.';
+      $('#challengeBody').textContent = ch.body || '(sin contenido)';
+    }
   }
-  if (bodyEl){
-    bodyEl.textContent = ch.body || '(sin instrucciones)';
-  }
-
-  if (btnComplete){
-    btnComplete.disabled = !hero;
-    btnComplete.classList.toggle('is-active', done);
-    btnComplete.textContent = done ? '↺ Descompletar' : '✔ Completado';
-  }
-  if (btnEdit) btnEdit.disabled = (state.role !== 'teacher');
-  if (btnDel) btnDel.disabled = (state.role !== 'teacher');
-}
 
   function renderEvents(){
     const grid = $('#eventGrid');
-    if (!grid) return;
     grid.innerHTML = '';
     const evs = state.data?.events || [];
     if (!evs.length){
@@ -1256,12 +928,20 @@ function renderChallengeDetail(){
   // “Edición” sin PIN aún (solo demo)
   function setRole(nextRole){
     state.role = nextRole;
-    try{ document.documentElement.classList.toggle('is-edit', state.role === 'teacher'); }catch(_e){}
-    updateEditButton();
-    applyFichaLock();
+    const btn = $('#btnEdicion');
+    if (state.role === 'teacher'){
+      btn.textContent = '🔓 Edición';
+      btn.classList.remove('pill--danger');
+      btn.classList.add('is-active');
+      toast('Modo edición (demo)');
+    }else{
+      btn.textContent = '🔒 Edición';
+      btn.classList.add('pill--danger');
+      btn.classList.remove('is-active');
+      toast('Modo vista (demo)');
+    }
     updateDataDebug();
     renderChallengeDetail();
-    toast(state.role === 'teacher' ? 'Edición activada' : 'Modo solo ver');
   }
 
   function bumpHeroXp(delta){
@@ -1486,7 +1166,6 @@ function renderChallengeDetail(){
   // --- Level Up Modal + reward claiming ---
   state.ui.levelUpOpen = false;
   state.ui.pendingToastHeroId = null;
-  state.ui.claimingReward = false;
 
   function getNextPendingReward(hero){
     const list = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
@@ -1530,7 +1209,6 @@ function renderChallengeDetail(){
 
     renderRewardPickGrid('main');
     modal.hidden = false;
-    modal.classList.add('is-open');
     state.ui.levelUpOpen = true;
 
     // Mini notification while pending
@@ -1541,7 +1219,6 @@ function renderChallengeDetail(){
     const modal = $('#levelUpModal');
     if (!modal) return;
     modal.hidden = true;
-    modal.classList.remove('is-open');
     state.ui.levelUpOpen = false;
   }
 
@@ -1555,39 +1232,22 @@ function renderChallengeDetail(){
     grid.innerHTML = '';
 
     if (mode === 'stat'){
-      // Header row: title + back
-      const head = document.createElement('div');
-      head.className = 'levelUpStatHead';
-      head.innerHTML = `
-        <div class="levelUpStatHead__title">Elige una stat</div>
-        <button class="pill pill--small pill--ghost" type="button" id="btnLevelUpBack">← Volver</button>
-      `;
-      grid.appendChild(head);
-
-      const backBtn = head.querySelector('#btnLevelUpBack');
-      backBtn?.addEventListener('click', ()=> renderRewardPickGrid('main'));
+      const title = document.createElement('div');
+      title.className = 'muted';
+      title.textContent = 'Elige la estadística a subir (+1):';
+      grid.appendChild(title);
 
       const statKeys = ['INT','SAB','CAR','RES','CRE'];
       statKeys.forEach(k=>{
-        const lowKey = k.toLowerCase();
-        // IMPORTANT: UI uses lowercase keys; prefer them to avoid desync issues.
-        const curVal = Number((hero.stats?.[lowKey] ?? hero.stats?.[k] ?? 0));
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'rewardPick rewardPick--stat';
+        const btn = document.createElement('div');
+        btn.className = 'rewardPick';
         btn.innerHTML = `
           <div class="rewardPick__title">${k}</div>
-          <div class="rewardPick__meta"><span class="badge badge--mini">${curVal}</span><span class="rewardPick__plus">+1</span></div>
+          <div class="rewardPick__desc">Sube ${k} de ${Number(hero.stats?.[k] ?? 0)} a ${Number(hero.stats?.[k] ?? 0) + 1}</div>
         `;
         btn.addEventListener('click', ()=>{
           hero.stats = hero.stats && typeof hero.stats === 'object' ? hero.stats : {};
-          // Prefer lowercase to match what is rendered.
-          const current = Number((hero.stats[lowKey] ?? hero.stats[k] ?? 0));
-          const next = Math.min(20, current + 1);
-          // Mantener sincronizadas llaves mayúsculas y minúsculas (UI usa minúsculas)
-          hero.stats[k] = next;
-          hero.stats[lowKey] = next;
+          hero.stats[k] = Math.min(20, Number(hero.stats[k] ?? 0) + 1);
 
           claimPendingReward({
             rewardId: 'stat+1',
@@ -1597,29 +1257,31 @@ function renderChallengeDetail(){
         });
         grid.appendChild(btn);
       });
+
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'pill pill--small pill--ghost';
+      back.textContent = '← Volver';
+      back.style.marginTop = '8px';
+      back.addEventListener('click', ()=> renderRewardPickGrid('main'));
+      grid.appendChild(back);
       return;
     }
 
     // main rewards
     const opts = [
-      { id:'stat+1', icon:'⚡', title:'+1 a una estadística', desc:'Elige una stat para subir en +1.' },
-      { id:'weekMax+10', icon:'📈', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal.' },
-      { id:'token+1', icon:'🪙', title:'+1 comodín', desc:'Un comodín para canjear después.' },
-      { id:'perk', icon:'✨', title:'Privilegio en clase', desc:'Un privilegio acordado contigo.' }
+      { id:'stat+1', title:'+1 punto a una estadística', desc:'Elige una stat para aumentar en +1.' },
+      { id:'weekMax+10', title:'+10 al límite semanal', desc:'Aumenta el máximo de XP semanal de actividades pequeñas.' },
+      { id:'token+1', title:'+1 comodín', desc:'Un comodín para canjear después (reintento, pase, etc.).' },
+      { id:'perk', title:'Privilegio en clase', desc:'Un privilegio acordado contigo (ej. elegir equipo, música 5 min).' }
     ];
 
     opts.forEach(o=>{
-      const div = document.createElement('button');
-      div.type = 'button';
+      const div = document.createElement('div');
       div.className = 'rewardPick';
       div.innerHTML = `
-        <div class="rewardPick__row">
-          <div class="rewardPick__icon" aria-hidden="true">${escapeHtml(o.icon)}</div>
-          <div class="rewardPick__main">
-            <div class="rewardPick__title">${escapeHtml(o.title)}</div>
-            <div class="rewardPick__desc">${escapeHtml(o.desc)}</div>
-          </div>
-        </div>
+        <div class="rewardPick__title">${escapeHtml(o.title)}</div>
+        <div class="rewardPick__desc">${escapeHtml(o.desc)}</div>
       `;
       div.addEventListener('click', ()=>{
         if (!pending) return;
@@ -1647,52 +1309,30 @@ function renderChallengeDetail(){
   function claimPendingReward({rewardId, title, badge}){
     const hero = currentHero();
     if (!hero) return;
+    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
+    const pending = hero.pendingRewards.shift(); // remove first
+    if (!pending) return;
 
-    // Guard: prevent double-claim / multiple handlers firing
-    if (state.ui.claimingReward) return;
-    state.ui.claimingReward = true;
+    hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
+    hero.rewardsHistory.push({
+      level: pending.level,
+      rewardId,
+      title,
+      badge,
+      date: new Date().toISOString()
+    });
 
-    // Disable UI immediately
-    const grid = $('#rewardPickGrid');
-    if (grid){
-      grid.classList.add('is-claiming');
-      grid.querySelectorAll('button').forEach(b=>{ b.disabled = true; });
-    }
+    saveLocal(state.data);
+    if (state.dataSource === 'remote') state.dataSource = 'local';
+    updateDataDebug();
+    renderAll();
 
-    // Close the modal right away so you can't chain-claim quickly
     closeLevelUpModal();
+    toast('✅ Recompensa reclamada');
 
-    try{
-      hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
-      const pending = hero.pendingRewards.shift(); // FIFO
-      if (!pending) return;
-
-      hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
-      hero.rewardsHistory.push({
-        level: pending.level,
-        rewardId,
-        title,
-        badge,
-        date: new Date().toISOString()
-      });
-
-      saveLocal(state.data);
-      if (state.dataSource === 'remote') state.dataSource = 'local';
-      updateDataDebug();
-      renderAll();
-
-      toast('✅ Recompensa reclamada');
-
-      // If more pending rewards remain, just nudge (do not auto-open)
-      if (hero.pendingRewards.length){
-        setTimeout(()=> toast('🎁 Te falta reclamar otra recompensa'), 650);
-      }
-    } finally {
-      state.ui.claimingReward = false;
-      if (grid){
-        grid.classList.remove('is-claiming');
-        grid.querySelectorAll('button').forEach(b=>{ b.disabled = false; });
-      }
+    // If more pending rewards remain, nudge again
+    if (hero.pendingRewards.length){
+      setTimeout(()=> toast('🎁 Te falta reclamar otra recompensa'), 650);
     }
   }
 
@@ -1702,11 +1342,7 @@ function renderChallengeDetail(){
       const modal = $('#confirmModal');
       if (!modal){ resolve(window.confirm(message)); return; }
       $('#confirmTitle').textContent = title;
-      const msgEl = $('#confirmMessage');
-      if (msgEl){
-        msgEl.textContent = message || '';
-        msgEl.style.display = message ? '' : 'none';
-      }
+      $('#confirmMessage').textContent = message;
       const okBtn = $('#btnConfirmOk');
       const cancelBtn = $('#btnConfirmCancel');
       okBtn.textContent = okText;
@@ -1768,17 +1404,6 @@ function bind(){
       });
       window.addEventListener('resize', closeTopMore);
       window.addEventListener('orientationchange', ()=>{ closeTopMore(); closeDrawer(); });
-    }
-
-    // Mobile: botón directo a Recompensas (trofeo). Más confiable que el menú "..." en iOS.
-    const btnMobileRewards = $('#btnMobileRewards');
-    if (btnMobileRewards){
-      btnMobileRewards.addEventListener('click', (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        setActiveRoute('recompensas');
-        closeDrawer();
-      });
     }
 
     $$('.segmented__btn').forEach(b=>{
@@ -1852,390 +1477,6 @@ function bind(){
       setRole(state.role === 'viewer' ? 'teacher' : 'viewer');
     });
 
-    // Cofre de recompensas (por ficha):
-    // - Si hay recompensas pendientes, abre el modal de level-up para reclamar.
-    // - Si no hay pendientes, manda a la pestaña de Recompensas (historial con fecha).
-    $('#btnChest')?.addEventListener('click', (e)=>{
-      e.preventDefault();
-      e.stopPropagation();
-      const h = currentHero();
-      if (!h) return;
-      h.pendingRewards = Array.isArray(h.pendingRewards) ? h.pendingRewards : [];
-      if (h.pendingRewards.length){
-        openLevelUpModal();
-      } else {
-        setActiveRoute('recompensas');
-      }
-    });
-
-// --- Desafíos UI ---
-const btnSubject = $('#btnSubject');
-const subjectMenu = $('#subjectMenu');
-if (btnSubject && subjectMenu){
-  btnSubject.addEventListener('click', (e)=>{
-    e.preventDefault(); e.stopPropagation();
-    toggleSubjectDropdown();
-  });
-  subjectMenu.addEventListener('click', (e)=> e.stopPropagation());
-  document.addEventListener('click', ()=> closeSubjectDropdown());
-  document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeSubjectDropdown(); });
-}
-
-// Difficulty filter pills
-$$('#diffPills [data-diff]').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    const diff = b.dataset.diff;
-    const was = state.challengeFilter.diff;
-    state.challengeFilter.diff = (was === diff) ? null : diff;
-    $$('#diffPills [data-diff]').forEach(x=> x.classList.toggle('is-active', state.challengeFilter.diff === x.dataset.diff));
-    renderChallenges();
-  });
-});
-
-// Completar / descompletar desafío (reversión real)
-$('#btnChallengeComplete')?.addEventListener('click', ()=>{
-  const hero = currentHero();
-  const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
-  if (!hero || !ch) return;
-
-  hero.challengeCompletions = (hero.challengeCompletions && typeof hero.challengeCompletions === 'object') ? hero.challengeCompletions : {};
-  const key = String(ch.id);
-  const pts = Number(ch.points ?? 0);
-
-  const applyNegativeXp = (deltaNeg)=>{
-    hero.xp = Number(hero.xp ?? 0) + Number(deltaNeg || 0);
-    hero.xpMax = Number(hero.xpMax ?? 100);
-    hero.level = Number(hero.level ?? 1);
-
-    while (hero.xp < 0 && hero.level > 1){
-      hero.level -= 1;
-      hero.xp += hero.xpMax;
-    }
-    if (hero.xp < 0) hero.xp = 0;
-
-    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
-    hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
-    hero.pendingRewards = hero.pendingRewards.filter(r => Number(r.level||0) <= hero.level);
-    hero.rewardsHistory = hero.rewardsHistory.filter(r => Number(r.level||0) <= hero.level);
-
-    saveLocal(state.data);
-    if (state.dataSource === 'remote') state.dataSource = 'local';
-    updateDataDebug();
-    renderHeroList();
-    renderHeroDetail();
-  };
-
-  if (hero.challengeCompletions[key]){
-    const awarded = Number(hero.challengeCompletions[key].points ?? pts);
-    delete hero.challengeCompletions[key];
-
-    hero.weekXp = Number(hero.weekXp ?? 0) - awarded;
-    if (hero.weekXp < 0) hero.weekXp = 0;
-
-    applyNegativeXp(-awarded);
-    toast('Desafío descompletado');
-  } else {
-    const max = Number(hero.weekXpMax || DEFAULT_WEEK_XP_MAX || 40);
-    hero.weekXp = Number(hero.weekXp || 0);
-    const remaining = max - hero.weekXp;
-    if (remaining <= 0){
-      toast('Ya llegaste al máximo de XP semanal...');
-      return;
-    }
-    if (pts > remaining){
-      toast(`Solo quedan ${remaining} XP esta semana`);
-      return;
-    }
-
-    hero.challengeCompletions[key] = { at: Date.now(), points: pts };
-    hero.weekXp += pts;
-    bumpHeroXp(pts);
-    toast('Desafío completado');
-  }
-
-  saveLocal(state.data);
-  renderChallenges();
-});
-
-// --- CRUD: Materias y Desafíos ---
-function pointsForDifficulty(diff){
-  const d = String(diff || '').toLowerCase();
-  if (d === 'easy') return 10;
-  if (d === 'medium') return 20;
-  if (d === 'hard') return 40;
-  return 0;
-}
-
-function refreshChallengeUI(){
-  ensureChallengeUI();
-  renderChallenges();
-  renderChallengeDetail();
-  updateDataDebug();
-}
-
-// Materias modal
-function openSubjectsModal(){
-  if (state.role !== 'teacher'){ toast('Activa edición para modificar materias'); return; }
-  const m = $('#subjectsModal');
-  if (!m) return;
-  renderSubjectsModal();
-  m.hidden = false;
-  setTimeout(()=> $('#inNewSubject')?.focus(), 50);
-}
-function closeSubjectsModal(){
-  const m = $('#subjectsModal');
-  if (!m) return;
-  m.hidden = true;
-}
-function renderSubjectsModal(){
-  const box = $('#subjectsList');
-  if (!box) return;
-  box.innerHTML = '';
-  const subjects = Array.isArray(state.data?.subjects) ? state.data.subjects : [];
-  subjects.forEach(sub=>{
-    const row = document.createElement('div');
-    row.className = 'subjectRow';
-    row.innerHTML = `
-      <div class="subjectRow__name">${escapeHtml(sub.name || 'Materia')}</div>
-      <div class="subjectRow__actions">
-        <button class="pill pill--small pill--ghost" type="button" data-act="rename">Renombrar</button>
-        <button class="pill pill--small pill--danger" type="button" data-act="delete">Eliminar</button>
-      </div>
-    `;
-    row.querySelector('[data-act="rename"]').addEventListener('click', async ()=>{
-      const next = prompt('Nuevo nombre de la materia:', sub.name || '');
-      if (!next) return;
-      sub.name = String(next).trim();
-      // Update denormalized subject names inside challenges (optional but keeps titles nice)
-      (state.data?.challenges || []).forEach(c=>{ if (String(c.subjectId) === String(sub.id)) c.subject = sub.name; });
-      saveLocal(state.data);
-      renderSubjectsModal();
-      refreshChallengeUI();
-      toast('Materia actualizada');
-    });
-    row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
-      const ok = await openConfirmModal({ title:'Eliminar materia', message:`Se eliminará "${sub.name}" y sus desafíos.`, okText:'Eliminar', cancelText:'Cancelar' });
-      if (!ok) return;
-      state.data.subjects = subjects.filter(s=> String(s.id) !== String(sub.id));
-      state.data.challenges = (state.data?.challenges || []).filter(c=> String(c.subjectId) !== String(sub.id));
-      // Fix filter
-      if (state.challengeFilter.subjectId && String(state.challengeFilter.subjectId) === String(sub.id)){
-        state.challengeFilter.subjectId = state.data.subjects[0]?.id || null;
-      }
-      saveLocal(state.data);
-      renderSubjectsModal();
-      refreshChallengeUI();
-      toast('Materia eliminada');
-    });
-    box.appendChild(row);
-  });
-}
-
-// Desafío modal
-let editingChallengeId = null;
-function openChallengeModal(mode='create', ch=null){
-  if (state.role !== 'teacher'){ toast('Activa edición para crear/editar desafíos'); return; }
-  const m = $('#challengeModal');
-  if (!m) return;
-  const title = $('#challengeModalTitle');
-  if (title) title.textContent = (mode === 'edit') ? 'Editar desafío' : 'Nuevo desafío';
-  editingChallengeId = (mode === 'edit' && ch) ? ch.id : null;
-
-  // Populate subject select
-  const selSub = $('#inChSubject');
-  const subjects = Array.isArray(state.data?.subjects) ? state.data.subjects : [];
-  if (selSub){
-    selSub.innerHTML = '';
-    subjects.forEach(s=>{
-      const opt = document.createElement('option');
-      opt.value = String(s.id);
-      opt.textContent = s.name || 'Materia';
-      selSub.appendChild(opt);
-    });
-  }
-
-  const selDiff = $('#inChDiff');
-  const inPts = $('#inChPoints');
-  const inTitle = $('#inChTitle');
-  const inBody = $('#inChBody');
-
-  const chosenSubject = ch?.subjectId || state.challengeFilter.subjectId || subjects[0]?.id || '';
-  if (selSub) selSub.value = String(chosenSubject);
-  const chosenDiff = String(ch?.difficulty || state.challengeFilter.diff || 'easy').toLowerCase();
-  if (selDiff) selDiff.value = chosenDiff;
-  if (inPts) inPts.value = String(ch?.points ?? pointsForDifficulty(chosenDiff));
-  if (inTitle) inTitle.value = String(ch?.title || '');
-  if (inBody) inBody.value = String(ch?.body || '');
-
-  const syncPts = ()=>{
-    if (!selDiff || !inPts) return;
-    const d = String(selDiff.value || '').toLowerCase();
-    // Solo auto-ajusta si el usuario no ha tocado puntos o si coincide con un preset
-    const cur = Number(inPts.value || 0);
-    const presets = [10,20,40];
-    if (!inPts.dataset.touched || presets.includes(cur)){
-      inPts.value = String(pointsForDifficulty(d));
-    }
-  };
-  selDiff?.addEventListener('change', syncPts);
-  inPts?.addEventListener('input', ()=>{ if (inPts) inPts.dataset.touched = '1'; });
-
-  m.hidden = false;
-  setTimeout(()=> inTitle?.focus(), 50);
-}
-
-function closeChallengeModal(){
-  const m = $('#challengeModal');
-  if (!m) return;
-  m.hidden = true;
-  editingChallengeId = null;
-  const inPts = $('#inChPoints');
-  if (inPts) delete inPts.dataset.touched;
-}
-
-async function saveChallengeFromModal(){
-  const selSub = $('#inChSubject');
-  const selDiff = $('#inChDiff');
-  const inPts = $('#inChPoints');
-  const inTitle = $('#inChTitle');
-  const inBody = $('#inChBody');
-  if (!selSub || !selDiff || !inPts || !inTitle || !inBody) return;
-
-  const subjectId = String(selSub.value || '');
-  const subjName = (state.data?.subjects || []).find(s=> String(s.id) === String(subjectId))?.name || 'Materia';
-  const difficulty = String(selDiff.value || 'easy').toLowerCase();
-  const points = Math.max(0, Number(inPts.value || 0));
-  const title = String(inTitle.value || '').trim();
-  const body = String(inBody.value || '').trim();
-  if (!title){ toast('Ponle un título al desafío'); return; }
-
-  state.data.challenges = Array.isArray(state.data?.challenges) ? state.data.challenges : [];
-
-  if (editingChallengeId){
-    const ch = state.data.challenges.find(x=> String(x.id) === String(editingChallengeId));
-    if (!ch) return;
-    ch.subjectId = subjectId;
-    ch.subject = subjName;
-    ch.difficulty = difficulty;
-    ch.points = points;
-    ch.title = title;
-    ch.body = body;
-    toast('Desafío actualizado');
-  } else {
-    const newCh = { id: uid('c'), subjectId, subject: subjName, difficulty, points, title, body };
-    state.data.challenges.unshift(newCh);
-    state.selectedChallengeId = newCh.id;
-    toast('Desafío creado');
-  }
-
-  saveLocal(state.data);
-  if (state.dataSource === 'remote') state.dataSource = 'local';
-  closeChallengeModal();
-  // Por defecto, filtra a la materia del desafío guardado
-  state.challengeFilter.subjectId = subjectId;
-  ensureChallengeUI();
-  renderChallenges();
-  renderChallengeDetail();
-}
-
-async function deleteSelectedChallenge(){
-  if (state.role !== 'teacher'){ toast('Activa edición para borrar'); return; }
-  const ch = (state.data?.challenges || []).find(x=> x.id === state.selectedChallengeId);
-  if (!ch) return;
-  const ok = await openConfirmModal({ title:'Eliminar desafío', message:`Eliminar "${ch.title}"?`, okText:'Eliminar', cancelText:'Cancelar' });
-  if (!ok) return;
-  state.data.challenges = (state.data?.challenges || []).filter(x=> x.id !== ch.id);
-  state.selectedChallengeId = null;
-  saveLocal(state.data);
-  renderChallenges();
-  renderChallengeDetail();
-  toast('Desafío eliminado');
-}
-
-// Menú "⋯" para móviles
-function openChallengeMoreMenu(){
-  const btn = $('#btnChallengeMore');
-  const menu = $('#challengeMoreMenu');
-  if (!btn || !menu) return;
-  if (state.role !== 'teacher'){ return; }
-
-  const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
-  menu.innerHTML = '';
-
-  const mk = (label, onClick)=>{
-    const it = document.createElement('button');
-    it.type = 'button';
-    it.className = 'ddItem';
-    it.textContent = label;
-    it.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeChallengeMoreMenu(); onClick(); });
-    menu.appendChild(it);
-  };
-
-  mk('✎ Editar', ()=>{ if (ch) openChallengeModal('edit', ch); });
-  mk('🗑 Eliminar', ()=> deleteSelectedChallenge());
-
-  const r = btn.getBoundingClientRect();
-  const pad = 10;
-  const w = 220;
-  let left = Math.min(Math.max(pad, r.right - w), window.innerWidth - w - pad);
-  let top = r.bottom + 10;
-  const maxH = Math.min(window.innerHeight * 0.6, 260);
-  if (top + maxH > window.innerHeight - pad){ top = Math.max(pad, r.top - 10 - maxH); }
-  menu.style.left = `${left}px`;
-  menu.style.top = `${top}px`;
-  menu.style.maxHeight = `${maxH}px`;
-  menu.style.overflow = 'auto';
-  menu.hidden = false;
-}
-function closeChallengeMoreMenu(){
-  const menu = $('#challengeMoreMenu');
-  if (!menu) return;
-  menu.hidden = true;
-}
-
-// Bind: Materias/Desafíos
-$('#btnManageSubjects')?.addEventListener('click', openSubjectsModal);
-$('#btnAddChallenge')?.addEventListener('click', ()=> openChallengeModal('create'));
-$('#btnChallengeEdit')?.addEventListener('click', ()=>{
-  const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
-  if (!ch) return toast('Selecciona un desafío');
-  openChallengeModal('edit', ch);
-});
-$('#btnChallengeDelete')?.addEventListener('click', deleteSelectedChallenge);
-$('#btnChallengeMore')?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); openChallengeMoreMenu(); });
-
-// Cierra el menú contextual al tocar fuera
-document.addEventListener('click', (e)=>{
-  const menu = $('#challengeMoreMenu');
-  const btn = $('#btnChallengeMore');
-  if (!menu || menu.hidden) return;
-  if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
-  closeChallengeMoreMenu();
-});
-
-// Modal: materias
-$('#btnCloseSubjects')?.addEventListener('click', closeSubjectsModal);
-$('#subjectsBackdrop')?.addEventListener('click', closeSubjectsModal);
-$('#btnAddSubject')?.addEventListener('click', ()=>{
-  if (state.role !== 'teacher') return;
-  const inp = $('#inNewSubject');
-  const name = String(inp?.value || '').trim();
-  if (!name) return;
-  state.data.subjects = Array.isArray(state.data.subjects) ? state.data.subjects : [];
-  state.data.subjects.push({ id: uid('sub'), name });
-  inp.value = '';
-  saveLocal(state.data);
-  renderSubjectsModal();
-  refreshChallengeUI();
-});
-$('#inNewSubject')?.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); $('#btnAddSubject')?.click(); }});
-
-// Modal: desafío
-$('#btnCloseChallengeModal')?.addEventListener('click', closeChallengeModal);
-$('#challengeBackdrop')?.addEventListener('click', closeChallengeModal);
-$('#btnCancelChallenge')?.addEventListener('click', closeChallengeModal);
-$('#btnSaveChallenge')?.addEventListener('click', saveChallengeFromModal);
-
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 
     $('#inRol').addEventListener('click', openRoleModal);
@@ -2247,60 +1488,6 @@ $('#btnSaveChallenge')?.addEventListener('click', saveChallengeFromModal);
     });
     $('#btnCloseRoleModal').addEventListener('click', closeRoleModal);
     $$('[data-close-role-modal]').forEach(el=> el.addEventListener('click', closeRoleModal));
-
-    // --- Bind de campos de ficha (Nombre/Edad/Descripción/Meta/etc.) ---
-    // Antes faltaba el wiring y por eso "Nombre" no actualizaba la ficha.
-    let heroSaveTimer = null;
-    const scheduleHeroSave = (immediate=false)=>{
-      const commit = ()=>{
-        saveLocal(state.data);
-        if (state.dataSource === 'remote') state.dataSource = 'local';
-        updateDataDebug();
-      };
-      if (immediate){ commit(); return; }
-      clearTimeout(heroSaveTimer);
-      heroSaveTimer = setTimeout(commit, 220);
-    };
-
-    const bindHeroField = (sel, applyFn, {rerenderList=false, updateHeader=false}={})=>{
-      const el = document.querySelector(sel);
-      if (!el) return;
-      const handler = ()=>{
-        const h = currentHero();
-        if (!h) return;
-        try{ applyFn(el, h); }catch(_e){}
-        if (updateHeader){
-          const t = document.getElementById('heroName');
-          if (t) t.textContent = (h.name || 'NUEVO HÉROE').toUpperCase();
-        }
-        scheduleHeroSave(false);
-        if (rerenderList) renderHeroList();
-      };
-      el.addEventListener('input', handler);
-      el.addEventListener('change', handler);
-      // Para que al salir se "limpie" espacios
-      el.addEventListener('blur', ()=>{
-        const h = currentHero();
-        if (!h) return;
-        if (sel === '#inNombre'){
-          const v = String(el.value || '').trim();
-          el.value = v;
-          h.name = v;
-          const t = document.getElementById('heroName');
-          if (t) t.textContent = (h.name || 'NUEVO HÉROE').toUpperCase();
-          renderHeroList();
-          scheduleHeroSave(true);
-        }
-      });
-    };
-
-    bindHeroField('#inNombre', (el,h)=>{ h.name = String(el.value || ''); }, {rerenderList:true, updateHeader:true});
-    bindHeroField('#inEdad', (el,h)=>{ h.age = el.value === '' ? '' : Number(el.value); });
-    bindHeroField('#txtDesc', (el,h)=>{ h.desc = String(el.value || ''); });
-    bindHeroField('#txtMeta', (el,h)=>{ h.goal = String(el.value || ''); });
-    bindHeroField('#txtBien', (el,h)=>{ h.goodAt = String(el.value || ''); });
-    bindHeroField('#txtMejorar', (el,h)=>{ h.improve = String(el.value || ''); });
-
 
     // Level Up modal backdrop
     $('#levelUpBackdrop')?.addEventListener('click', closeLevelUpModal);
@@ -2388,8 +1575,8 @@ $('#btnSaveChallenge')?.addEventListener('click', saveChallengeFromModal);
       if (!h) return;
 
       const ok = await openConfirmModal({
-        title: `Eliminar ficha: ${h.name || '—'}`,
-        message: '',
+        title: 'Eliminar ficha',
+        message: `¿Eliminar a "${h.name || 'este héroe'}"?\n\nEsto borra la ficha. Solo se puede recuperar con un respaldo (JSON).`,
         okText: 'Eliminar',
         cancelText: 'Cancelar'
       });
@@ -2415,23 +1602,25 @@ $('#btnSaveChallenge')?.addEventListener('click', saveChallengeFromModal);
       photoInput.click();
     };
 
-    // Icono overlay (hover en desktop / siempre visible en touch)
-    const btnFotoOverlay = $('#btnFotoOverlay');
-    btnFotoOverlay?.addEventListener('click', (e)=>{
+    $('#btnPonerFoto')?.addEventListener('click', (e)=>{
       e.preventDefault();
-      e.stopPropagation();
-      // openPhotoModal ya abre selector si no hay imagen
+      openPhotoPicker();
+    });
+    $('#btnEditarFoto')?.addEventListener('click', (e)=>{
+      e.preventDefault();
       openPhotoModal();
     });
-
-    // En iPad/iPhone también es cómodo que tocar la imagen abra el editor
-    const avatarFrame = $('#avatarFrame');
-    avatarFrame?.addEventListener('click', (e)=>{
-      // evita doble trigger cuando se toca el botón
-      if (e.target && (e.target === btnFotoOverlay)) return;
-      if (!window.matchMedia('(hover: none)').matches) return; // solo touch
-      if (!isEditEnabled()) return;
-      openPhotoModal();
+    $('#btnQuitarFoto')?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const h = currentHero();
+      if (!h) return;
+      h.photo = '';
+      h.img = '';
+      h.image = '';
+      saveLocal();
+      renderHeroDetail(h);
+      renderHeroList();
+      toast('Foto eliminada.');
     });
 
     photoInput?.addEventListener('change', async ()=>{
@@ -2461,27 +1650,18 @@ $('#btnSaveChallenge')?.addEventListener('click', saveChallengeFromModal);
   }
 
   async function init(){
-    // Captura errores para que en iPhone no se sienta "se rompió" sin pista
-    window.addEventListener('error', (ev)=>{
-      try{
-        const msg = (ev && ev.message) ? String(ev.message) : 'Error';
-        toast(`⚠️ ${msg}`);
-      }catch(e){}
-    });
-    window.addEventListener('unhandledrejection', (ev)=>{
-      try{
-        const msg = (ev && ev.reason) ? String(ev.reason) : 'Promesa rechazada';
-        toast(`⚠️ ${msg}`);
-      }catch(e){}
-    });
-
-    bind();
-    setActiveRoute(state.route);
-    updateDeviceDebug();
-    syncDetailsUI();
-    await loadData({forceRemote:false});
-    setRole(state.role);
-    syncDetailsUI();
+    try{
+      bind();
+      setActiveRoute(state.route);
+      updateDeviceDebug();
+      syncDetailsUI();
+      await loadData({forceRemote:false});
+      setRole(state.role);
+      syncDetailsUI();
+    }finally{
+      // Quita el splash incluso si falló algo (para no bloquear la app)
+      await finishSplash();
+    }
   }
 
   init();
