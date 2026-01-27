@@ -1949,3 +1949,30 @@ body.is-view-locked #btnQuitarFoto{
   .splash__logo, .splash__glow{ animation: none !important; }
   .splash{ transition: none !important; }
 }
+
+/* ===== LevelUP_V2_00.029 — Ajustes Desafíos (legibilidad y chips) ===== */
+/* Evita encimado de badges (ej. "Tecnología" + "Difícil") en el encabezado de detalle */
+.challengeDetailMeta{ align-items:flex-start; }
+
+.challengeHintBadges{
+  display:flex !important;
+  flex-wrap:wrap;
+  gap:10px !important;
+  align-items:center;
+  margin-top:6px;
+}
+
+.challengeHintBadges .badge{
+  margin:0 !important;
+  white-space:nowrap;
+}
+
+/* Respaldo extra: aunque el layout falle, que nunca se encimen */
+.challengeHintBadges .badge + .badge{ margin-left: 0 !important; }
+
+/* Lista: un poco más de aire entre título y chips */
+.challengeRow{ gap:10px; }
+.challengeMetaRow{ gap:8px; }
+
+/* Detail: que el bloque de badges no se comprima raro */
+.challengeDetailMeta > .challengeHintBadges{ min-width: 0; }
