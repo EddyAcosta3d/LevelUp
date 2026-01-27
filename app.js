@@ -80,7 +80,7 @@ function makeBlankHero(group){
   };
 
   // Build marker (para confirmar en GitHub que sí cargó la versión correcta)
-  const BUILD_ID = 'v20-desafios';
+  const BUILD_ID = 'v22-desafios-ui';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -236,10 +236,9 @@ if (!d.challenges.length){
   function updateEditButton(){
     const btn = $('#btnEdicion');
     if(!btn) return;
-    // Only show edit toggle on Fichas
-    const show = (state.route === 'fichas');
+    // Visible (desktop): te permite habilitar edición también para Desafíos/Materias
+    const show = true;
     btn.hidden = !show;
-    if(!show) return;
     if(isEditEnabled()){
       btn.textContent = '✎ Editar';
       btn.classList.remove('pill--danger');
@@ -1125,6 +1124,7 @@ function renderChallenges(){
     const done = isChallengeDone(hero, ch.id);
     const item = document.createElement('div');
     item.className = 'challengeItem' + (done ? ' is-done' : '');
+    item.dataset.diff = String(ch.difficulty || '').toLowerCase();
     item.style.cursor = 'pointer';
 
     const subj = ch.subject || (state.data?.subjects || []).find(s=>s.id === ch.subjectId)?.name || '—';
@@ -1256,6 +1256,7 @@ function renderChallengeDetail(){
   // “Edición” sin PIN aún (solo demo)
   function setRole(nextRole){
     state.role = nextRole;
+    try{ document.documentElement.classList.toggle('is-edit', state.role === 'teacher'); }catch(_e){}
     updateEditButton();
     applyFichaLock();
     updateDataDebug();
@@ -1956,11 +1957,284 @@ $('#btnChallengeComplete')?.addEventListener('click', ()=>{
   renderChallenges();
 });
 
-// Placeholders (se implementan en la siguiente fase)
-$('#btnAddChallenge')?.addEventListener('click', ()=> toast('Crear desafío: próximo paso'));
-$('#btnManageSubjects')?.addEventListener('click', ()=> toast('Editar materias: próximo paso'));
-$('#btnChallengeEdit')?.addEventListener('click', ()=> toast('Editar desafío: próximo paso'));
-$('#btnChallengeDelete')?.addEventListener('click', ()=> toast('Borrar desafío: próximo paso'));
+// --- CRUD: Materias y Desafíos ---
+function pointsForDifficulty(diff){
+  const d = String(diff || '').toLowerCase();
+  if (d === 'easy') return 10;
+  if (d === 'medium') return 20;
+  if (d === 'hard') return 40;
+  return 0;
+}
+
+function refreshChallengeUI(){
+  ensureChallengeUI();
+  renderChallenges();
+  renderChallengeDetail();
+  updateDataDebug();
+}
+
+// Materias modal
+function openSubjectsModal(){
+  if (state.role !== 'teacher'){ toast('Activa edición para modificar materias'); return; }
+  const m = $('#subjectsModal');
+  if (!m) return;
+  renderSubjectsModal();
+  m.hidden = false;
+  setTimeout(()=> $('#inNewSubject')?.focus(), 50);
+}
+function closeSubjectsModal(){
+  const m = $('#subjectsModal');
+  if (!m) return;
+  m.hidden = true;
+}
+function renderSubjectsModal(){
+  const box = $('#subjectsList');
+  if (!box) return;
+  box.innerHTML = '';
+  const subjects = Array.isArray(state.data?.subjects) ? state.data.subjects : [];
+  subjects.forEach(sub=>{
+    const row = document.createElement('div');
+    row.className = 'subjectRow';
+    row.innerHTML = `
+      <div class="subjectRow__name">${escapeHtml(sub.name || 'Materia')}</div>
+      <div class="subjectRow__actions">
+        <button class="pill pill--small pill--ghost" type="button" data-act="rename">Renombrar</button>
+        <button class="pill pill--small pill--danger" type="button" data-act="delete">Eliminar</button>
+      </div>
+    `;
+    row.querySelector('[data-act="rename"]').addEventListener('click', async ()=>{
+      const next = prompt('Nuevo nombre de la materia:', sub.name || '');
+      if (!next) return;
+      sub.name = String(next).trim();
+      // Update denormalized subject names inside challenges (optional but keeps titles nice)
+      (state.data?.challenges || []).forEach(c=>{ if (String(c.subjectId) === String(sub.id)) c.subject = sub.name; });
+      saveLocal(state.data);
+      renderSubjectsModal();
+      refreshChallengeUI();
+      toast('Materia actualizada');
+    });
+    row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+      const ok = await openConfirmModal({ title:'Eliminar materia', message:`Se eliminará "${sub.name}" y sus desafíos.`, okText:'Eliminar', cancelText:'Cancelar' });
+      if (!ok) return;
+      state.data.subjects = subjects.filter(s=> String(s.id) !== String(sub.id));
+      state.data.challenges = (state.data?.challenges || []).filter(c=> String(c.subjectId) !== String(sub.id));
+      // Fix filter
+      if (state.challengeFilter.subjectId && String(state.challengeFilter.subjectId) === String(sub.id)){
+        state.challengeFilter.subjectId = state.data.subjects[0]?.id || null;
+      }
+      saveLocal(state.data);
+      renderSubjectsModal();
+      refreshChallengeUI();
+      toast('Materia eliminada');
+    });
+    box.appendChild(row);
+  });
+}
+
+// Desafío modal
+let editingChallengeId = null;
+function openChallengeModal(mode='create', ch=null){
+  if (state.role !== 'teacher'){ toast('Activa edición para crear/editar desafíos'); return; }
+  const m = $('#challengeModal');
+  if (!m) return;
+  const title = $('#challengeModalTitle');
+  if (title) title.textContent = (mode === 'edit') ? 'Editar desafío' : 'Nuevo desafío';
+  editingChallengeId = (mode === 'edit' && ch) ? ch.id : null;
+
+  // Populate subject select
+  const selSub = $('#inChSubject');
+  const subjects = Array.isArray(state.data?.subjects) ? state.data.subjects : [];
+  if (selSub){
+    selSub.innerHTML = '';
+    subjects.forEach(s=>{
+      const opt = document.createElement('option');
+      opt.value = String(s.id);
+      opt.textContent = s.name || 'Materia';
+      selSub.appendChild(opt);
+    });
+  }
+
+  const selDiff = $('#inChDiff');
+  const inPts = $('#inChPoints');
+  const inTitle = $('#inChTitle');
+  const inBody = $('#inChBody');
+
+  const chosenSubject = ch?.subjectId || state.challengeFilter.subjectId || subjects[0]?.id || '';
+  if (selSub) selSub.value = String(chosenSubject);
+  const chosenDiff = String(ch?.difficulty || state.challengeFilter.diff || 'easy').toLowerCase();
+  if (selDiff) selDiff.value = chosenDiff;
+  if (inPts) inPts.value = String(ch?.points ?? pointsForDifficulty(chosenDiff));
+  if (inTitle) inTitle.value = String(ch?.title || '');
+  if (inBody) inBody.value = String(ch?.body || '');
+
+  const syncPts = ()=>{
+    if (!selDiff || !inPts) return;
+    const d = String(selDiff.value || '').toLowerCase();
+    // Solo auto-ajusta si el usuario no ha tocado puntos o si coincide con un preset
+    const cur = Number(inPts.value || 0);
+    const presets = [10,20,40];
+    if (!inPts.dataset.touched || presets.includes(cur)){
+      inPts.value = String(pointsForDifficulty(d));
+    }
+  };
+  selDiff?.addEventListener('change', syncPts);
+  inPts?.addEventListener('input', ()=>{ if (inPts) inPts.dataset.touched = '1'; });
+
+  m.hidden = false;
+  setTimeout(()=> inTitle?.focus(), 50);
+}
+
+function closeChallengeModal(){
+  const m = $('#challengeModal');
+  if (!m) return;
+  m.hidden = true;
+  editingChallengeId = null;
+  const inPts = $('#inChPoints');
+  if (inPts) delete inPts.dataset.touched;
+}
+
+async function saveChallengeFromModal(){
+  const selSub = $('#inChSubject');
+  const selDiff = $('#inChDiff');
+  const inPts = $('#inChPoints');
+  const inTitle = $('#inChTitle');
+  const inBody = $('#inChBody');
+  if (!selSub || !selDiff || !inPts || !inTitle || !inBody) return;
+
+  const subjectId = String(selSub.value || '');
+  const subjName = (state.data?.subjects || []).find(s=> String(s.id) === String(subjectId))?.name || 'Materia';
+  const difficulty = String(selDiff.value || 'easy').toLowerCase();
+  const points = Math.max(0, Number(inPts.value || 0));
+  const title = String(inTitle.value || '').trim();
+  const body = String(inBody.value || '').trim();
+  if (!title){ toast('Ponle un título al desafío'); return; }
+
+  state.data.challenges = Array.isArray(state.data?.challenges) ? state.data.challenges : [];
+
+  if (editingChallengeId){
+    const ch = state.data.challenges.find(x=> String(x.id) === String(editingChallengeId));
+    if (!ch) return;
+    ch.subjectId = subjectId;
+    ch.subject = subjName;
+    ch.difficulty = difficulty;
+    ch.points = points;
+    ch.title = title;
+    ch.body = body;
+    toast('Desafío actualizado');
+  } else {
+    const newCh = { id: uid('c'), subjectId, subject: subjName, difficulty, points, title, body };
+    state.data.challenges.unshift(newCh);
+    state.selectedChallengeId = newCh.id;
+    toast('Desafío creado');
+  }
+
+  saveLocal(state.data);
+  if (state.dataSource === 'remote') state.dataSource = 'local';
+  closeChallengeModal();
+  // Por defecto, filtra a la materia del desafío guardado
+  state.challengeFilter.subjectId = subjectId;
+  ensureChallengeUI();
+  renderChallenges();
+  renderChallengeDetail();
+}
+
+async function deleteSelectedChallenge(){
+  if (state.role !== 'teacher'){ toast('Activa edición para borrar'); return; }
+  const ch = (state.data?.challenges || []).find(x=> x.id === state.selectedChallengeId);
+  if (!ch) return;
+  const ok = await openConfirmModal({ title:'Eliminar desafío', message:`Eliminar "${ch.title}"?`, okText:'Eliminar', cancelText:'Cancelar' });
+  if (!ok) return;
+  state.data.challenges = (state.data?.challenges || []).filter(x=> x.id !== ch.id);
+  state.selectedChallengeId = null;
+  saveLocal(state.data);
+  renderChallenges();
+  renderChallengeDetail();
+  toast('Desafío eliminado');
+}
+
+// Menú "⋯" para móviles
+function openChallengeMoreMenu(){
+  const btn = $('#btnChallengeMore');
+  const menu = $('#challengeMoreMenu');
+  if (!btn || !menu) return;
+  if (state.role !== 'teacher'){ return; }
+
+  const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
+  menu.innerHTML = '';
+
+  const mk = (label, onClick)=>{
+    const it = document.createElement('button');
+    it.type = 'button';
+    it.className = 'ddItem';
+    it.textContent = label;
+    it.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); closeChallengeMoreMenu(); onClick(); });
+    menu.appendChild(it);
+  };
+
+  mk('✎ Editar', ()=>{ if (ch) openChallengeModal('edit', ch); });
+  mk('🗑 Eliminar', ()=> deleteSelectedChallenge());
+
+  const r = btn.getBoundingClientRect();
+  const pad = 10;
+  const w = 220;
+  let left = Math.min(Math.max(pad, r.right - w), window.innerWidth - w - pad);
+  let top = r.bottom + 10;
+  const maxH = Math.min(window.innerHeight * 0.6, 260);
+  if (top + maxH > window.innerHeight - pad){ top = Math.max(pad, r.top - 10 - maxH); }
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+  menu.style.maxHeight = `${maxH}px`;
+  menu.style.overflow = 'auto';
+  menu.hidden = false;
+}
+function closeChallengeMoreMenu(){
+  const menu = $('#challengeMoreMenu');
+  if (!menu) return;
+  menu.hidden = true;
+}
+
+// Bind: Materias/Desafíos
+$('#btnManageSubjects')?.addEventListener('click', openSubjectsModal);
+$('#btnAddChallenge')?.addEventListener('click', ()=> openChallengeModal('create'));
+$('#btnChallengeEdit')?.addEventListener('click', ()=>{
+  const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
+  if (!ch) return toast('Selecciona un desafío');
+  openChallengeModal('edit', ch);
+});
+$('#btnChallengeDelete')?.addEventListener('click', deleteSelectedChallenge);
+$('#btnChallengeMore')?.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); openChallengeMoreMenu(); });
+
+// Cierra el menú contextual al tocar fuera
+document.addEventListener('click', (e)=>{
+  const menu = $('#challengeMoreMenu');
+  const btn = $('#btnChallengeMore');
+  if (!menu || menu.hidden) return;
+  if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+  closeChallengeMoreMenu();
+});
+
+// Modal: materias
+$('#btnCloseSubjects')?.addEventListener('click', closeSubjectsModal);
+$('#subjectsBackdrop')?.addEventListener('click', closeSubjectsModal);
+$('#btnAddSubject')?.addEventListener('click', ()=>{
+  if (state.role !== 'teacher') return;
+  const inp = $('#inNewSubject');
+  const name = String(inp?.value || '').trim();
+  if (!name) return;
+  state.data.subjects = Array.isArray(state.data.subjects) ? state.data.subjects : [];
+  state.data.subjects.push({ id: uid('sub'), name });
+  inp.value = '';
+  saveLocal(state.data);
+  renderSubjectsModal();
+  refreshChallengeUI();
+});
+$('#inNewSubject')?.addEventListener('keydown', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); $('#btnAddSubject')?.click(); }});
+
+// Modal: desafío
+$('#btnCloseChallengeModal')?.addEventListener('click', closeChallengeModal);
+$('#challengeBackdrop')?.addEventListener('click', closeChallengeModal);
+$('#btnCancelChallenge')?.addEventListener('click', closeChallengeModal);
+$('#btnSaveChallenge')?.addEventListener('click', saveChallengeFromModal);
 
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 

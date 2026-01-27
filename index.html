@@ -236,6 +236,10 @@
               <button class="pill" id="btnAddChallenge" type="button">+ Desafío</button>
               <button class="pill pill--ghost" id="btnManageSubjects" type="button">✎ Materias</button>
             </div>
+
+            <!-- Menú contextual (mobile/compact) para acciones del desafío seleccionado -->
+            <div class="dropdown__menu" id="challengeMoreMenu" role="menu" aria-label="Acciones de desafío" hidden></div>
+
 <div class="cards2">
               <div class="card">
                 <div class="cardTitle">Lista</div>
@@ -250,6 +254,7 @@
                     <button class="pill pill--small" id="btnChallengeComplete" type="button">✔ Completado</button>
                     <button class="pill pill--small pill--ghost" id="btnChallengeEdit" type="button">✎ Editar</button>
                     <button class="pill pill--small pill--danger" id="btnChallengeDelete" type="button">🗑</button>
+                    <button class="pill pill--small pill--ghost" id="btnChallengeMore" type="button" aria-label="Más acciones">⋯</button>
                   </div>
                 </div>
                 <div class="challengeBody" id="challengeBody"></div>
@@ -398,10 +403,84 @@
       </div>
     </div>
 
+    <!-- Modal: Materias (CRUD) -->
+    <div class="modal" id="subjectsModal" hidden>
+      <div class="modal__backdrop" id="subjectsBackdrop"></div>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="subjectsTitle">
+        <div class="modal__header">
+          <div class="cardTitle" id="subjectsTitle">Materias</div>
+          <button class="pill pill--small pill--ghost" id="btnCloseSubjects" type="button">✕</button>
+        </div>
+        <div class="modal__body">
+          <div class="formCard">
+            <label class="label">Nueva materia</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input class="input" id="inNewSubject" placeholder="Ej: Ciencias" />
+              <button class="pill pill--small" id="btnAddSubject" type="button">Agregar</button>
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="cardTitle" style="margin:6px 0 10px;">Lista</div>
+          <div class="subjectsList" id="subjectsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Crear / Editar desafío -->
+    <div class="modal" id="challengeModal" hidden>
+      <div class="modal__backdrop" id="challengeBackdrop"></div>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="challengeModalTitle">
+        <div class="modal__header">
+          <div class="cardTitle" id="challengeModalTitle">Desafío</div>
+          <button class="pill pill--small pill--ghost" id="btnCloseChallengeModal" type="button">✕</button>
+        </div>
+        <div class="modal__body">
+          <div class="fields3" style="grid-template-columns: 1fr 120px 1fr;">
+            <div class="field">
+              <label class="label">Materia</label>
+              <select class="input input--select" id="inChSubject"></select>
+            </div>
+            <div class="field">
+              <label class="label">Dificultad</label>
+              <select class="input input--select" id="inChDiff">
+                <option value="easy">Fácil (10)</option>
+                <option value="medium">Medio (20)</option>
+                <option value="hard">Difícil (40)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label">Puntos</label>
+              <input class="input" id="inChPoints" inputmode="numeric" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Título</label>
+            <input class="input" id="inChTitle" placeholder="Ej: Problemas de fracciones" />
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="field">
+            <label class="label">Instrucciones</label>
+            <textarea class="textarea" id="inChBody" placeholder="Escribe instrucciones simples..."></textarea>
+          </div>
+
+          <div style="height:14px"></div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <button class="pill pill--small pill--ghost" id="btnCancelChallenge" type="button">Cancelar</button>
+            <button class="pill pill--small" id="btnSaveChallenge" type="button">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="./app.js?v=20260126K" defer></script>
+  <script src="./app.js?v=20260126L" defer></script>
 </body>
 </html>

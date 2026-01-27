@@ -639,9 +639,47 @@ body{
 .badge--pts{border-color:rgba(114,26,255,0.26);background:rgba(114,26,255,0.10)}
 .badge--done{border-color:rgba(0,210,255,0.30);background:rgba(0,210,255,0.10)}
 .badge--diff{border-color:rgba(220,220,230,0.18)}
-.badge--easy{border-color:rgba(0,210,255,0.18)}
-.badge--medium{border-color:rgba(114,26,255,0.22)}
-.badge--hard{border-color:rgba(255,90,90,0.22)}
+.badge--easy{border-color:rgba(0,210,255,0.34); background: rgba(0,210,255,0.10); color: rgba(220,220,230,0.95); }
+.badge--medium{border-color:rgba(114,26,255,0.36); background: rgba(114,26,255,0.12); color: rgba(220,220,230,0.95); }
+.badge--hard{border-color:rgba(255,90,90,0.38); background: rgba(255,90,90,0.10); color: rgba(220,220,230,0.95); }
+
+/* Desafíos: pesos visuales */
+.challengeName{ font-weight: 900; letter-spacing: .2px; }
+.challengeItem{ position:relative; overflow:hidden; }
+.challengeItem::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background: rgba(220,220,230,0.08); }
+.challengeItem[data-diff="easy"]::before{ background: rgba(0,210,255,0.75); box-shadow: 0 0 14px rgba(0,210,255,0.22); }
+.challengeItem[data-diff="medium"]::before{ background: rgba(114,26,255,0.80); box-shadow: 0 0 14px rgba(114,26,255,0.22); }
+.challengeItem[data-diff="hard"]::before{ background: rgba(255,90,90,0.80); box-shadow: 0 0 14px rgba(255,90,90,0.18); }
+
+.challengeBody{ min-height: 220px; font-size: 15px; line-height: 1.35; color: rgba(220,220,230,0.94); white-space: pre-wrap; }
+
+/* Pills de dificultad: colorear el activo */
+.diffPills .pill{ border-color: rgba(220,220,230,0.14); }
+.diffPills .pill.is-active{ border-color: rgba(0,210,255,0.40); background: rgba(0,210,255,0.10); }
+.diffPills .pill.is-active[data-diff="easy"]{ border-color: rgba(0,210,255,0.55); background: rgba(0,210,255,0.12); }
+.diffPills .pill.is-active[data-diff="medium"]{ border-color: rgba(114,26,255,0.55); background: rgba(114,26,255,0.12); }
+.diffPills .pill.is-active[data-diff="hard"]{ border-color: rgba(255,90,90,0.55); background: rgba(255,90,90,0.12); }
+
+/* Acciones: en móvil, usar menú "⋯" para no saturar */
+#btnChallengeMore{ display:none; }
+html:not(.is-edit) #btnChallengeEdit,
+html:not(.is-edit) #btnChallengeDelete,
+html:not(.is-edit) #btnChallengeMore{ display:none !important; }
+@media (max-width: 640px){
+  #btnChallengeEdit, #btnChallengeDelete{ display:none; }
+  html.is-edit #btnChallengeMore{ display:inline-flex; }
+  .challengeDetailActions{ gap: 10px; }
+  .challengeTop{ gap: 10px; }
+}
+
+/* Menú contextual de desafío (portal) */
+#challengeMoreMenu{ position: fixed; z-index: 25000; min-width: 220px; border-radius: 14px; padding: 6px; border: 1px solid rgba(0,210,255,0.18); background: rgba(25,42,86,0.92); box-shadow: 0 18px 50px rgba(0,0,0,0.55); }
+
+/* Materias modal */
+.subjectsList{ display:grid; gap: 10px; }
+.subjectRow{ display:flex; align-items:center; justify-content:space-between; gap: 10px; padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(0,210,255,0.14); background: rgba(0,0,0,0.18); }
+.subjectRow__name{ font-weight: 800; }
+.subjectRow__actions{ display:flex; gap: 8px; flex-wrap:wrap; }
 .ddItem{width:100%;text-align:left;padding:10px 10px;border:0;background:transparent;color:var(--text,#dcdce6);cursor:pointer}
 .ddItem:hover{background:rgba(0,210,255,0.08)}
 
