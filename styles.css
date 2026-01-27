@@ -157,7 +157,7 @@ body{
   border-color: rgba(0,210,255,0.12);
 }
 .topMoreMenu__item:active{ transform: translateY(1px); }
-.topMoreMenu__item .emoji{ width: 18px; display:inline-block; opacity: .95; }
+.topMoreMenu__item .emoji{ width: 18px; display:inline-block; opacity: .70; }
 
 .brand{ display:flex; align-items:center; gap: 12px; }
 .brand__logo{
@@ -639,8 +639,8 @@ body{
 .challengeItem{ border-radius: 14px; border: 1px solid rgba(0,210,255,0.12); background: rgba(0,0,0,0.18); padding: 12px; }
 .challengeItem.is-done{ border-color: rgba(114,26,255,0.35); box-shadow: 0 0 0 1px rgba(114,26,255,0.12) inset; }
 .challengeRow{display:flex;flex-direction:column;gap:8px}
-.challengeMetaRow{display:flex;flex-wrap:wrap;gap:6px;opacity:.95}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;line-height:1;border:1px solid rgba(0,210,255,0.16);background:rgba(15,15,20,0.35);color:var(--text,#dcdce6)}
+.challengeMetaRow{display:flex;flex-wrap:wrap;column-gap:10px;row-gap:10px;opacity:.95}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;line-height:1;border:1px solid rgba(0,210,255,0.16);background:rgba(15,15,20,0.35);color:var(--text,#dcdce6);white-space:nowrap}
 .badge--subj{border-color:rgba(0,210,255,0.20)}
 .badge--pts{border-color:rgba(114,26,255,0.26);background:rgba(114,26,255,0.10)}
 .badge--done{border-color:rgba(0,210,255,0.30);background:rgba(0,210,255,0.10)}
@@ -1768,10 +1768,11 @@ body.is-view-locked #btnQuitarFoto{
 .challengeDetailActions{display:flex;gap:8px;flex-wrap:wrap}
 .challengeDetailMeta{
   color:var(--text, #dcdce6);
-  opacity:.92;
+  opacity:.95;
   display:flex;
   flex-wrap:wrap;
-  gap:8px;
+  column-gap:10px;
+  row-gap:10px;
   align-items:center;
 }
 .challengeBody{min-height:140px;white-space:pre-wrap;border:1px solid rgba(0,210,255,.18);background:rgba(15,15,20,.45);border-radius:16px;padding:12px;color:var(--text, #dcdce6)}
@@ -1808,7 +1809,7 @@ body.is-view-locked #btnQuitarFoto{
     radial-gradient(circle at 68% 78%, rgba(114,26,255,.10), rgba(114,26,255,0) 44%),
     radial-gradient(circle at 50% 50%, rgba(255,255,255,.06), rgba(255,255,255,0) 50%);
   filter: blur(0.2px);
-  opacity: .85;
+  opacity: .55;
   animation: splashDrift 4s ease-in-out infinite alternate;
   pointer-events: none;
 }
@@ -1823,14 +1824,20 @@ body.is-view-locked #btnQuitarFoto{
   position: relative;
   display: grid;
   place-items: center;
-  padding: 14px 18px;
-  border-radius: 26px;
+  padding: 18px 22px;
+  border-radius: 28px;
+  overflow: hidden; /* clip shine so it doesn't become a full-screen bar */
+  background: radial-gradient(circle at 50% 35%, rgba(114,26,255,.10), rgba(0,0,0,0) 60%),
+              rgba(0,0,0,0.18);
+  border: 1px solid rgba(0,210,255,0.16);
+  box-shadow: 0 20px 90px rgba(0,0,0,0.70);
 }
 
 /* impact ring */
 .splash__inner::before{
   content:"";
   position:absolute;
+  z-index: 0;
   inset:-56px;
   border-radius: 999px;
   border: 2px solid rgba(0,210,255,.24);
@@ -1848,22 +1855,25 @@ body.is-view-locked #btnQuitarFoto{
 .splash__inner::after{
   content:"";
   position:absolute;
-  inset:-70px;
+  z-index: 3;
+  inset:-18px;
   border-radius: 999px;
   background: linear-gradient(120deg,
     rgba(255,255,255,0) 0%,
     rgba(255,255,255,0) 36%,
-    rgba(255,255,255,.55) 50%,
+    rgba(255,255,255,.28) 50%,
     rgba(255,255,255,0) 64%,
     rgba(255,255,255,0) 100%);
   mix-blend-mode: screen;
   opacity: 0;
   transform: translateX(-120%) rotate(10deg);
-  animation: splashShine 1.05s ease-out .55s both;
+  animation: splashShine .85s ease-out .60s both;
   pointer-events: none;
 }
 
 .splash__logo{
+  position: relative;
+  z-index: 2;
   width: clamp(260px, 78vw, 480px);
   height: auto;
   filter: drop-shadow(0 16px 58px rgba(0,0,0,.62));
@@ -1872,13 +1882,14 @@ body.is-view-locked #btnQuitarFoto{
 
 .splash__glow{
   position: absolute;
+  z-index: 1;
   inset: -110px;
   border-radius: 999px;
   background:
     radial-gradient(circle at 50% 42%, rgba(114,26,255,.34), rgba(114,26,255,0) 62%),
     radial-gradient(circle at 50% 62%, rgba(0,210,255,.18), rgba(0,210,255,0) 64%);
   filter: blur(26px);
-  opacity: .95;
+  opacity: .70;
   animation: splashPulse 1.6s ease-in-out infinite;
   pointer-events: none;
 }
