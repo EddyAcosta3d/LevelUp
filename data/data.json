@@ -2,15 +2,15 @@
   "meta": {
     "app": "LevelUp",
     "version": "data-seed-v1",
-    "updatedAt": "2026-01-26T03:49:27.132Z"
+    "updatedAt": "2026-01-26T03:34:09.024084+00:00"
   },
   "heroes": [
     {
       "id": "h_2d_1",
       "group": "2D",
       "name": "Eddy",
-      "age": 32,
-      "role": "Mentor",
+      "age": 12,
+      "role": "Guerrero",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -21,12 +21,7 @@
         "SAB": 1,
         "CAR": 3,
         "RES": 2,
-        "CRE": 5,
-        "int": 8,
-        "sab": 8,
-        "car": 8,
-        "res": 8,
-        "cre": 8
+        "CRE": 5
       },
       "desc": "",
       "goal": "",
@@ -34,14 +29,13 @@
       "improve": "",
       "photo": "",
       "photoFit": {
-        "x": 35.42178067294034,
-        "y": 18.768768310546875,
+        "x": 50,
+        "y": 50,
         "scale": 1
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": "assets/personajes/Eddy.png"
+      "pendingRewards": []
     },
     {
       "id": "h_2d_2",
@@ -73,15 +67,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_3",
       "group": "2D",
       "name": "Maia",
       "age": 12,
-      "role": "Creador",
+      "role": "Bardo",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -106,15 +99,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_4",
       "group": "2D",
       "name": "Jesús",
       "age": 12,
-      "role": "Explorador",
+      "role": "Alquimista",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -139,15 +131,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_5",
       "group": "2D",
       "name": "Alexa",
       "age": 12,
-      "role": "Guardián",
+      "role": "Sanador",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -172,15 +163,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_6",
       "group": "2D",
       "name": "Ernesto",
       "age": 12,
-      "role": "Explorador",
+      "role": "Hechicero",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -205,15 +195,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_7",
       "group": "2D",
       "name": "Alexis",
       "age": 12,
-      "role": "Analista",
+      "role": "Guerrero",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -238,15 +227,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_8",
       "group": "2D",
       "name": "Josué",
       "age": 12,
-      "role": "Explorador",
+      "role": "Inventor",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -271,15 +259,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_9",
       "group": "2D",
       "name": "Santiago",
       "age": 12,
-      "role": "Explorador",
+      "role": "Mentor",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -304,15 +291,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_10",
       "group": "2D",
       "name": "Tadeo",
       "age": 12,
-      "role": "Analista",
+      "role": "Explorador",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -337,15 +323,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": "assets/personajes/Tadeo.png"
+      "pendingRewards": []
     },
     {
       "id": "h_2d_11",
       "group": "2D",
       "name": "Eric",
       "age": 12,
-      "role": "Explorador",
+      "role": "Mentor",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -370,15 +355,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_12",
       "group": "2D",
       "name": "Majo",
       "age": 12,
-      "role": "Creador",
+      "role": "Inventor",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -403,15 +387,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_13",
       "group": "2D",
       "name": "Brandon",
       "age": 12,
-      "role": "Analista",
+      "role": "Guerrero",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -436,15 +419,14 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_2d_14",
       "group": "2D",
       "name": "Arely",
       "age": 12,
-      "role": "Creador",
+      "role": "Analista",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -469,8 +451,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_1",
@@ -502,8 +483,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_2",
@@ -535,8 +515,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_3",
@@ -568,8 +547,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_4",
@@ -601,8 +579,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_5",
@@ -634,8 +611,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_6",
@@ -667,8 +643,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_7",
@@ -700,8 +675,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_8",
@@ -733,8 +707,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_9",
@@ -766,8 +739,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_10",
@@ -799,8 +771,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_11",
@@ -832,8 +803,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_12",
@@ -865,8 +835,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_13",
@@ -898,8 +867,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     },
     {
       "id": "h_3d_14",
@@ -931,8 +899,7 @@
       },
       "tokens": 0,
       "rewardsHistory": [],
-      "pendingRewards": [],
-      "photoSrc": ""
+      "pendingRewards": []
     }
   ],
   "challenges": [],

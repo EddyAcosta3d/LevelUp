@@ -629,6 +629,20 @@ body{
   #actChips .pill .i{ margin-right: 6px; }
 }
 .challengeItem{ border-radius: 14px; border: 1px solid rgba(0,210,255,0.12); background: rgba(0,0,0,0.18); padding: 12px; }
+.challengeItem.is-done{ border-color: rgba(114,26,255,0.35); box-shadow: 0 0 0 1px rgba(114,26,255,0.12) inset; }
+.challengeRow{display:flex;flex-direction:column;gap:8px}
+.challengeMetaRow{display:flex;flex-wrap:wrap;gap:6px;opacity:.95}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;line-height:1;border:1px solid rgba(0,210,255,0.16);background:rgba(15,15,20,0.35);color:var(--text,#dcdce6)}
+.badge--subj{border-color:rgba(0,210,255,0.20)}
+.badge--pts{border-color:rgba(114,26,255,0.26);background:rgba(114,26,255,0.10)}
+.badge--done{border-color:rgba(0,210,255,0.30);background:rgba(0,210,255,0.10)}
+.badge--diff{border-color:rgba(220,220,230,0.18)}
+.badge--easy{border-color:rgba(0,210,255,0.18)}
+.badge--medium{border-color:rgba(114,26,255,0.22)}
+.badge--hard{border-color:rgba(255,90,90,0.22)}
+.ddItem{width:100%;text-align:left;padding:10px 10px;border:0;background:transparent;color:var(--text,#dcdce6);cursor:pointer}
+.ddItem:hover{background:rgba(0,210,255,0.08)}
+
 .ghostBox{
   margin-top: 10px; border-radius: 14px; height: 110px;
   border: 1px dashed rgba(0,210,255,0.18); background: rgba(255,255,255,0.02);

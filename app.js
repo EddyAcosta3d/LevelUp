@@ -68,6 +68,7 @@ function makeBlankHero(group){
     group: '2D',
     selectedHeroId: null,
     selectedChallengeId: null,
+    challengeFilter: { subjectId: 'all', diff: null },
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
@@ -119,6 +120,53 @@ function readFileAsDataURL(file){
     d.challenges = Array.isArray(d.challenges) ? d.challenges : [];
     d.events = Array.isArray(d.events) ? d.events : [];
 
+d.subjects = Array.isArray(d.subjects) ? d.subjects : [];
+
+// Seed básico (solo si vienen vacíos): materias + desafíos demo para maquetado.
+if (!d.subjects.length){
+  d.subjects = [
+    { id:'sub_tec', name:'Tecnología' },
+    { id:'sub_ing', name:'Inglés' },
+    { id:'sub_esp', name:'Español' },
+    { id:'sub_mat', name:'Matemáticas' },
+    { id:'sub_tut', name:'Tutoría' },
+  ];
+}
+
+if (!d.challenges.length){
+  const byName = (n)=> (d.subjects.find(s=> (s.name||'').toLowerCase() === n.toLowerCase()) || d.subjects[0] || {id:'sub_tec', name:'Tecnología'});
+  const S = {
+    tec: byName('Tecnología'),
+    ing: byName('Inglés'),
+    esp: byName('Español'),
+    mat: byName('Matemáticas'),
+    tut: byName('Tutoría'),
+  };
+  // 2 por dificultad (6 total) para probar layout
+  d.challenges = [
+    { id: uid('c'), subjectId: S.tec.id, subject: S.tec.name, difficulty:'easy',   points:10,
+      title:'Fácil: Dibuja un ícono (10 min)',
+      body:'En tu libreta, diseña un ícono para una app escolar.\n\nRequisitos:\n- Debe ser simple\n- 2 a 3 formas geométricas\n- Explica qué significa' },
+    { id: uid('c'), subjectId: S.ing.id, subject: S.ing.name, difficulty:'easy',   points:10,
+      title:'Fácil: 10 palabras en inglés',
+      body:'Escribe 10 palabras en inglés relacionadas con la escuela.\n\nLuego, elige 3 y escribe una oración con cada una.' },
+
+    { id: uid('c'), subjectId: S.esp.id, subject: S.esp.name, difficulty:'medium', points:20,
+      title:'Medio: Mini historia (8 líneas)',
+      body:'Escribe una historia corta de 8 líneas.\n\nIncluye:\n- Un inicio claro\n- Un problema\n- Un final' },
+    { id: uid('c'), subjectId: S.mat.id, subject: S.mat.name, difficulty:'medium', points:20,
+      title:'Medio: 3 problemas con contexto',
+      body:'Resuelve 3 problemas en tu libreta (pueden ser inventados).\n\nCada problema debe tener:\n- Datos\n- Operación\n- Respuesta con unidades' },
+
+    { id: uid('c'), subjectId: S.tec.id, subject: S.tec.name, difficulty:'hard',   points:40,
+      title:'Difícil: Plan de proyecto (1 página)',
+      body:'Crea un plan de proyecto en 1 página.\n\nIncluye:\n- Objetivo\n- Materiales\n- Pasos\n- Tiempo estimado\n- Cómo evaluarás si quedó bien' },
+    { id: uid('c'), subjectId: S.tut.id, subject: S.tut.name, difficulty:'hard',   points:40,
+      title:'Difícil: Reflexión (2 párrafos)',
+      body:'Escribe 2 párrafos sobre un reto personal en la escuela.\n\nIncluye:\n- Qué pasó\n- Qué aprendiste\n- Qué harás diferente la próxima vez' },
+  ];
+}
+
     d.heroes.forEach(h=>{
       h.id = h.id || uid('h');
       h.group = h.group || '2D';
@@ -139,6 +187,7 @@ function readFileAsDataURL(file){
       h.desc = h.desc || '';
       h.goal = h.goal || '';
       h.rewardsHistory = Array.isArray(h.rewardsHistory) ? h.rewardsHistory : [];
+      h.challengeCompletions = (h.challengeCompletions && typeof h.challengeCompletions === 'object') ? h.challengeCompletions : {};
       h.pendingRewards = Array.isArray(h.pendingRewards) ? h.pendingRewards : []; // items: { level, createdAt }
       h.tokens = Number(h.tokens ?? 0);
       // keep stats object
@@ -913,50 +962,174 @@ function renderHeroAvatar(hero){
   }
 }
 
-  function renderChallenges(){
-    const list = $('#challengeList');
-    list.innerHTML = '';
-    const challenges = state.data?.challenges || [];
-    if (!challenges.length){
-      list.innerHTML = '<div class="muted">Sin desafíos.</div>';
-      return;
-    }
-    if (!state.selectedChallengeId) state.selectedChallengeId = challenges[0].id;
+  
+function difficultyLabel(diff){
+  const d = String(diff || '').toLowerCase();
+  if (d === 'easy') return 'Fácil';
+  if (d === 'medium') return 'Medio';
+  if (d === 'hard') return 'Difícil';
+  return '—';
+}
 
-    challenges.forEach(ch=>{
-      const item = document.createElement('div');
-      item.className = 'challengeItem';
-      item.style.cursor = 'pointer';
-      item.innerHTML = `
+function ensureChallengeUI(){
+  const menu = $('#subjectMenu');
+  const btn  = $('#btnSubject');
+  if (!menu || !btn) return;
+
+  const subjects = state.data?.subjects || [];
+  menu.innerHTML = '';
+
+  const addItem = (label, subjectId)=>{
+    const it = document.createElement('button');
+    it.type = 'button';
+    it.className = 'ddItem';
+    it.dataset.subjectId = subjectId;
+    it.textContent = label;
+    it.addEventListener('click', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      state.challengeFilter.subjectId = subjectId;
+      btn.textContent = (subjectId === 'all') ? 'Materia ▾' : (label + ' ▾');
+      closeSubjectDropdown();
+      renderChallenges();
+    });
+    menu.appendChild(it);
+  };
+
+  addItem('Todas', 'all');
+  subjects.forEach(s=> addItem(s.name || 'Materia', s.id));
+
+  // difficulty pills
+  $$('#diffPills [data-diff]').forEach(b=>{
+    const diff = b.dataset.diff;
+    b.classList.toggle('is-active', state.challengeFilter.diff === diff);
+  });
+}
+
+function openSubjectDropdown(){
+  const dd = $('#subjectDropdown');
+  if (dd) dd.classList.add('is-open');
+}
+function closeSubjectDropdown(){
+  const dd = $('#subjectDropdown');
+  if (dd) dd.classList.remove('is-open');
+}
+function toggleSubjectDropdown(){
+  const dd = $('#subjectDropdown');
+  if (dd) dd.classList.toggle('is-open');
+}
+
+function getFilteredChallenges(){
+  const challenges = Array.isArray(state.data?.challenges) ? state.data.challenges : [];
+  const sub = state.challengeFilter?.subjectId || 'all';
+  const diff = state.challengeFilter?.diff || null;
+
+  return challenges.filter(ch=>{
+    if (sub !== 'all' && String(ch.subjectId || '') !== String(sub)) return false;
+    if (diff && String(ch.difficulty || '') !== diff) return false;
+    return true;
+  });
+}
+
+function isChallengeDone(hero, challengeId){
+  if (!hero) return false;
+  hero.challengeCompletions = (hero.challengeCompletions && typeof hero.challengeCompletions === 'object') ? hero.challengeCompletions : {};
+  return !!hero.challengeCompletions[String(challengeId || '')];
+}
+
+function renderChallenges(){
+  ensureChallengeUI();
+
+  const list = $('#challengeList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const hero = currentHero();
+  const filtered = getFilteredChallenges();
+
+  if (!filtered.length){
+    list.innerHTML = '<div class="muted">Sin desafíos.</div>';
+    state.selectedChallengeId = null;
+    renderChallengeDetail();
+    return;
+  }
+
+  if (!state.selectedChallengeId || !filtered.some(c=>c.id === state.selectedChallengeId)){
+    state.selectedChallengeId = filtered[0].id;
+  }
+
+  filtered.forEach(ch=>{
+    const done = isChallengeDone(hero, ch.id);
+    const item = document.createElement('div');
+    item.className = 'challengeItem' + (done ? ' is-done' : '');
+    item.style.cursor = 'pointer';
+
+    const subj = ch.subject || (state.data?.subjects || []).find(s=>s.id === ch.subjectId)?.name || '—';
+    const diffLabel = difficultyLabel(ch.difficulty);
+    const pts = Number(ch.points ?? 0);
+
+    item.innerHTML = `
+      <div class="challengeRow">
         <div class="challengeName">${escapeHtml(ch.title || 'Desafío')}</div>
-        <div class="challengeMeta">Estado: ${escapeHtml(ch.status || '—')}</div>
-      `;
-      item.addEventListener('click', ()=>{
-        state.selectedChallengeId = ch.id;
-        renderChallengeDetail();
-      });
-      list.appendChild(item);
+        <div class="challengeMetaRow">
+          <span class="badge badge--subj">${escapeHtml(subj)}</span>
+          <span class="badge badge--diff badge--${escapeHtml(String(ch.difficulty||'').toLowerCase())}">${escapeHtml(diffLabel)}</span>
+          <span class="badge badge--pts">${escapeHtml(String(pts))} XP</span>
+          ${done ? '<span class="badge badge--done">✔</span>' : ''}
+        </div>
+      </div>
+    `;
+
+    item.addEventListener('click', ()=>{
+      state.selectedChallengeId = ch.id;
+      renderChallengeDetail();
     });
 
-    renderChallengeDetail();
+    list.appendChild(item);
+  });
+
+  renderChallengeDetail();
+}
+
+function renderChallengeDetail(){
+  const hintEl = $('#challengeHint');
+  const bodyEl = $('#challengeBody');
+  const btnComplete = $('#btnChallengeComplete');
+  const btnEdit = $('#btnChallengeEdit');
+  const btnDel = $('#btnChallengeDelete');
+
+  const hero = currentHero();
+  const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
+
+  if (!ch){
+    if (hintEl) hintEl.textContent = 'Selecciona un desafío.';
+    if (bodyEl) bodyEl.textContent = '';
+    if (btnComplete) btnComplete.disabled = true;
+    if (btnEdit) btnEdit.disabled = true;
+    if (btnDel) btnDel.disabled = true;
+    return;
   }
 
-  // 🔥 AQUÍ está la regla: alumno no ve contenido
-  function renderChallengeDetail(){
-    const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
-    if (!ch){
-      $('#challengeHint').textContent = 'Selecciona un desafío.';
-      $('#challengeBody').textContent = '';
-      return;
-    }
-    if (state.role === 'viewer'){
-      $('#challengeHint').textContent = 'Modo alumno: solo nombre.';
-      $('#challengeBody').textContent = 'Contenido oculto.';
-    }else{
-      $('#challengeHint').textContent = 'Modo edición: detalle visible.';
-      $('#challengeBody').textContent = ch.body || '(sin contenido)';
-    }
+  const subj = ch.subject || (state.data?.subjects || []).find(s=>s.id === ch.subjectId)?.name || '—';
+  const diffLabel = difficultyLabel(ch.difficulty);
+  const pts = Number(ch.points ?? 0);
+  const done = isChallengeDone(hero, ch.id);
+  const doneAt = done ? hero.challengeCompletions[String(ch.id)].at : null;
+
+  if (hintEl){
+    hintEl.textContent = `${subj} · ${diffLabel} · ${pts} XP` + (doneAt ? ` · Completado: ${new Date(doneAt).toLocaleDateString()}` : '');
   }
+  if (bodyEl){
+    bodyEl.textContent = ch.body || '(sin instrucciones)';
+  }
+
+  if (btnComplete){
+    btnComplete.disabled = !hero;
+    btnComplete.classList.toggle('is-active', done);
+    btnComplete.textContent = done ? '↺ Descompletar' : '✔ Completado';
+  }
+  if (btnEdit) btnEdit.disabled = (state.role !== 'teacher');
+  if (btnDel) btnDel.disabled = (state.role !== 'teacher');
+}
 
   function renderEvents(){
     const grid = $('#eventGrid');
@@ -1622,6 +1795,101 @@ function bind(){
         setActiveRoute('recompensas');
       }
     });
+
+// --- Desafíos UI ---
+const btnSubject = $('#btnSubject');
+const subjectMenu = $('#subjectMenu');
+if (btnSubject && subjectMenu){
+  btnSubject.addEventListener('click', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    toggleSubjectDropdown();
+  });
+  subjectMenu.addEventListener('click', (e)=> e.stopPropagation());
+  document.addEventListener('click', ()=> closeSubjectDropdown());
+  document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeSubjectDropdown(); });
+}
+
+// Difficulty filter pills
+$$('#diffPills [data-diff]').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const diff = b.dataset.diff;
+    const was = state.challengeFilter.diff;
+    state.challengeFilter.diff = (was === diff) ? null : diff;
+    $$('#diffPills [data-diff]').forEach(x=> x.classList.toggle('is-active', state.challengeFilter.diff === x.dataset.diff));
+    renderChallenges();
+  });
+});
+
+// Completar / descompletar desafío (reversión real)
+$('#btnChallengeComplete')?.addEventListener('click', ()=>{
+  const hero = currentHero();
+  const ch = (state.data?.challenges || []).find(x => x.id === state.selectedChallengeId);
+  if (!hero || !ch) return;
+
+  hero.challengeCompletions = (hero.challengeCompletions && typeof hero.challengeCompletions === 'object') ? hero.challengeCompletions : {};
+  const key = String(ch.id);
+  const pts = Number(ch.points ?? 0);
+
+  const applyNegativeXp = (deltaNeg)=>{
+    hero.xp = Number(hero.xp ?? 0) + Number(deltaNeg || 0);
+    hero.xpMax = Number(hero.xpMax ?? 100);
+    hero.level = Number(hero.level ?? 1);
+
+    while (hero.xp < 0 && hero.level > 1){
+      hero.level -= 1;
+      hero.xp += hero.xpMax;
+    }
+    if (hero.xp < 0) hero.xp = 0;
+
+    hero.pendingRewards = Array.isArray(hero.pendingRewards) ? hero.pendingRewards : [];
+    hero.rewardsHistory = Array.isArray(hero.rewardsHistory) ? hero.rewardsHistory : [];
+    hero.pendingRewards = hero.pendingRewards.filter(r => Number(r.level||0) <= hero.level);
+    hero.rewardsHistory = hero.rewardsHistory.filter(r => Number(r.level||0) <= hero.level);
+
+    saveLocal(state.data);
+    if (state.dataSource === 'remote') state.dataSource = 'local';
+    updateDataDebug();
+    renderHeroList();
+    renderHeroDetail();
+  };
+
+  if (hero.challengeCompletions[key]){
+    const awarded = Number(hero.challengeCompletions[key].points ?? pts);
+    delete hero.challengeCompletions[key];
+
+    hero.weekXp = Number(hero.weekXp ?? 0) - awarded;
+    if (hero.weekXp < 0) hero.weekXp = 0;
+
+    applyNegativeXp(-awarded);
+    toast('Desafío descompletado');
+  } else {
+    const max = Number(hero.weekXpMax || DEFAULT_WEEK_XP_MAX || 40);
+    hero.weekXp = Number(hero.weekXp || 0);
+    const remaining = max - hero.weekXp;
+    if (remaining <= 0){
+      toast('Ya llegaste al máximo de XP semanal...');
+      return;
+    }
+    if (pts > remaining){
+      toast(`Solo quedan ${remaining} XP esta semana`);
+      return;
+    }
+
+    hero.challengeCompletions[key] = { at: Date.now(), points: pts };
+    hero.weekXp += pts;
+    bumpHeroXp(pts);
+    toast('Desafío completado');
+  }
+
+  saveLocal(state.data);
+  renderChallenges();
+});
+
+// Placeholders (se implementan en la siguiente fase)
+$('#btnAddChallenge')?.addEventListener('click', ()=> toast('Crear desafío: próximo paso'));
+$('#btnManageSubjects')?.addEventListener('click', ()=> toast('Editar materias: próximo paso'));
+$('#btnChallengeEdit')?.addEventListener('click', ()=> toast('Editar desafío: próximo paso'));
+$('#btnChallengeDelete')?.addEventListener('click', ()=> toast('Borrar desafío: próximo paso'));
 
     $('#btnDebugPanel').addEventListener('click', toggleDetails);
 
