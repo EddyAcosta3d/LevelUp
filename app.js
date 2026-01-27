@@ -1204,8 +1204,8 @@ function renderChallengeDetail(){
 
   function renderEvents(){
     const grid = $('#eventGrid');
+    if (!grid) return;
     grid.innerHTML = '';
-    grid.classList.toggle('is-stat', mode === 'stat');
     const evs = state.data?.events || [];
     if (!evs.length){
       grid.innerHTML = '<div class="muted">Sin eventos.</div>';
