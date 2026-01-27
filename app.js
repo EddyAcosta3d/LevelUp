@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'STABLE_RESET_v14';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.032';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -1212,6 +1212,12 @@ function isChallengeDone(hero, challengeId){
 }
 
 function renderChallenges(){
+    // Ensure default filters: one subject + easy difficulty
+    const subjectsAll = Array.isArray(state.data?.subjects) ? state.data.subjects : [];
+    if (!state.challengeFilter) state.challengeFilter = { subjectId: null, diff: 'easy' };
+    if (!state.challengeFilter.diff) state.challengeFilter.diff = 'easy';
+    if (!state.challengeFilter.subjectId && subjectsAll.length) state.challengeFilter.subjectId = subjectsAll[0].id;
+
   ensureChallengeUI();
 
   const list = $('#challengeList');
@@ -1290,9 +1296,7 @@ function renderChallengeDetail(){
   const done = isChallengeDone(hero, ch.id);
   const doneAt = done ? hero.challengeCompletions[String(ch.id)].at : null;
 
-  if (hintEl){
-    hintEl.innerHTML = doneAt ? `<span class="badge badge--done">Completado: ${escapeHtml(new Date(doneAt).toLocaleDateString())}</span>` : '';
-  }
+  if (hintEl){ hintEl.innerHTML = ''; }
   if (bodyEl){
     bodyEl.textContent = ch.body || '(sin instrucciones)';
   }
@@ -2679,4 +2683,20 @@ async function init(){
     syncDetailsUI();
   }
   (async()=>{ try{ await init(); } finally { hideSplash(); } })();
+
+  // ---- Generic modal close (backdrops) + Event modal close ----
+  document.addEventListener('click', (e)=>{
+    const closer = e.target && e.target.closest ? e.target.closest('[data-close]') : null;
+    if (closer){
+      const id = closer.getAttribute('data-close');
+      const m = id ? document.getElementById(id) : null;
+      if (m) m.hidden = true;
+    }
+  });
+
+  (function(){
+    const btn = document.getElementById('btnEventClose');
+    if (btn) btn.addEventListener('click', ()=>{ const m=document.getElementById('eventModal'); if(m) m.hidden=true; });
+  })();
+
 })();
