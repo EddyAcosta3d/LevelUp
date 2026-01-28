@@ -9,13 +9,13 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'LevelUP_V2_00.039';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.040';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
 
   const CONFIG = {
-    remoteUrl: './data/data.json',
+    remoteUrls: ['./data/data.json','./data.json'],
     remoteTimeoutMs: 3500,
     storageKey: 'levelup:data:v1'
   };
@@ -146,11 +146,13 @@ function seedChallengesDemo(S){
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
+      ,remoteLastUrl: ''
+    ,remoteLastErr: ''
   };
 
   // Build marker (para confirmar en GitHub que sí cargó la versión correcta)
   // Build identifier (also used for cache-busting via querystring in index.html)
-  const BUILD_ID = 'LevelUP_V2_00.034';
+  const BUILD_ID = 'LevelUP_V2_00.040';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -571,6 +573,11 @@ d.heroes.forEach(h=>{
     $('#dbgBuild') && ($('#dbgBuild').textContent = BUILD_ID);
     $('#dbgSubCount') && ($('#dbgSubCount').textContent = String(subCount));
     $('#dbgChCount') && ($('#dbgChCount').textContent = String(chCount));
+
+const ru = document.getElementById('dbgRemoteUrl');
+if (ru) ru.textContent = state.remoteLastUrl || (Array.isArray(CONFIG.remoteUrls) ? CONFIG.remoteUrls[0] : '—');
+const re = document.getElementById('dbgRemoteErr');
+if (re) re.textContent = state.remoteLastErr ? state.remoteLastErr : '—';
   }
 
   // Dropdown
@@ -682,18 +689,37 @@ d.heroes.forEach(h=>{
   }
   function clearLocal(){ try{ localStorage.removeItem(CONFIG.storageKey); }catch(e){} }
 
-  // Remote fetch timeout
-  async function fetchRemote(){
-    const ctrl = new AbortController();
-    const t = setTimeout(()=> ctrl.abort(), CONFIG.remoteTimeoutMs);
-    try{
-      const url = `${CONFIG.remoteUrl}?v=${Date.now()}`; // cache-buster
-      const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    } finally {
-      clearTimeout(t);
+  
+// Remote fetch timeout (tries multiple URLs for GitHub Pages setups)
+async function fetchRemote(){
+  const urls = Array.isArray(CONFIG.remoteUrls) ? CONFIG.remoteUrls : [String(CONFIG.remoteUrls || './data/data.json')];
+  const ctrl = new AbortController();
+  const t = setTimeout(()=> ctrl.abort(), CONFIG.remoteTimeoutMs);
+
+  let lastErr = null;
+  try{
+    for (const base of urls){
+      const url = `${base}?v=${Date.now()}`; // cache-buster
+      try{
+        const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        state.remoteLastUrl = base;
+        state.remoteLastErr = '';
+        return data;
+      }catch(e){
+        lastErr = e;
+        // keep trying next url
+      }
     }
+    throw lastErr || new Error('No se pudo cargar datos remotos');
+  } finally {
+    clearTimeout(t);
+    if (lastErr){
+      state.remoteLastErr = String(lastErr && (lastErr.message || lastErr)) || 'Error al cargar remoto';
+    }
+  }
+}
   }
 
   async function loadData({forceRemote=false} = {}){
@@ -706,7 +732,7 @@ d.heroes.forEach(h=>{
         updateDataDebug(); renderAll();
         return;
       }catch(e){
-        toast('No se pudo cargar GitHub. Usando copia local.');
+        toast('No se pudo cargar GitHub. Usando copia local.'); updateDataDebug();
       }
     }else{
       try{
