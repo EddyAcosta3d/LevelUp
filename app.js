@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'LevelUP_V2_00.037';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.038';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -37,12 +37,12 @@
       @media (min-width: 900px){ #roleModal #roleList{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
 
       /* Eventos: grid responsivo (2 columnas en móvil) */
-      #eventGrid{ display:grid; gap:12px; align-content:start; }
-      @media (max-width: 640px){ #eventGrid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
-      @media (min-width: 641px){ #eventGrid{ grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); } }
-      #eventGrid .evCard{ display:flex; flex-direction:column; }
-      #eventGrid .evArt{ aspect-ratio: 3/4; width:100%; overflow:hidden; border-radius:12px; }
-      #eventGrid .evInfo{ padding:10px 10px 12px; }
+      #eventGrid, .eventGrid{ display:grid; gap:12px; align-content:start; }
+      @media (max-width: 640px){ #eventGrid, .eventGrid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+      @media (min-width: 641px){ #eventGrid, .eventGrid{ grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); } }
+      #eventGrid .evCard, .eventGrid .evCard{ display:flex; flex-direction:column; }
+      #eventGrid .evArt, .eventGrid .evArt{ aspect-ratio: 3/4; width:100%; overflow:hidden; border-radius:12px; }
+      #eventGrid .evInfo, .eventGrid .evInfo{ padding:10px 10px 12px; }
     
       /* Pills pequeñas (para estado en eventos) */
       .pill{ display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:999px; font-size:12px; line-height:1.1;
@@ -1001,11 +1001,17 @@ function renderHeroAvatar(hero){
       // 1) ['Líder','Estratega',...]
       // 2) [{name:'Líder', desc:'...'}, ...]
       if (typeof cat[0] === 'string'){
-        return cat.map((name, idx)=>({
-          id: String(name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'') || ('rol_'+idx),
-          name: String(name),
-          desc: ''
-        }));
+        const defaultsByName = new Map(DEFAULT_ROLE_OPTIONS.map(r=>[String(r.name).toLowerCase(), r]));
+        return cat.map((name, idx)=>{
+          const key = String(name).toLowerCase();
+          const d = defaultsByName.get(key);
+          const safeId = String(name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'') || ('rol_'+idx);
+          return {
+            id: d?.id || safeId,
+            name: String(name),
+            desc: d?.desc || ''
+          };
+        });
       }
       if (typeof cat[0] === 'object'){
         return cat.map((r, idx)=>({
@@ -1526,7 +1532,8 @@ function renderChallengeDetail(){
   function renderEvents(){
     ensureDynamicStyles();
 
-    const grid = $('#eventGrid');
+    const grid = document.getElementById('eventGrid') || document.getElementById('eventsGrid') || document.getElementById('events') || document.querySelector('[data-events-grid]');
+    if (grid) grid.classList.add('eventGrid');
     if (!grid) return;
     grid.innerHTML = '';
 
