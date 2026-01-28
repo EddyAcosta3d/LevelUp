@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'LevelUP_V2_00.040';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.042';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -69,6 +69,34 @@ function sanitizeFileName(str){
   // colapsa espacios
   s = s.replace(/\s+/g,' ').trim();
   return s;
+}
+
+
+// Resuelve la imagen de un jefe/evento con convención:
+//  - Jefes:  assets/jefes/Boss_<key>_(unlocked|locked).jpg
+//  - Eventos: assets/eventos/Event_<key>_(unlocked|locked).jpg
+// Puedes sobrescribir con campos en el JSON:
+//  ev.image / ev.imageUnlocked, ev.lockedImage / ev.imageLocked, ev.folder, ev.filePrefix, ev.ext, ev.assetKey
+function getEventImageInfo(ev, unlocked){
+  ev = ev || {};
+  const kind = (ev.kind || 'event');
+  const folder = ev.folder || (kind === 'boss' ? 'jefes' : 'eventos');
+  const rawKey = ev.assetKey || ev.id || ev.key || '';
+  let key = sanitizeFileName(rawKey) || 'unknown';
+  // para URLs más limpias
+  key = key.replace(/\s+/g,'_');
+
+  const unlockedSrc = ev.imageUnlocked || ev.unlockedImage || ev.image || ev.imgUnlocked || '';
+  const lockedSrc   = ev.imageLocked   || ev.lockedImage   || ev.locked || ev.imgLocked   || '';
+
+  if (unlocked && unlockedSrc) return { src: unlockedSrc };
+  if (!unlocked && lockedSrc)  return { src: lockedSrc };
+
+  const prefix = ev.filePrefix || (kind === 'boss' ? 'Boss_' : 'Event_');
+  const variant = unlocked ? 'unlocked' : 'locked';
+  const ext = String(ev.ext || 'jpg').replace('.','');
+  const file = `${prefix}${key}_${variant}.${ext}`;
+  return { src: `assets/${folder}/${file}` };
 }
 
 function makeId(prefix='h'){
