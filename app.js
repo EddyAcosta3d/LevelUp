@@ -453,7 +453,9 @@ d.heroes.forEach(h=>{
 
   function updateDataDebug(){
     $('#dbgRole').textContent = state.role;
-    $('#dbgDataSrc').textContent = state.dataSource;
+    const loaded = state.loadedFrom || state.dataSource;
+    const label = (loaded === 'remote' && state.hasLocalChanges) ? `${loaded} (cambios locales)` : loaded;
+    $('#dbgDataSrc').textContent = label;
     const upd = state.data?.meta?.updatedAt ? new Date(state.data.meta.updatedAt).toLocaleString() : '—';
     $('#dbgUpdated').textContent = upd;
     $('#brandSubtitle').textContent = (state.data?.meta?.app || 'LevelUp');
@@ -561,6 +563,7 @@ d.heroes.forEach(h=>{
     try{
       const payload = (data !== undefined) ? data : state.data;
       localStorage.setItem(CONFIG.storageKey, JSON.stringify(payload));
+      state.hasLocalChanges = true;
       return true;
     }catch(e){
       return false;
@@ -593,7 +596,7 @@ d.heroes.forEach(h=>{
     if (forceRemote){
       try{
         const d = await fetchRemote();
-        state.data = normalizeData(d); state.dataSource = 'remote';
+        state.data = normalizeData(d); state.dataSource = 'remote'; state.loadedFrom = 'remote';
         saveLocal(state.data);
         toast('Cargado desde GitHub');
         updateDataDebug(); renderAll();
@@ -604,7 +607,7 @@ d.heroes.forEach(h=>{
     }else{
       try{
         const d = await fetchRemote();
-        state.data = normalizeData(d); state.dataSource = 'remote';
+        state.data = normalizeData(d); state.dataSource = 'remote'; state.loadedFrom = 'remote';
         saveLocal(state.data);
         updateDataDebug(); renderAll();
         return;
@@ -613,12 +616,12 @@ d.heroes.forEach(h=>{
 
     const local = loadLocal();
     if (local){
-      state.data = normalizeData(local); state.dataSource = 'local';
+      state.data = normalizeData(local); state.dataSource = 'local'; state.loadedFrom = 'local';
       updateDataDebug(); renderAll();
       return;
     }
 
-    state.data = normalizeData(demoData()); state.dataSource = 'demo';
+    state.data = normalizeData(demoData()); state.dataSource = 'demo'; state.loadedFrom = 'demo';
     updateDataDebug(); renderAll();
   }
 
@@ -1421,11 +1424,20 @@ function renderChallengeDetail(){
   }
 
   function renderAll(){
-    renderHeroList();
-    renderHeroDetail();
-    renderChallenges();
-    renderEvents();
-    renderPeopleTable();
+    const safe = (name, fn) => {
+      try { fn(); }
+      catch (err) {
+        console.error(`[render:${name}]`, err);
+        toast(`⚠️ Error en ${name}`);
+      }
+    };
+
+    safe('Fichas (lista)', renderHeroList);
+    safe('Fichas (detalle)', renderHeroDetail);
+    safe('Desafíos', renderChallenges);
+    safe('Eventos', renderEvents);
+    safe('Personas', renderPeopleTable);
+    safe('Datos', updateDataDebug);
   }
 
   // “Edición” sin PIN aún (solo demo)

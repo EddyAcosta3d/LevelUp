@@ -1874,10 +1874,11 @@ body.is-view-locked #btnQuitarFoto{
 }
 
 .splash__logo{
-  margin-left: -12px; /* compensate logo PNG padding */
+  /* Más grande y centrado (evita que el PNG se sienta “cargado” hacia un lado). */
+  margin-left: 0;
   position: relative;
   z-index: 2;
-  width: clamp(260px, 78vw, 480px);
+  width: clamp(340px, 70vmin, 680px);
   height: auto;
   filter: drop-shadow(0 16px 58px rgba(0,0,0,.62));
   animation: splashStamp 1.15s cubic-bezier(.16,1,.3,1) both;
@@ -2009,8 +2010,9 @@ body.is-view-locked #btnQuitarFoto{
 .splash__inner{ max-width: 560px; }
 .splash__logo{ width: clamp(320px, 50vw, 620px); }
 .splash__shine{
-  opacity: 0.55;
-  filter: blur(0.5px);
+  opacity: 0.25;
+  filter: blur(1.2px);
+  mix-blend-mode: soft-light;
 }
 
 
