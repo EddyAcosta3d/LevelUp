@@ -720,7 +720,6 @@ async function fetchRemote(){
     }
   }
 }
-  }
 
   async function loadData({forceRemote=false} = {}){
     if (forceRemote){
