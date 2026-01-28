@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'LevelUP_V2_00.038';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.039';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -44,12 +44,15 @@
       #eventGrid .evArt, .eventGrid .evArt{ aspect-ratio: 3/4; width:100%; overflow:hidden; border-radius:12px; }
       #eventGrid .evInfo, .eventGrid .evInfo{ padding:10px 10px 12px; }
     
-      /* Pills pequeñas (para estado en eventos) */
-      .pill{ display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:999px; font-size:12px; line-height:1.1;
+      /* Estado en eventos (NO tocar .pill global del header/UI) */
+      .evPill{ display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:999px; font-size:12px; line-height:1.1;
         border:1px solid rgba(0,210,255,.35); background:rgba(15,15,20,.35); color:rgb(220,220,230); }
-      .pill.ok{ border-color: rgba(0,210,255,.7); }
-      .pill.warn{ border-color: rgba(114,26,255,.65); }
-      .pill.muted{ opacity:.75; }
+      .evPill.ok{ border-color: rgba(0,210,255,.7); }
+      .evPill.warn{ border-color: rgba(114,26,255,.65); }
+      .evPill.muted{ opacity:.75; }
+
+      /* Mensaje vacío visible */
+      #eventGrid .emptyNote, .eventGrid .emptyNote{ padding:12px; border:1px dashed rgba(0,210,255,.25); border-radius:12px; opacity:.9; }
 `;
     document.head.appendChild(st);
   }
@@ -352,10 +355,9 @@ function normalizeData(data){
       d.challenges = seedChallengesDemo(S);
       d.meta.seededDemo = true;
     }
-
-    
-    // Seed demo de eventos/bosses (si no hay eventos aún)
-    if (!d.meta.seededEvents && !d.events.length){
+    // Seed demo de eventos/bosses (si no hay eventos aún).
+    // Para desactivarlo en tu JSON real: meta.noAutoSeedEvents = true
+    if (!d.meta.noAutoSeedEvents && !d.events.length){
       d.events = seedEventsDemo();
       d.meta.seededEvents = true;
     }
@@ -1534,13 +1536,20 @@ function renderChallengeDetail(){
 
     const grid = document.getElementById('eventGrid') || document.getElementById('eventsGrid') || document.getElementById('events') || document.querySelector('[data-events-grid]');
     if (grid) grid.classList.add('eventGrid');
-    if (!grid) return;
+    if (!grid){
+      if (!state._warnedNoEventGrid){
+        console.warn('[Eventos] No se encontró contenedor (eventGrid).');
+        try{ toast('⚠️ No se encontró el contenedor de Eventos en el HTML'); }catch(_e){}
+        state._warnedNoEventGrid = true;
+      }
+      return;
+    }
     grid.innerHTML = '';
 
     const hero = currentHero();
     let evs = Array.isArray(state.data?.events) ? state.data.events : [];
     if (!evs.length){
-      grid.innerHTML = '<div class="muted">Sin eventos.</div>';
+      grid.innerHTML = '<div class="emptyNote">Sin eventos aún. Agrega jefes/eventos en <b>data/data.json</b>.</div>';
       return;
     }
 
@@ -1575,7 +1584,7 @@ function renderChallengeDetail(){
           <div class="evTitle">${escapeHtml(title)}</div>
           <div class="evReq">${escapeHtml(unlocked ? (ev.subtitle || '') : (reqText || ''))}</div>
           <div class="evMeta">
-            ${unlocked ? (eligible ? '<span class="pill ok">Elegible</span>' : '<span class="pill warn">No elegible</span>') : '<span class="pill muted">Progreso</span>'}
+            ${unlocked ? (eligible ? '<span class="evPill ok">Elegible</span>' : '<span class="evPill warn">No elegible</span>') : '<span class="evPill muted">Progreso</span>'}
           </div>
         </div>
       `;
@@ -1921,7 +1930,14 @@ function renderChallengeDetail(){
     if (!hero) return;
     const pending = getNextPendingReward(hero);
     const grid = $('#rewardPickGrid');
-    if (!grid) return;
+    if (!grid){
+      if (!state._warnedNoEventGrid){
+        console.warn('[Eventos] No se encontró contenedor (eventGrid).');
+        try{ toast('⚠️ No se encontró el contenedor de Eventos en el HTML'); }catch(_e){}
+        state._warnedNoEventGrid = true;
+      }
+      return;
+    }
 
     grid.innerHTML = '';
 
