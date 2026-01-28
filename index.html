@@ -10,9 +10,15 @@
   <!-- Icono de la pestaña (pon tu archivo en assets/logo.png o cambia la ruta) -->
   <link rel="icon" href="assets/logo.png" type="image/png" />
   <link rel="apple-touch-icon" href="assets/logo.png" />
-  <link rel="stylesheet" href="./styles.css?v=LevelUP_V2_00.042" />
+  <link rel="stylesheet" href="./styles.css?v=LevelUP_V2_00.043" />
 </head>
 <body>
+  <div class="splash" id="splash" aria-label="LevelUp" role="status">
+    <div class="splash__inner">
+      <img class="splash__logo" src="assets/logo.png" alt="LevelUp" />
+      <div class="splash__glow" aria-hidden="true"></div>
+    </div>
+  </div>
   <!--
     LevelUp Hybrid Skeleton (Base responsive + datos híbridos)
     - Desktop / iPad / iPhone
@@ -28,23 +34,17 @@
       <div class="topbar__left">
         <button class="iconbtn topbar__menu" id="btnMenu" aria-label="Abrir menú lateral" title="Menú">☰</button>
 
-        <!-- Mobile overflow menu for header actions (Recompensas/Estado/Datos/Edición) -->
-        <div class="topbar__moreWrap">
-          <button
-            class="iconbtn topbar__moreBtn"
-            id="btnTopMore"
-            aria-label="Más opciones"
-            title="Más"
-            aria-expanded="false"
-            aria-controls="topMoreMenu"
-          >⋯</button>
-          <div class="topMoreMenu" id="topMoreMenu" hidden>
-            <button class="topMoreMenu__item" data-proxy-click="btnRecompensas">🏆 Recompensas</button>
-            <button class="topMoreMenu__item" data-proxy-click="btnDebugPanel">🧪 Estado</button>
-            <button class="topMoreMenu__item" data-proxy-click="btnDatos">💾 Datos</button>
-            <button class="topMoreMenu__item" data-proxy-click="btnEdicion">🔒 Edición</button>
-          </div>
-        </div>
+        <!-- Mobile: acceso directo a Recompensas (trofeo). Más simple y confiable en iOS. -->
+        <button class="iconbtn topbar__trophyBtn" id="btnMobileRewards" aria-label="Recompensas" title="Recompensas">
+          <svg class="trophyIcon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <path d="M22 12h20v6c0 8-5 14-10 14s-10-6-10-14v-6z" fill="rgba(114,26,255,.18)" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+            <path d="M18 14h-6c0 12 6 18 14 20" fill="none" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+            <path d="M46 14h6c0 12-6 18-14 20" fill="none" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+            <path d="M28 36h8v6h-8z" fill="rgba(25,42,86,.85)" stroke="rgba(0,210,255,.45)" stroke-width="2"/>
+            <path d="M22 42h20v8H22z" fill="rgba(25,42,86,.85)" stroke="rgba(0,210,255,.45)" stroke-width="2"/>
+            <path d="M18 50h28" stroke="rgba(0,210,255,.25)" stroke-width="2"/>
+          </svg>
+        </button>
 
         <div class="brand" aria-label="LevelUp">
           <div class="brand__logo" aria-hidden="true">
@@ -96,7 +96,7 @@
             <button class="segmented__btn is-active" role="tab" aria-selected="true" data-group="2D">2D</button>
             <button class="segmented__btn" role="tab" aria-selected="false" data-group="3D">3D</button>
           </div>
-          <button class="pill pill--small" id="btnNuevoHeroe">+ Nuevo</button>
+          <button class="pill pill--small" id="btnNuevoHeroe" data-edit-only="1">+ Nuevo</button>
         </div>
 
         <div class="list" id="heroList"></div>
@@ -108,18 +108,30 @@
             <div class="cardGrid">
               <div class="card card--center card--avatar">
                 <!-- Eliminar héroe (fuera del marco para no descentrar la foto) -->
-                <button class="iconBtn iconBtn--danger heroDeleteBtn" id="btnEliminar" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
+                <button class="iconBtn heroChestBtn" id="btnChest" title="Recompensas" aria-label="Recompensas">
+                  <!-- Inline SVG para que se vea como cofre (no emoji caja de herramientas) -->
+                  <svg class="chestIcon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                    <!-- tapa -->
+                    <path d="M12 26c0-10 8-18 20-18s20 8 20 18v4H12v-4z" fill="rgba(114,26,255,.18)" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+                    <!-- cuerpo -->
+                    <path d="M10 30h44v22c0 3-2 6-6 6H16c-4 0-6-3-6-6V30z" fill="rgba(25,42,86,.85)" stroke="rgba(0,210,255,.55)" stroke-width="2"/>
+                    <!-- refuerzo -->
+                    <path d="M10 40h44" stroke="rgba(0,210,255,.35)" stroke-width="2"/>
+                    <!-- cerradura -->
+                    <path d="M28 41h8v10h-8z" fill="rgba(220,220,230,.12)" stroke="rgba(220,220,230,.55)" stroke-width="2"/>
+                    <circle cx="32" cy="46" r="1.8" fill="rgba(0,210,255,.9)"/>
+                  </svg>
+                  <span class="notifBadge" id="chestBadge" aria-hidden="true" hidden>1</span>
+                </button>
+                <button class="iconBtn iconBtn--danger heroDeleteBtn" id="btnEliminar" data-edit-only="1" title="Eliminar héroe" aria-label="Eliminar héroe">🗑</button>
                 <div class="avatar">
 				  <div class="avatar__frame" id="avatarFrame">
 					<div class="avatar__box" id="avatarBox">
 						<div class="avatar__placeholder">Sin foto</div>
 					</div>
+                    <!-- Overlay edit icon: appears on hover (desktop) or always on touch -->
+                    <button class="avatarEditBtn" id="btnFotoOverlay" data-edit-only="1" title="Editar foto" aria-label="Editar foto">✎</button>
 				  </div>
-                  <div class="avatar__actions">
-                    <button class="pill pill--small" id="btnPonerFoto">📷 Poner foto</button>
-                    <button class="pill pill--small pill--ghost" id="btnEditarFoto">✎ Editar foto</button>
-                    <button class="pill pill--small pill--ghost pill--icon" id="btnQuitarFoto" aria-label="Quitar foto" title="Quitar foto">✕</button>
-                  </div>
                 </div>
 
                 <div class="heroName" id="heroName">NUEVO HÉROE</div>
@@ -159,28 +171,27 @@
                     <div class="xpLevel" id="xpLevel">Lvl 1</div>
                     <div class="xpText" id="xpText">· XP 0/100</div>
                     <div class="xpBtns">
-                      <button class="pill pill--small pill--ghost" id="btnXpM5">-5 XP</button>
-                      <button class="pill pill--small pill--ghost" id="btnXpM1">-1 XP</button>
-                      <button class="pill pill--small pill--ghost" id="btnXpP1">+1 XP</button>
-                      <button class="pill pill--small pill--ghost" id="btnXpP5">+5 XP</button>
+                      <button class="pill pill--small pill--ghost" id="btnXpM5" data-edit-only="1">-5 XP</button>
+                      <button class="pill pill--small pill--ghost" id="btnXpM1" data-edit-only="1">-1 XP</button>
+                      <button class="pill pill--small pill--ghost" id="btnXpP1" data-edit-only="1">+1 XP</button>
+                      <button class="pill pill--small pill--ghost" id="btnXpP5" data-edit-only="1">+5 XP</button>
                     </div>
                   </div>
                   <div class="xpBar"><div class="xpFill" id="xpFill" style="width:0%"></div></div>
 
                   <div class="xpFooter">
                     <div class="subCard">
-                      <div class="subCard__title">Actividades pequeñas</div>
                       <div class="chipRow" id="actChips">
                         <button class="pill pill--small" data-xp="2">+2 Participación</button>
                         <button class="pill pill--small" data-xp="5">+5 Trabajos</button>
                         <button class="pill pill--small" data-xp="10">+10 Tareas</button>
                       </div>
                     </div>
-                    <div class="subCard">
+                    <div class="subCard subCard--week">
                       <div class="subCard__title">Esta semana:</div>
                       <div class="subCard__valRow">
                         <div class="subCard__val" id="weekXp">0/40 XP</div>
-                        <button class="iconBtn iconBtn--tiny" id="btnWeekReset" title="Reiniciar XP semanal" aria-label="Reiniciar XP semanal">↺</button>
+                        <button class="iconBtn iconBtn--tiny" id="btnWeekReset" data-edit-only="1" title="Reiniciar XP semanal" aria-label="Reiniciar XP semanal">↺</button>
                       </div>
                     </div>
                   </div>
@@ -191,11 +202,6 @@
           </article>
 
         <article class="page" data-page="recompensas">
-          <div class="pageIntro">
-            <h2 class="h2">Recompensas</h2>
-            <p class="muted">Historial por personaje y lista general de recompensas.</p>
-          </div>
-
           <div class="rewardsGrid">
             <section class="card" aria-label="Historial de recompensas">
               <div class="cardHead">
@@ -221,15 +227,26 @@
         </article>
 
           <article class="page" data-page="desafios">
-            <div class="pageIntro">
-              <h2 class="h2">Desafíos</h2>
-              <p class="muted">
-                En modo alumno (viewer) solo se muestra el <b>nombre</b>.
-                En modo edición (teacher) se ve el detalle.
-              </p>
+            <div class="challengeTop">
+              <div class="dropdown" id="subjectDropdown">
+                <button class="pill" id="btnSubject" type="button">Materia ▾</button>
+                <div class="dropdown__menu" id="subjectMenu" role="menu" aria-label="Materias"></div>
+              </div>
+
+              <div class="diffPills" id="diffPills" role="group" aria-label="Dificultad">
+                <button class="pill pill--ghost" id="btnDiffEasy" type="button" data-diff="easy">Fácil</button>
+                <button class="pill pill--ghost" id="btnDiffMed" type="button" data-diff="medium">Medio</button>
+                <button class="pill pill--ghost" id="btnDiffHard" type="button" data-diff="hard">Difícil</button>
+              </div>
+
+              <button class="pill" id="btnAddChallenge" type="button" data-edit-only="1">+ Desafío</button>
+              <button class="pill pill--ghost" id="btnManageSubjects" type="button" data-edit-only="1">✎ Materias</button>
             </div>
 
-            <div class="cards2">
+            <!-- Menú contextual (mobile/compact) para acciones del desafío seleccionado -->
+            <div class="dropdown__menu" id="challengeMoreMenu" role="menu" aria-label="Acciones de desafío" hidden></div>
+
+<div class="cards2">
               <div class="card">
                 <div class="cardTitle">Lista</div>
                 <div class="challengeList" id="challengeList"></div>
@@ -237,8 +254,16 @@
 
               <div class="card">
                 <div class="cardTitle">Detalle</div>
-                <div class="muted" id="challengeHint">Selecciona un desafío.</div>
-                <div class="ghostBox" id="challengeBody">Contenido del desafío (solo teacher)</div>
+                <div class="challengeDetailHead">
+                  <div class="challengeDetailMeta" id="challengeHint">Selecciona un desafío.</div>
+                  <div class="challengeDetailActions">
+                    <button class="pill pill--small" id="btnChallengeComplete" type="button">✔ Completado</button>
+                    <button class="pill pill--small pill--ghost" id="btnChallengeEdit" data-edit-only="1" type="button">✎ Editar</button>
+                    <button class="pill pill--small pill--danger" id="btnChallengeDelete" data-edit-only="1" type="button">🗑</button>
+                    <button class="pill pill--small pill--ghost" id="btnChallengeMore" type="button" aria-label="Más acciones" data-edit-only="1">⋯</button>
+                  </div>
+                </div>
+                <div class="challengeBody" id="challengeBody"></div>
               </div>
             </div>
           </article>
@@ -274,6 +299,9 @@
             <div class="k">Rol</div><div class="v" id="dbgRole">viewer</div>
             <div class="k">Datos</div><div class="v" id="dbgDataSrc">—</div>
             <div class="k">Update</div><div class="v" id="dbgUpdated">—</div>
+            <div class="k">Build</div><div class="v" id="dbgBuild">—</div>
+            <div class="k">Materias</div><div class="v" id="dbgSubCount">—</div>
+            <div class="k">Desafíos</div><div class="v" id="dbgChCount">—</div>
           </div>
         </div>
 
@@ -381,10 +409,115 @@
       </div>
     </div>
 
+    <!-- Modal: Materias (CRUD) -->
+    <div class="modal" id="subjectsModal" hidden>
+      <div class="modal__backdrop" id="subjectsBackdrop"></div>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="subjectsTitle">
+        <div class="modal__header">
+          <div class="cardTitle" id="subjectsTitle">Materias</div>
+          <button class="pill pill--small pill--ghost" id="btnCloseSubjects" type="button">✕</button>
+        </div>
+        <div class="modal__body">
+          <div class="formCard">
+            <label class="label">Nueva materia</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input class="input" id="inNewSubject" placeholder="Ej: Ciencias" />
+              <button class="pill pill--small" id="btnAddSubject" type="button">Agregar</button>
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+
+          <div class="cardTitle" style="margin:6px 0 10px;">Lista</div>
+          <div class="subjectsList" id="subjectsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Crear / Editar desafío -->
+    <div class="modal" id="challengeModal" hidden>
+      <div class="modal__backdrop" id="challengeBackdrop"></div>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="challengeModalTitle">
+        <div class="modal__header">
+          <div class="cardTitle" id="challengeModalTitle">Desafío</div>
+          <button class="pill pill--small pill--ghost" id="btnCloseChallengeModal" type="button">✕</button>
+        </div>
+        <div class="modal__body">
+          <div class="fields3" style="grid-template-columns: 1fr 120px 1fr;">
+            <div class="field">
+              <label class="label">Materia</label>
+              <select class="input input--select" id="inChSubject"></select>
+            </div>
+            <div class="field">
+              <label class="label">Dificultad</label>
+              <input type="hidden" id="inChDiff" value="easy" />
+              <div class="diffPick" id="inChDiffPick" role="group" aria-label="Dificultad">
+                <button type="button" class="pill pill--small" data-diff="easy">Fácil</button>
+                <button type="button" class="pill pill--small" data-diff="medium">Medio</button>
+                <button type="button" class="pill pill--small" data-diff="hard">Difícil</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Puntos</label>
+              <input class="input" id="inChPoints" inputmode="numeric" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Título</label>
+            <input class="input" id="inChTitle" placeholder="Ej: Problemas de fracciones" />
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="field">
+            <label class="label">Instrucciones</label>
+            <textarea class="textarea" id="inChBody" placeholder="Escribe instrucciones simples..."></textarea>
+          </div>
+
+          <div style="height:14px"></div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <button class="pill pill--small pill--ghost" id="btnCancelChallenge" type="button">Cancelar</button>
+            <button class="pill pill--small" id="btnSaveChallenge" type="button">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <input type="file" id="fileJson" accept="application/json" hidden />
   </div>
 
-  <script src="./app.js?v=LevelUP_V2_00.042" defer></script>
+  <!-- Cache-bust version -->
+  
+
+  <!-- Eventos: modal de detalle -->
+  <div class="modal" id="eventModal" hidden>
+    <div class="modal__backdrop" data-close="eventModal"></div>
+    <div class="modal__card modal__card--event" role="dialog" aria-modal="true" aria-labelledby="eventModalTitle">
+      <div class="modal__head">
+        <div class="modal__titleRow">
+          <div class="badge badge--subj" id="eventModalKind">EVENTO</div>
+          <h3 id="eventModalTitle">Evento</h3>
+        </div>
+        <button class="iconBtn" id="btnEventClose" title="Cerrar" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="eventModalGrid">
+          <div class="eventModalImg" id="eventModalImg" aria-hidden="true"></div>
+          <div class="eventModalInfo">
+            <div class="muted" id="eventModalReq"></div>
+            <div class="row gap">
+              <button class="btn btnPrimary" id="btnEventFight">⚔️ Retar</button>
+              <button class="btn" id="btnEventToggleUnlock" data-edit-only="1">Desbloquear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="./splash.js?v=LevelUP_V2_00.034" defer></script>
+  <script src="./app.js?v=LevelUP_V2_00.043" defer></script>
 </body>
 </html>

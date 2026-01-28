@@ -9,13 +9,13 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'LevelUP_V2_00.042';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.038';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
 
   const CONFIG = {
-    remoteUrls: ['./data/data.json','./data.json'],
+    remoteUrl: './data/data.json',
     remoteTimeoutMs: 3500,
     storageKey: 'levelup:data:v1'
   };
@@ -44,15 +44,12 @@
       #eventGrid .evArt, .eventGrid .evArt{ aspect-ratio: 3/4; width:100%; overflow:hidden; border-radius:12px; }
       #eventGrid .evInfo, .eventGrid .evInfo{ padding:10px 10px 12px; }
     
-      /* Estado en eventos (NO tocar .pill global del header/UI) */
-      .evPill{ display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:999px; font-size:12px; line-height:1.1;
+      /* Pills pequeñas (para estado en eventos) */
+      .pill{ display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:999px; font-size:12px; line-height:1.1;
         border:1px solid rgba(0,210,255,.35); background:rgba(15,15,20,.35); color:rgb(220,220,230); }
-      .evPill.ok{ border-color: rgba(0,210,255,.7); }
-      .evPill.warn{ border-color: rgba(114,26,255,.65); }
-      .evPill.muted{ opacity:.75; }
-
-      /* Mensaje vacío visible */
-      #eventGrid .emptyNote, .eventGrid .emptyNote{ padding:12px; border:1px dashed rgba(0,210,255,.25); border-radius:12px; opacity:.9; }
+      .pill.ok{ border-color: rgba(0,210,255,.7); }
+      .pill.warn{ border-color: rgba(114,26,255,.65); }
+      .pill.muted{ opacity:.75; }
 `;
     document.head.appendChild(st);
   }
@@ -69,34 +66,6 @@ function sanitizeFileName(str){
   // colapsa espacios
   s = s.replace(/\s+/g,' ').trim();
   return s;
-}
-
-
-// Resuelve la imagen de un jefe/evento con convención:
-//  - Jefes:  assets/jefes/Boss_<key>_(unlocked|locked).jpg
-//  - Eventos: assets/eventos/Event_<key>_(unlocked|locked).jpg
-// Puedes sobrescribir con campos en el JSON:
-//  ev.image / ev.imageUnlocked, ev.lockedImage / ev.imageLocked, ev.folder, ev.filePrefix, ev.ext, ev.assetKey
-function getEventImageInfo(ev, unlocked){
-  ev = ev || {};
-  const kind = (ev.kind || 'event');
-  const folder = ev.folder || (kind === 'boss' ? 'jefes' : 'eventos');
-  const rawKey = ev.assetKey || ev.id || ev.key || '';
-  let key = sanitizeFileName(rawKey) || 'unknown';
-  // para URLs más limpias
-  key = key.replace(/\s+/g,'_');
-
-  const unlockedSrc = ev.imageUnlocked || ev.unlockedImage || ev.image || ev.imgUnlocked || '';
-  const lockedSrc   = ev.imageLocked   || ev.lockedImage   || ev.locked || ev.imgLocked   || '';
-
-  if (unlocked && unlockedSrc) return { src: unlockedSrc };
-  if (!unlocked && lockedSrc)  return { src: lockedSrc };
-
-  const prefix = ev.filePrefix || (kind === 'boss' ? 'Boss_' : 'Event_');
-  const variant = unlocked ? 'unlocked' : 'locked';
-  const ext = String(ev.ext || 'jpg').replace('.','');
-  const file = `${prefix}${key}_${variant}.${ext}`;
-  return { src: `assets/${folder}/${file}` };
 }
 
 function makeId(prefix='h'){
@@ -174,13 +143,11 @@ function seedChallengesDemo(S){
     isDetailsOpen: false,
     data: null,
     dataSource: '—'      // remote | local | demo
-      ,remoteLastUrl: ''
-    ,remoteLastErr: ''
   };
 
   // Build marker (para confirmar en GitHub que sí cargó la versión correcta)
   // Build identifier (also used for cache-busting via querystring in index.html)
-  const BUILD_ID = 'LevelUP_V2_00.040';
+  const BUILD_ID = 'LevelUP_V2_00.034';
 
   const $ = (sel, root=document) => root.querySelector(sel);
   const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -385,9 +352,10 @@ function normalizeData(data){
       d.challenges = seedChallengesDemo(S);
       d.meta.seededDemo = true;
     }
-    // Seed demo de eventos/bosses (si no hay eventos aún).
-    // Para desactivarlo en tu JSON real: meta.noAutoSeedEvents = true
-    if (!d.meta.noAutoSeedEvents && !d.events.length){
+
+    
+    // Seed demo de eventos/bosses (si no hay eventos aún)
+    if (!d.meta.seededEvents && !d.events.length){
       d.events = seedEventsDemo();
       d.meta.seededEvents = true;
     }
@@ -601,11 +569,6 @@ d.heroes.forEach(h=>{
     $('#dbgBuild') && ($('#dbgBuild').textContent = BUILD_ID);
     $('#dbgSubCount') && ($('#dbgSubCount').textContent = String(subCount));
     $('#dbgChCount') && ($('#dbgChCount').textContent = String(chCount));
-
-const ru = document.getElementById('dbgRemoteUrl');
-if (ru) ru.textContent = state.remoteLastUrl || (Array.isArray(CONFIG.remoteUrls) ? CONFIG.remoteUrls[0] : '—');
-const re = document.getElementById('dbgRemoteErr');
-if (re) re.textContent = state.remoteLastErr ? state.remoteLastErr : '—';
   }
 
   // Dropdown
@@ -717,70 +680,59 @@ if (re) re.textContent = state.remoteLastErr ? state.remoteLastErr : '—';
   }
   function clearLocal(){ try{ localStorage.removeItem(CONFIG.storageKey); }catch(e){} }
 
-  
-// Remote fetch timeout (tries multiple URLs for GitHub Pages setups)
-async function fetchRemote(){
-  const urls = Array.isArray(CONFIG.remoteUrls) ? CONFIG.remoteUrls : [String(CONFIG.remoteUrls || './data/data.json')];
-  const ctrl = new AbortController();
-  const t = setTimeout(()=> ctrl.abort(), CONFIG.remoteTimeoutMs);
+  // Remote fetch timeout
+  async function fetchRemote() {
+  // Try multiple common locations so GitHub Pages vs local file open both work.
+  // The first one that returns valid JSON wins.
+  const candidates = [
+    (CONFIG.remoteUrl || "").trim(),
+    "./data/data.json",
+    "data/data.json",
+    "./data.json",
+    "data.json"
+  ].filter(Boolean);
 
   let lastErr = null;
-  try{
-    for (const base of urls){
-      const url = `${base}?v=${Date.now()}`; // cache-buster
-      try{
-        const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        state.remoteLastUrl = base;
-        state.remoteLastErr = '';
-        return data;
-      }catch(e){
-        lastErr = e;
-        // keep trying next url
-      }
-    }
-    throw lastErr || new Error('No se pudo cargar datos remotos');
-  } finally {
-    clearTimeout(t);
-    if (lastErr){
-      state.remoteLastErr = String(lastErr && (lastErr.message || lastErr)) || 'Error al cargar remoto';
+  for (const urlRaw of candidates) {
+    const url = urlRaw + (urlRaw.includes("?") ? "&" : "?") + "v=" + Date.now();
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const data = await r.json();
+      return { ok: true, data, url: urlRaw };
+    } catch (e) {
+      lastErr = e;
     }
   }
+  return { ok: false, error: lastErr || new Error("No remote candidates") };
 }
 
-  async function loadData({forceRemote=false} = {}){
-    if (forceRemote){
-      try{
-        const d = await fetchRemote();
-        state.data = normalizeData(d); state.dataSource = 'remote';
-        saveLocal(state.data);
-        toast('Cargado desde GitHub');
-        updateDataDebug(); renderAll();
-        return;
-      }catch(e){
-        toast('No se pudo cargar GitHub. Usando copia local.'); updateDataDebug();
-      }
-    }else{
-      try{
-        const d = await fetchRemote();
-        state.data = normalizeData(d); state.dataSource = 'remote';
-        saveLocal(state.data);
-        updateDataDebug(); renderAll();
-        return;
-      }catch(e){}
-    }
+  async function loadData({ preferRemote = true } = {}) {
+  state.dataSource = { mode: "unknown", url: "" };
 
-    const local = loadLocal();
-    if (local){
-      state.data = normalizeData(local); state.dataSource = 'local';
-      updateDataDebug(); renderAll();
+  // 1) Prefer remote JSON (GitHub Pages / deployed)
+  if (preferRemote) {
+    const r = await fetchRemote();
+    if (r.ok && r.data) {
+      state.data = normalizeData(r.data);
+      state.dataSource = { mode: "remote", url: r.url || (CONFIG.remoteUrl || "") };
+      saveLocal(state.data);
       return;
     }
-
-    state.data = normalizeData(demoData()); state.dataSource = 'demo';
-    updateDataDebug(); renderAll();
   }
+
+  // 2) Fallback: localStorage
+  const local = loadLocal();
+  if (local) {
+    state.data = normalizeData(local);
+    state.dataSource = { mode: "localStorage", url: "" };
+    return;
+  }
+
+  // 3) Final fallback: bundled demo data (if present)
+  state.data = normalizeData(DEFAULT_DATA);
+  state.dataSource = { mode: "bundled", url: "" };
+}
 
   // Render helpers
   function escapeHtml(s){
@@ -1589,20 +1541,13 @@ function renderChallengeDetail(){
 
     const grid = document.getElementById('eventGrid') || document.getElementById('eventsGrid') || document.getElementById('events') || document.querySelector('[data-events-grid]');
     if (grid) grid.classList.add('eventGrid');
-    if (!grid){
-      if (!state._warnedNoEventGrid){
-        console.warn('[Eventos] No se encontró contenedor (eventGrid).');
-        try{ toast('⚠️ No se encontró el contenedor de Eventos en el HTML'); }catch(_e){}
-        state._warnedNoEventGrid = true;
-      }
-      return;
-    }
+    if (!grid) return;
     grid.innerHTML = '';
 
     const hero = currentHero();
     let evs = Array.isArray(state.data?.events) ? state.data.events : [];
     if (!evs.length){
-      grid.innerHTML = '<div class="emptyNote">Sin eventos aún. Agrega jefes/eventos en <b>data/data.json</b>.</div>';
+      grid.innerHTML = '<div class="muted">Sin eventos.</div>';
       return;
     }
 
@@ -1637,12 +1582,23 @@ function renderChallengeDetail(){
           <div class="evTitle">${escapeHtml(title)}</div>
           <div class="evReq">${escapeHtml(unlocked ? (ev.subtitle || '') : (reqText || ''))}</div>
           <div class="evMeta">
-            ${unlocked ? (eligible ? '<span class="evPill ok">Elegible</span>' : '<span class="evPill warn">No elegible</span>') : '<span class="evPill muted">Progreso</span>'}
+            ${unlocked ? (eligible ? '<span class="pill ok">Elegible</span>' : '<span class="pill warn">No elegible</span>') : '<span class="pill muted">Progreso</span>'}
           </div>
         </div>
       `;
 
-      card.addEventListener('click', ()=>{
+      
+      // If the image file isn't present yet, remove the <img> to avoid the broken-image icon.
+      const imgEl = card.querySelector('img.evArt__img');
+      if (imgEl) {
+        imgEl.addEventListener('error', () => {
+          try { imgEl.remove(); } catch(e) { imgEl.style.display = 'none'; }
+          const art = card.querySelector('.evArt');
+          if (art) art.classList.add('evArt--noimg');
+        }, { once: true });
+      }
+
+card.addEventListener('click', ()=>{
         openEventModal(ev.id);
       });
 
@@ -1983,14 +1939,7 @@ function renderChallengeDetail(){
     if (!hero) return;
     const pending = getNextPendingReward(hero);
     const grid = $('#rewardPickGrid');
-    if (!grid){
-      if (!state._warnedNoEventGrid){
-        console.warn('[Eventos] No se encontró contenedor (eventGrid).');
-        try{ toast('⚠️ No se encontró el contenedor de Eventos en el HTML'); }catch(_e){}
-        state._warnedNoEventGrid = true;
-      }
-      return;
-    }
+    if (!grid) return;
 
     grid.innerHTML = '';
 
@@ -3011,7 +2960,14 @@ async function init(){
 
   (function(){
     const btn = document.getElementById('btnEventClose');
-    if (btn) btn.addEventListener('click', ()=>{ const m=document.getElementById('eventModal'); if(m) m.hidden=true; });
+    const m = document.getElementById('eventModal');
+    if (btn) btn.addEventListener('click', ()=>{ if(m) m.hidden = true; });
+
+    // Click on the dark backdrop closes the modal too (fixes cases where the X is hard to tap).
+    if (m) m.addEventListener('click', (e)=>{ if (e.target === m) m.hidden = true; });
+
+    // Escape key closes it
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape' && m && !m.hidden) m.hidden = true; });
   })();
 
 })();

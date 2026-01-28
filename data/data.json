@@ -422,7 +422,7 @@
       "group": "2D",
       "name": "Brandon",
       "age": 12,
-      "role": "Constructor",
+      "role": "Investigador",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -488,7 +488,7 @@
       "group": "3D",
       "name": "Jannya",
       "age": 12,
-      "role": "Explorador",
+      "role": "Mentor",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -521,7 +521,7 @@
       "group": "3D",
       "name": "Ana Brenda",
       "age": 12,
-      "role": "Organizador",
+      "role": "Comunicador",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -719,7 +719,7 @@
       "group": "3D",
       "name": "Juan",
       "age": 12,
-      "role": "Constructor",
+      "role": "Investigador",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -752,7 +752,7 @@
       "group": "3D",
       "name": "Luis",
       "age": 12,
-      "role": "Explorador",
+      "role": "Resiliente",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -818,7 +818,7 @@
       "group": "3D",
       "name": "Zoe",
       "age": 12,
-      "role": "Constructor",
+      "role": "Estratega",
       "level": 1,
       "xp": 0,
       "xpMax": 100,
@@ -1055,8 +1055,8 @@
       "id": "ev1",
       "kind": "boss",
       "title": "El Loquito del Centro",
-      "image": "assets/eventos/loquito.png",
-      "lockedImage": "assets/eventos/loquito_locked.png",
+      "image": "assets/jefes/Boss_loquito_unlocked.jpg",
+      "lockedImage": "assets/jefes/Boss_loquito_locked.jpg",
       "unlock": {
         "label": "Completa 3 desafíos (cualquiera)",
         "type": "challengesCompleted",
@@ -1085,6 +1085,43 @@
         "difficulty": "hard",
         "count": 1
       }
+    }
+  ],
+  "roles": [
+    {
+      "id": "mentor",
+      "name": "Mentor",
+      "desc": "Apoya a otros, explica con calma y comparte trucos."
+    },
+    {
+      "id": "lider",
+      "name": "Líder",
+      "desc": "Organiza al equipo, reparte tareas y mantiene el ritmo."
+    },
+    {
+      "id": "estratega",
+      "name": "Estratega",
+      "desc": "Planea antes de actuar y propone la mejor ruta."
+    },
+    {
+      "id": "investigador",
+      "name": "Investigador",
+      "desc": "Busca información, prueba y documenta lo que aprende."
+    },
+    {
+      "id": "creativo",
+      "name": "Creativo",
+      "desc": "Da ideas originales, diseña y mejora la presentación."
+    },
+    {
+      "id": "comunicador",
+      "name": "Comunicador",
+      "desc": "Habla claro, negocia y presenta al grupo."
+    },
+    {
+      "id": "resiliente",
+      "name": "Resiliente",
+      "desc": "No se rinde, aprende del error y vuelve a intentarlo."
     }
   ]
 }
