@@ -9,7 +9,7 @@
    3) siempre puedes importar JSON manual (iPad offline) y se guarda localmente
 */
 (function(){
-  window.LEVELUP_BUILD = 'LevelUP_V2_00.034';
+  window.LEVELUP_BUILD = 'LevelUP_V2_00.037';
   'use strict';
 
   // CLEAN PASS v29: stability + small UI tweaks
@@ -22,6 +22,37 @@
 
   // Weekly XP cap for "Actividades pequeñas" (per hero). If hero.weekXpMax is missing, we fall back to this.
   const DEFAULT_WEEK_XP_MAX = 40;
+
+  // Inserta estilos dinámicos mínimos (para que el modal de roles y eventos se vean bien sin depender de parches de CSS).
+  function ensureDynamicStyles(){
+    if (document.getElementById('dynStyles')) return;
+    const st = document.createElement('style');
+    st.id = 'dynStyles';
+    st.textContent = `
+      /* Roles: nombre + descripción legibles */
+      #roleModal .roleItem{ display:flex; flex-direction:column; align-items:flex-start; text-align:left; gap:4px; }
+      #roleModal .roleItem__name{ font-weight:800; letter-spacing:.2px; }
+      #roleModal .roleItem__desc{ font-size:12px; line-height:1.25; opacity:.82; }
+      #roleModal #roleList{ display:grid; grid-template-columns:1fr; gap:10px; }
+      @media (min-width: 900px){ #roleModal #roleList{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+
+      /* Eventos: grid responsivo (2 columnas en móvil) */
+      #eventGrid{ display:grid; gap:12px; align-content:start; }
+      @media (max-width: 640px){ #eventGrid{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+      @media (min-width: 641px){ #eventGrid{ grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); } }
+      #eventGrid .evCard{ display:flex; flex-direction:column; }
+      #eventGrid .evArt{ aspect-ratio: 3/4; width:100%; overflow:hidden; border-radius:12px; }
+      #eventGrid .evInfo{ padding:10px 10px 12px; }
+    
+      /* Pills pequeñas (para estado en eventos) */
+      .pill{ display:inline-flex; align-items:center; justify-content:center; padding:2px 8px; border-radius:999px; font-size:12px; line-height:1.1;
+        border:1px solid rgba(0,210,255,.35); background:rgba(15,15,20,.35); color:rgb(220,220,230); }
+      .pill.ok{ border-color: rgba(0,210,255,.7); }
+      .pill.warn{ border-color: rgba(114,26,255,.65); }
+      .pill.muted{ opacity:.75; }
+`;
+    document.head.appendChild(st);
+  }
 
 // Convierte texto a un nombre seguro de archivo (sin perder mayúsculas/minúsculas)
 function sanitizeFileName(str){
@@ -1493,6 +1524,8 @@ function renderChallengeDetail(){
   }
 
   function renderEvents(){
+    ensureDynamicStyles();
+
     const grid = $('#eventGrid');
     if (!grid) return;
     grid.innerHTML = '';
@@ -1507,50 +1540,44 @@ function renderChallengeDetail(){
     // Ordena por "order" si existe (si no, conserva orden)
     evs = [...evs].sort((a,b)=> Number(a.order||0) - Number(b.order||0));
 
-    const groups = [
-      { key:'boss', title:'JEFES', items: evs.filter(e=> (e.kind||'event') === 'boss') },
-      { key:'event', title:'EVENTOS', items: evs.filter(e=> (e.kind||'event') !== 'boss') },
-    ].filter(g=> g.items.length);
-
     const frag = document.createDocumentFragment();
-    groups.forEach(group=>{
-      const h = document.createElement('div');
-      // Reuse existing section title styling (used in recompensas)
-      h.className = 'rewardsSectionTitle';
-      h.textContent = group.title;
-      frag.appendChild(h);
 
-      group.items.forEach(ev=>{
+    evs.forEach(ev=>{
       const prereqMet = isEventPrereqMet(ev);
       const unlocked = prereqMet ? isEventUnlocked(ev) : false;
       const eligible = hero ? isHeroEligibleForEvent(hero, ev) : false;
-      const div = document.createElement('button');
-      div.type = 'button';
-      div.className = 'eventCard' + (unlocked ? ' is-unlocked' : ' is-locked') + (eligible ? ' is-eligible' : '') + (prereqMet ? '' : ' is-hidden');
-      div.innerHTML = `
-        <div class="eventCard__img"></div>
-        <div class="eventCard__meta">
-          <div class="eventCard__name">${escapeHtml(unlocked ? (ev.title||'Evento') : '?????')}</div>
-          <div class="challengeHintBadges">
-            <span class="badge badge--subj">${escapeHtml((ev.kind||'event') === 'boss' ? 'JEFE' : 'EVENTO')}</span>
-            ${unlocked ? '' : `<span class="badge badge--diff">BLOQUEADO</span>`}
+
+      const kind = (ev.kind || 'event');
+      const kindLabel = (kind === 'boss') ? 'JEFE' : 'EVENTO';
+
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'evCard' + (unlocked ? ' isUnlocked' : ' isLocked');
+
+      // Imagen (usa tu convención por carpeta/nombre si no viene explícita)
+      const imgInfo = getEventImageInfo(ev, unlocked);
+      const title = (ev.title || 'Sin título');
+      const reqText = (ev.unlock && ev.unlock.label) ? ev.unlock.label : (ev.requirement || '');
+
+      card.innerHTML = `
+        <div class="evArt">
+          <img class="evImg" alt="${escapeHtml(title)}" src="${escapeHtml(imgInfo.src)}" loading="lazy">
+          <div class="evTag">${escapeHtml(kindLabel)}${unlocked ? '' : ' · BLOQUEADO'}</div>
+        </div>
+        <div class="evInfo">
+          <div class="evTitle">${escapeHtml(title)}</div>
+          <div class="evReq">${escapeHtml(unlocked ? (ev.subtitle || '') : (reqText || ''))}</div>
+          <div class="evMeta">
+            ${unlocked ? (eligible ? '<span class="pill ok">Elegible</span>' : '<span class="pill warn">No elegible</span>') : '<span class="pill muted">Progreso</span>'}
           </div>
-          <div class="eventCard__req">${escapeHtml(!prereqMet ? 'Desbloquea el anterior' : (unlocked ? (ev.eligibility?.label||'') : (ev.unlock?.label||'Requisito')))}</div>
         </div>
       `;
-      const img = div.querySelector('.eventCard__img');
-      if (img){
-        img.classList.toggle('is-locked', !unlocked);
-        const src = unlocked ? (ev.image || '') : (ev.lockedImage || ev.image || '');
-        if (src){
-          img.style.setProperty('--ev-img', `url(${src})`);
-        } else {
-          img.style.removeProperty('--ev-img');
-        }
-      }
-      div.addEventListener('click', ()=> openEventModal(ev.id));
-        frag.appendChild(div);
+
+      card.addEventListener('click', ()=>{
+        openEventModal(ev.id);
       });
+
+      frag.appendChild(card);
     });
 
     grid.appendChild(frag);
@@ -2870,6 +2897,8 @@ $('#btnSaveChallenge')?.addEventListener('click', saveChallengeFromModal);
   }
 
 async function init(){
+    ensureDynamicStyles();
+
     // Captura errores para que en iPhone no se sienta "se rompió" sin pista
     window.addEventListener('error', (ev)=>{
       try{
